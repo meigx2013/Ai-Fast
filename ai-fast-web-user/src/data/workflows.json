@@ -1,0 +1,241 @@
+{
+  "workflows": [
+    {
+      "id": 1,
+      "title": "AI智能客服工作流",
+      "description": "基于大语言模型的智能客服系统，支持多轮对话、意图识别、知识库检索等功能，可快速接入企业客服场景。",
+      "cover": "https://picsum.photos/seed/workflow1/400/300",
+      "category": "客服",
+      "tags": ["AI", "客服", "对话", "NLP"],
+      "author": {
+        "id": 1,
+        "name": "张三",
+        "avatar": "https://picsum.photos/seed/user1/100/100"
+      },
+      "views": 1520,
+      "likes": 328,
+      "favorites": 156,
+      "createdAt": "2024-01-15",
+      "updatedAt": "2024-03-20",
+      "difficulty": "中级",
+      "duration": "2小时",
+      "steps": [
+        {
+          "title": "环境准备",
+          "content": "安装必要的依赖包和配置开发环境"
+        },
+        {
+          "title": "模型部署",
+          "content": "部署大语言模型服务，配置API接口"
+        },
+        {
+          "title": "对话流程设计",
+          "content": "设计多轮对话流程和意图识别逻辑"
+        },
+        {
+          "title": "知识库集成",
+          "content": "集成向量数据库，实现知识检索功能"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "自动化数据分析工作流",
+      "description": "利用AI Agent自动完成数据清洗、分析和可视化报告生成，支持多种数据源接入，适合数据分析师使用。",
+      "cover": "https://picsum.photos/seed/workflow2/400/300",
+      "category": "数据分析",
+      "tags": ["数据分析", "自动化", "可视化", "Python"],
+      "author": {
+        "id": 2,
+        "name": "李四",
+        "avatar": "https://picsum.photos/seed/user2/100/100"
+      },
+      "views": 2340,
+      "likes": 456,
+      "favorites": 289,
+      "createdAt": "2024-02-01",
+      "updatedAt": "2024-03-18",
+      "difficulty": "高级",
+      "duration": "4小时",
+      "steps": [
+        {
+          "title": "数据源配置",
+          "content": "配置MySQL、Excel等多种数据源连接"
+        },
+        {
+          "title": "数据清洗流程",
+          "content": "设计自动化数据清洗和预处理流程"
+        },
+        {
+          "title": "分析模型构建",
+          "content": "构建数据分析模型和统计方法"
+        },
+        {
+          "title": "报告生成",
+          "content": "设计可视化报告模板和自动生成逻辑"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "内容创作助手工作流",
+      "description": "AI驱动的内容创作工具，支持文章写作、图片生成、内容优化等功能，帮助创作者提高效率。",
+      "cover": "https://picsum.photos/seed/workflow3/400/300",
+      "category": "内容创作",
+      "tags": ["AI写作", "内容创作", "图片生成", "SEO"],
+      "author": {
+        "id": 3,
+        "name": "王五",
+        "avatar": "https://picsum.photos/seed/user3/100/100"
+      },
+      "views": 3120,
+      "likes": 678,
+      "favorites": 423,
+      "createdAt": "2024-01-20",
+      "updatedAt": "2024-03-22",
+      "difficulty": "初级",
+      "duration": "1.5小时",
+      "steps": [
+        {
+          "title": "写作模板配置",
+          "content": "配置不同类型文章的写作模板"
+        },
+        {
+          "title": "AI模型接入",
+          "content": "接入GPT等大语言模型API"
+        },
+        {
+          "title": "图片生成集成",
+          "content": "集成DALL-E或Stable Diffusion图片生成"
+        },
+        {
+          "title": "SEO优化",
+          "content": "添加SEO关键词优化和内容润色功能"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "智能文档处理工作流",
+      "description": "自动识别和处理各类文档，支持PDF解析、表格提取、信息抽取等功能，大幅提升文档处理效率。",
+      "cover": "https://picsum.photos/seed/workflow4/400/300",
+      "category": "文档处理",
+      "tags": ["OCR", "文档处理", "PDF", "信息抽取"],
+      "author": {
+        "id": 4,
+        "name": "赵六",
+        "avatar": "https://picsum.photos/seed/user4/100/100"
+      },
+      "views": 1890,
+      "likes": 345,
+      "favorites": 198,
+      "createdAt": "2024-02-15",
+      "updatedAt": "2024-03-19",
+      "difficulty": "中级",
+      "duration": "3小时",
+      "steps": [
+        {
+          "title": "文档上传处理",
+          "content": "实现多格式文档上传和预处理"
+        },
+        {
+          "title": "OCR识别",
+          "content": "集成OCR引擎进行文字识别"
+        },
+        {
+          "title": "信息抽取",
+          "content": "使用NLP技术抽取关键信息"
+        },
+        {
+          "title": "结果导出",
+          "content": "支持多种格式导出处理结果"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "代码审查助手工作流",
+      "description": "AI驱动的代码审查工具，自动检测代码问题、提供优化建议，支持多种编程语言。",
+      "cover": "https://picsum.photos/seed/workflow5/400/300",
+      "category": "开发工具",
+      "tags": ["代码审查", "AI", "开发工具", "代码质量"],
+      "author": {
+        "id": 5,
+        "name": "孙七",
+        "avatar": "https://picsum.photos/seed/user5/100/100"
+      },
+      "views": 2780,
+      "likes": 534,
+      "favorites": 367,
+      "createdAt": "2024-01-28",
+      "updatedAt": "2024-03-21",
+      "difficulty": "高级",
+      "duration": "3.5小时",
+      "steps": [
+        {
+          "title": "代码解析",
+          "content": "解析多种编程语言的代码结构"
+        },
+        {
+          "title": "问题检测",
+          "content": "检测代码中的潜在问题和安全漏洞"
+        },
+        {
+          "title": "优化建议",
+          "content": "基于AI提供代码优化建议"
+        },
+        {
+          "title": "报告生成",
+          "content": "生成详细的代码审查报告"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "社交媒体管理工作流",
+      "description": "自动化社交媒体运营工具，支持内容发布、数据分析、互动管理等功能，一站式管理多个平台。",
+      "cover": "https://picsum.photos/seed/workflow6/400/300",
+      "category": "营销",
+      "tags": ["社交媒体", "自动化", "营销", "数据分析"],
+      "author": {
+        "id": 6,
+        "name": "周八",
+        "avatar": "https://picsum.photos/seed/user6/100/100"
+      },
+      "views": 1650,
+      "likes": 289,
+      "favorites": 145,
+      "createdAt": "2024-02-10",
+      "updatedAt": "2024-03-17",
+      "difficulty": "初级",
+      "duration": "2小时",
+      "steps": [
+        {
+          "title": "平台接入",
+          "content": "配置各社交媒体平台API"
+        },
+        {
+          "title": "内容发布",
+          "content": "实现多平台内容自动发布"
+        },
+        {
+          "title": "数据统计",
+          "content": "收集和分析运营数据"
+        },
+        {
+          "title": "互动管理",
+          "content": "自动回复和互动管理功能"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    { "id": 1, "name": "全部", "count": 6 },
+    { "id": 2, "name": "客服", "count": 1 },
+    { "id": 3, "name": "数据分析", "count": 1 },
+    { "id": 4, "name": "内容创作", "count": 1 },
+    { "id": 5, "name": "文档处理", "count": 1 },
+    { "id": 6, "name": "开发工具", "count": 1 },
+    { "id": 7, "name": "营销", "count": 1 }
+  ]
+}
