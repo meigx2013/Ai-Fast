@@ -1,0 +1,14 @@
+{
+  "registry_id": "toolset-builder",
+  "name": "Toolset Builder",
+  "description": "A toolset for helping developers create new ASDM toolsets efficiently.",
+  "scenario": "工具集开发",
+  "version": "0.0.2",
+  "configType": "toolset",
+  "commands": [
+    "asdm-complete-toolset",
+    "asdm-create-specs",
+    "asdm-define-features",
+    "asdm-init-toolset"
+  ]
+}

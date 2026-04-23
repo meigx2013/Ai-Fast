@@ -1,0 +1,14 @@
+{
+  "registry_id": "prd-builder",
+  "name": "PRD Builder",
+  "description": "A toolset for planning and executing tasks for a workspace.",
+  "version": "1.0.0",
+  "downloadUrl": "prd-builder.zip",
+  "entryPoint": "prd-builder/README.md",
+  "dateCreated": "2026-04-20T00:00:00Z",
+  "dateUpdated": "2026-04-20T00:00:00Z",
+  "createdBy": "ASDM Platform",
+  "updatedBy": "ASDM Platform",
+  "configType": "toolset",
+  "commands": ["/asdm-prd-planning", "/asdm-prd-breakdown", "/asdm-prd-execution"]
+}

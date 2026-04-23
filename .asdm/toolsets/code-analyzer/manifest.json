@@ -1,0 +1,9 @@
+{
+  "registry_id": "code-analyzer",
+  "name": "代码分析工具集",
+  "description": "用于代码库分析，输出文件大小和中文含义描述，识别被引用3次以上的核心类/方法资产",
+  "scenario": "代码分析",
+  "version": "0.0.1",
+  "configType": "toolset",
+  "commands": ["file-analyze", "core-asset-identify", "code-summary"]
+}

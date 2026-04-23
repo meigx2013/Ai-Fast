@@ -1,0 +1,11 @@
+{
+  "registry_id": "toolset-manifest",
+  "name": "Toolset Manifest File Add",
+  "description": "为缺少 manifest.json 文件的工具集自动获取信息创建 manifest 文件。",
+  "scenario": "工具集开发",
+  "version": "0.0.1",
+  "configType": "toolset",
+  "commands": [
+    "asdm-generate-manifest"
+  ]
+}

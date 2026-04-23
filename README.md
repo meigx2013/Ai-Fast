@@ -45,23 +45,24 @@
 
 ```
 ai-fast
-├── ai-fast-common                // 公共模块
-│   ├── ai-fast-common-core       // 核心公共模块（工具类、常量、异常等）
-│   ├── ai-fast-common-redis      // Redis公共模块
-│   └── ai-fast-common-security   // 安全公共模块
-├── ai-fast-gateway               // 网关服务
-├── ai-fast-auth                  // 认证服务
-├── ai-fast-user                  // 用户服务
-│   ├── ai-fast-user-api          // 用户服务API接口
-│   └── ai-fast-user-biz          // 用户服务业务实现
-├── ai-fast-content               // 内容服务
-│   ├── ai-fast-content-api       // 内容服务API接口
-│   └── ai-fast-content-biz       // 内容服务业务实现
-├── ai-fast-admin                 // 管理后台服务
+├── ai-fast-services              // 后端服务（统一目录）
+│   ├── ai-fast-common            // 公共模块
+│   │   ├── ai-fast-common-core   // 核心公共模块（工具类、常量、异常等）
+│   │   ├── ai-fast-common-redis  // Redis公共模块
+│   │   └── ai-fast-common-security // 安全公共模块
+│   ├── ai-fast-gateway           // 网关服务
+│   ├── ai-fast-auth              // 认证服务
+│   ├── ai-fast-user              // 用户服务
+│   │   ├── ai-fast-user-api      // 用户服务API接口
+│   │   └── ai-fast-user-biz      // 用户服务业务实现
+│   ├── ai-fast-content           // 内容服务
+│   │   ├── ai-fast-content-api   // 内容服务API接口
+│   │   └── ai-fast-content-biz   // 内容服务业务实现
+│   └── ai-fast-admin             // 管理后台服务
 ├── ai-fast-web                   // 前端项目
 │   ├── ai-fast-web-user          // To C端站点
 │   └── ai-fast-web-admin         // 管理后台
-└── sql                           // SQL脚本
+└── sql                           // SQL脚本（全局）
 ```
 
 ## 快速开始
@@ -90,7 +91,7 @@ mysql -u root -p
 CREATE DATABASE ai_fast DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 # 导入SQL脚本
-mysql -u root -p ai_fast < sql/ai_fast.sql
+mysql -u root -p ai_fast < ai-fast-services/sql/ai_fast.sql
 ```
 
 3. **配置Nacos**
@@ -105,6 +106,7 @@ mysql -u root -p ai_fast < sql/ai_fast.sql
 5. **启动服务**
 ```bash
 # 编译项目
+cd ai-fast-services
 mvn clean install -DskipTests
 
 # 按顺序启动服务
