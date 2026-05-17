@@ -1,15 +1,17 @@
 <template>
   <div class="register-page">
-    <div class="register-container">
+    <div class="register-card">
       <div class="register-header">
         <div class="logo">
-          <el-icon :size="40"><Cpu /></el-icon>
+          <div class="logo-icon">
+            <el-icon :size="24"><Cpu /></el-icon>
+          </div>
           <span>AI Fast</span>
         </div>
         <h2>创建账户</h2>
-        <p>加入我们，开启AI工作流之旅</p>
+        <p>加入我们，开启AI智能体与工作流之旅</p>
       </div>
-      
+
       <el-form
         ref="formRef"
         :model="formData"
@@ -25,7 +27,7 @@
             size="large"
           />
         </el-form-item>
-        
+
         <el-form-item prop="email">
           <el-input
             v-model="formData.email"
@@ -34,7 +36,7 @@
             size="large"
           />
         </el-form-item>
-        
+
         <el-form-item prop="password">
           <el-input
             v-model="formData.password"
@@ -45,7 +47,7 @@
             show-password
           />
         </el-form-item>
-        
+
         <el-form-item prop="confirmPassword">
           <el-input
             v-model="formData.confirmPassword"
@@ -56,7 +58,7 @@
             show-password
           />
         </el-form-item>
-        
+
         <el-form-item prop="name">
           <el-input
             v-model="formData.name"
@@ -65,7 +67,7 @@
             size="large"
           />
         </el-form-item>
-        
+
         <el-form-item>
           <el-button
             type="primary"
@@ -78,7 +80,7 @@
           </el-button>
         </el-form-item>
       </el-form>
-      
+
       <div class="register-footer">
         <span>已有账户？</span>
         <el-link type="primary" @click="$router.push('/login')">立即登录</el-link>
@@ -141,9 +143,9 @@ const rules = {
 async function handleRegister() {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
-  
+
   loading.value = true
-  
+
   setTimeout(() => {
     const result = userStore.register({
       username: formData.username,
@@ -151,14 +153,14 @@ async function handleRegister() {
       password: formData.password,
       name: formData.name
     })
-    
+
     if (result.success) {
       ElMessage.success('注册成功')
       router.push('/home')
     } else {
       ElMessage.error(result.message)
     }
-    
+
     loading.value = false
   }, 500)
 }
@@ -170,42 +172,88 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--bg-secondary);
   padding: 20px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899, #f97316);
+    opacity: 0.08;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -25%;
+    right: -5%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    opacity: 0.06;
+  }
 }
 
-.register-container {
+.register-card {
   width: 100%;
   max-width: 420px;
-  background: #fff;
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
   padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  z-index: 1;
 }
 
 .register-header {
   text-align: center;
   margin-bottom: 32px;
-  
+
   .logo {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    color: #409eff;
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 16px;
+    gap: 10px;
+    margin-bottom: 20px;
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    span {
+      font-size: 22px;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   }
-  
+
   h2 {
     font-size: 24px;
-    color: #303133;
+    color: var(--text-primary);
     margin-bottom: 8px;
   }
-  
+
   p {
-    color: #909399;
+    color: var(--text-tertiary);
     font-size: 14px;
   }
 }
@@ -219,9 +267,9 @@ async function handleRegister() {
 .register-footer {
   text-align: center;
   margin-top: 24px;
-  color: #909399;
+  color: var(--text-tertiary);
   font-size: 14px;
-  
+
   .el-link {
     margin-left: 4px;
   }

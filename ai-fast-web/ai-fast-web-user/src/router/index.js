@@ -13,6 +13,24 @@ const routes = [
         meta: { title: '首页' }
       },
       {
+        path: 'agents',
+        name: 'Agents',
+        component: () => import('@/views/Agents.vue'),
+        meta: { title: '智能体' }
+      },
+      {
+        path: 'workflows',
+        name: 'Workflows',
+        component: () => import('@/views/Workflows.vue'),
+        meta: { title: '工作流' }
+      },
+      {
+        path: 'resources',
+        name: 'Resources',
+        component: () => import('@/views/Resources.vue'),
+        meta: { title: '资源库' }
+      },
+      {
         path: 'workflow/:id',
         name: 'WorkflowDetail',
         component: () => import('@/views/WorkflowDetail.vue'),
@@ -42,12 +60,15 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior() {
+    return { top: 0 }
+  }
 })
 
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title ? `${to.meta.title} - AI Fast` : 'AI Fast'
-  
+
   const token = localStorage.getItem('token')
   if (to.meta.requiresAuth && !token) {
     next('/login')

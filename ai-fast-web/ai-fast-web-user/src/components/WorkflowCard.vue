@@ -1,33 +1,33 @@
 <template>
-  <el-card class="workflow-card" shadow="hover" @click="$emit('click')">
+  <div class="workflow-card" @click="$emit('click')">
     <div class="card-cover">
       <img :src="workflow.cover" :alt="workflow.title" />
       <div class="card-difficulty" :class="difficultyClass">
         {{ workflow.difficulty }}
       </div>
     </div>
-    
+
     <div class="card-content">
       <h3 class="card-title">{{ workflow.title }}</h3>
       <p class="card-desc">{{ workflow.description }}</p>
-      
+
       <div class="card-tags">
         <el-tag
           v-for="tag in workflow.tags.slice(0, 3)"
           :key="tag"
           size="small"
-          type="info"
+          effect="plain"
         >
           {{ tag }}
         </el-tag>
       </div>
-      
+
       <div class="card-footer">
         <div class="author-info">
           <el-avatar :size="24" :src="workflow.author.avatar" />
           <span class="author-name">{{ workflow.author.name }}</span>
         </div>
-        
+
         <div class="card-stats">
           <span class="stat-item">
             <el-icon><View /></el-icon>
@@ -40,7 +40,7 @@
         </div>
       </div>
     </div>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -76,20 +76,20 @@ function formatNumber(num) {
 <style lang="scss" scoped>
 .workflow-card {
   cursor: pointer;
-  transition: all 0.3s;
-  border-radius: 12px;
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  
+  transition: all 0.3s ease;
+
   &:hover {
     transform: translateY(-4px);
-    
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-primary);
+
     .card-cover img {
       transform: scale(1.05);
     }
-  }
-  
-  :deep(.el-card__body) {
-    padding: 0;
   }
 }
 
@@ -97,56 +97,56 @@ function formatNumber(num) {
   position: relative;
   height: 180px;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s;
+    transition: transform 0.4s ease;
   }
-  
+
   .card-difficulty {
     position: absolute;
     top: 12px;
     right: 12px;
-    padding: 4px 12px;
-    border-radius: 12px;
+    padding: 4px 14px;
+    border-radius: var(--radius-xl);
     font-size: 12px;
-    font-weight: 500;
-    
+    font-weight: 600;
+
     &.easy {
-      background: rgba(103, 194, 58, 0.9);
+      background: rgba(16, 185, 129, 0.9);
       color: #fff;
     }
-    
+
     &.medium {
-      background: rgba(230, 162, 60, 0.9);
+      background: rgba(245, 158, 11, 0.9);
       color: #fff;
     }
-    
+
     &.hard {
-      background: rgba(245, 108, 108, 0.9);
+      background: rgba(239, 68, 68, 0.9);
       color: #fff;
     }
   }
 }
 
 .card-content {
-  padding: 16px;
-  
+  padding: 16px 20px 20px;
+
   .card-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--text-primary);
     margin-bottom: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  
+
   .card-desc {
     font-size: 13px;
-    color: #909399;
+    color: var(--text-tertiary);
     line-height: 1.5;
     height: 40px;
     overflow: hidden;
@@ -160,37 +160,37 @@ function formatNumber(num) {
 .card-tags {
   display: flex;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #ebeef5;
-  
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+
   .author-info {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     .author-name {
       font-size: 13px;
-      color: #606266;
+      color: var(--text-secondary);
     }
   }
-  
+
   .card-stats {
     display: flex;
     gap: 12px;
-    
+
     .stat-item {
       display: flex;
       align-items: center;
       gap: 4px;
       font-size: 12px;
-      color: #909399;
+      color: var(--text-tertiary);
     }
   }
 }
