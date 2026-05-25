@@ -1,0 +1,226 @@
+/* awesome-pptx - 清新风格 CSS 模板 */
+/* Fresh Style - Soft & Delightful */
+
+:root {
+  /* 配色 - 马卡龙色系 */
+  --bg-primary: #f0f9ff;
+  --bg-secondary: #e0f2fe;
+  --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #f0fdf4 50%, #fef3c7 75%, #faf5ff 100%);
+  
+  --title-color: #0c4a6e;
+  --text-color: #475569;
+  
+  --accent: #22d3ee;
+  --accent-secondary: #a78bfa;
+  --accent-tertiary: #fb7185;
+  --accent-glow: rgba(34, 211, 238, 0.25);
+  
+  /* 布局变量 */
+  --slide-padding: 8%;
+  --content-max-width: 850px;
+  --content-align: center;
+  
+  /* 字体 */
+  --font-main: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --title-size: clamp(2.2rem, 5vw, 3.8rem);
+  --title-weight: 500;
+  --title-gap: 1.5rem;
+  --text-size: clamp(1rem, 1.8vw, 1.3rem);
+  --text-line-height: 1.9;
+  --text-gap: 1.2rem;
+  
+  /* 导航 */
+  --dot-bg: rgba(12, 74, 110, 0.15);
+  --dot-active: #22d3ee;
+  --dot-hover: rgba(34, 211, 238, 0.6);
+  
+  --btn-bg: rgba(255, 255, 255, 0.85);
+  --btn-color: #0c4a6e;
+  --btn-hover: #22d3ee;
+  --btn-shadow: 0 4px 20px rgba(34, 211, 238, 0.25);
+  --btn-radius: 25px;
+  
+  --indicator-color: rgba(12, 74, 110, 0.7);
+  --indicator-bg: rgba(255, 255, 255, 0.8);
+  
+  /* 动画 */
+  --transition-duration: 0.5s;
+  --title-animation: bounceIn 0.8s ease-out forwards;
+  --title-duration: 0.8s;
+  --title-delay: 0.1s;
+  --text-animation: fadeInUp 0.7s ease-out forwards;
+  --text-duration: 0.7s;
+  --text-delay: 0.3s;
+  --list-animation: fadeInUp 0.7s ease-out forwards;
+  --list-duration: 0.7s;
+  --list-delay: 0.5s;
+  
+  --transform-enter: translateY(30px);
+  --transform-exit: translateY(-30px);
+  
+  /* 装饰 */
+  --deco-color: rgba(34, 211, 238, 0.12);
+  --deco-opacity: 0.7;
+}
+
+/* 浅色主题 */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-gradient: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+/* 深色主题 */
+[data-theme="dark"] {
+  --bg-primary: #1e293b;
+  --bg-secondary: #334155;
+  --bg-gradient: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  --title-color: #f0f9ff;
+  --text-color: #cbd5e1;
+  --dot-bg: rgba(255, 255, 255, 0.2);
+  --indicator-bg: rgba(30, 41, 59, 0.9);
+}
+
+/* 气泡背景装饰 */
+.deco-grid {
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(251, 113, 133, 0.05) 0%, transparent 50%);
+}
+
+/* 漂浮气泡 */
+.deco-circle {
+  border: none;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.8), 
+    rgba(34, 211, 238, 0.1) 50%,
+    transparent 70%);
+  animation: gentleBounce 4s ease-in-out infinite;
+}
+
+@keyframes gentleBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-15px) scale(1.05); }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(25px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+  50% { transform: scale(1.05) translateY(-5px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 标题样式 */
+.slide-title {
+  background: linear-gradient(135deg, var(--title-color) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 卡片容器 */
+.card-container {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(34, 211, 238, 0.1);
+}
+
+/* 列表 - 圆点样式 */
+.slide-list {
+  list-style: none;
+  padding: 0;
+  display: inline-block;
+  text-align: left;
+}
+
+.slide-list li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.8rem;
+}
+
+.slide-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  border-radius: 50%;
+  animation: popIn 0.5s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 0.1s);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* 浮动装饰元素 */
+.floating-element {
+  position: absolute;
+  animation: floatGentle 6s ease-in-out infinite;
+}
+
+.floating-element:nth-child(odd) {
+  animation-delay: -3s;
+}
+
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-12px) rotate(5deg); }
+  75% { transform: translateY(-6px) rotate(-5deg); }
+}
+
+/* 星星装饰 */
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* 飘带装饰 */
+.ribbon {
+  position: absolute;
+  width: 80px;
+  height: 20px;
+  background: linear-gradient(90deg, transparent, var(--accent-tertiary), transparent);
+  opacity: 0.2;
+  border-radius: 10px;
+  transform: rotate(-15deg);
+}
+
+/* 小图标装饰 */
+.icon-decoration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  border-radius: 12px;
+  margin: 0 8px;
+  font-size: 18px;
+}
+
+/* 按钮增强 */
+.ctrl-btn {
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+}

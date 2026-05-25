@@ -1,0 +1,20 @@
+{
+  "registry_id": "awesome-pptx",
+  "name": "炫彩演示生成器",
+  "description": "支持多种风格的演示页面生成器，可生成商务、科技、中国风、清新等多种视觉风格的美观 HTML 演示页面，带有丰富的动画和装饰效果。",
+  "scenario": "炫彩演示页面生成",
+  "version": "1.0.0",
+  "configType": "toolset",
+  "commands": [
+    "awesome-pptx",
+    "炫彩演示"
+  ],
+  "styles": [
+    "business",
+    "tech",
+    "chinese",
+    "fresh",
+    "minimal",
+    "gradient"
+  ]
+}

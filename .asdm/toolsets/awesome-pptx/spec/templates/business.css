@@ -1,0 +1,171 @@
+/* awesome-pptx - 商务风格 CSS 模板 */
+/* Business Style - Corporate & Professional */
+
+:root {
+  /* 配色 */
+  --bg-primary: #0a1628;
+  --bg-secondary: #1a365d;
+  --bg-gradient: linear-gradient(135deg, #0a1628 0%, #1a365d 50%, #0a1628 100%);
+  
+  --title-color: #f0f4f8;
+  --text-color: #cbd5e1;
+  
+  --accent: #d4af37;
+  --accent-secondary: #1e40af;
+  --accent-tertiary: #3b82f6;
+  --accent-glow: rgba(212, 175, 55, 0.3);
+  
+  /* 布局变量 */
+  --slide-padding: 8%;
+  --content-max-width: 900px;
+  --content-align: left;
+  
+  /* 字体 */
+  --font-main: 'Source Han Sans SC', 'Noto Sans SC', -apple-system, sans-serif;
+  --title-size: clamp(2.5rem, 6vw, 4.5rem);
+  --title-weight: 700;
+  --title-gap: 2rem;
+  --text-size: clamp(1.1rem, 2vw, 1.4rem);
+  --text-line-height: 1.8;
+  --text-gap: 1.5rem;
+  
+  /* 导航 */
+  --dot-bg: rgba(255, 255, 255, 0.3);
+  --dot-active: #d4af37;
+  --dot-hover: rgba(212, 175, 55, 0.7);
+  
+  --btn-bg: rgba(255, 255, 255, 0.1);
+  --btn-color: #f0f4f8;
+  --btn-hover: #d4af37;
+  --btn-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
+  --btn-radius: 8px;
+  
+  --indicator-color: rgba(255, 255, 255, 0.7);
+  --indicator-bg: rgba(0, 0, 0, 0.3);
+  
+  /* 动画 */
+  --transition-duration: 0.6s;
+  --title-animation: slideInUp 0.8s ease-out forwards;
+  --title-duration: 0.8s;
+  --title-delay: 0.1s;
+  --text-animation: slideInUp 0.8s ease-out forwards;
+  --text-duration: 0.8s;
+  --text-delay: 0.3s;
+  --list-animation: slideInUp 0.8s ease-out forwards;
+  --list-duration: 0.8s;
+  --list-delay: 0.5s;
+  
+  --transform-enter: translateX(0);
+  --transform-exit: translateX(-30px);
+  
+  /* 装饰 */
+  --deco-color: rgba(212, 175, 55, 0.1);
+  --deco-opacity: 0.6;
+}
+
+/* 深色主题 */
+[data-theme="dark"] {
+  --bg-primary: #050a15;
+  --bg-gradient: linear-gradient(135deg, #050a15 0%, #0a1628 100%);
+}
+
+/* 浅色主题 */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --title-color: #0a1628;
+  --text-color: #475569;
+  --accent: #b8860b;
+  --dot-bg: rgba(10, 22, 40, 0.2);
+  --dot-active: #b8860b;
+}
+
+/* 装饰元素样式 */
+.deco-grid {
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(212, 175, 55, 0.12) 1px, transparent 0);
+  background-size: 50px 50px;
+}
+
+.deco-circle {
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.1);
+  animation: gentlePulse 6s ease-in-out infinite;
+}
+
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* 角落装饰线条 */
+.corner-deco {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border: 2px solid rgba(212, 175, 55, 0.2);
+}
+
+.corner-deco.top-left {
+  top: 30px;
+  left: 30px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.corner-deco.bottom-right {
+  bottom: 80px;
+  right: 80px;
+  border-left: none;
+  border-top: none;
+}
+
+/* 标题样式增强 */
+.slide-title {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.slide-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+/* 列表样式 */
+.slide-list li {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.slide-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.7em;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* 代码块 */
+.slide-code {
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.slide-code code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+  line-height: 1.6;
+}

@@ -1,0 +1,239 @@
+/* awesome-pptx - 科技风格 CSS 模板 */
+/* Tech Style - Futuristic & Digital */
+
+:root {
+  /* 配色 */
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-gradient: linear-gradient(180deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+  
+  --title-color: #58a6ff;
+  --text-color: #8b949e;
+  
+  --accent: #00ff88;
+  --accent-secondary: #ff6b6b;
+  --accent-tertiary: #a855f7;
+  --accent-glow: rgba(0, 255, 136, 0.4);
+  
+  /* 布局变量 */
+  --slide-padding: 6%;
+  --content-max-width: 1000px;
+  --content-align: left;
+  
+  /* 字体 */
+  --font-main: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  --title-size: clamp(2.2rem, 5vw, 4rem);
+  --title-weight: 600;
+  --title-gap: 1.5rem;
+  --text-size: clamp(1rem, 1.8vw, 1.3rem);
+  --text-line-height: 1.7;
+  --text-gap: 1.2rem;
+  
+  /* 导航 */
+  --dot-bg: rgba(255, 255, 255, 0.15);
+  --dot-active: #00ff88;
+  --dot-hover: rgba(0, 255, 136, 0.6);
+  
+  --btn-bg: rgba(0, 255, 136, 0.08);
+  --btn-color: #00ff88;
+  --btn-hover: #00ff88;
+  --btn-shadow: 0 0 25px rgba(0, 255, 136, 0.35);
+  --btn-radius: 6px;
+  
+  --indicator-color: rgba(255, 255, 255, 0.6);
+  --indicator-bg: rgba(0, 0, 0, 0.5);
+  
+  /* 动画 */
+  --transition-duration: 0.5s;
+  --title-animation: techGlow 2s ease-in-out infinite alternate, slideInUp 0.8s ease-out forwards;
+  --title-duration: 0.8s;
+  --title-delay: 0.1s;
+  --text-animation: slideInUp 0.8s ease-out forwards;
+  --text-duration: 0.8s;
+  --text-delay: 0.25s;
+  --list-animation: slideInUp 0.8s ease-out forwards;
+  --list-duration: 0.8s;
+  --list-delay: 0.4s;
+  
+  --transform-enter: translateX(0) translateY(20px);
+  --transform-exit: translateX(30px) translateY(-20px);
+  
+  /* 装饰 */
+  --deco-color: rgba(0, 255, 136, 0.08);
+  --deco-opacity: 0.4;
+}
+
+/* 浅色主题 */
+[data-theme="light"] {
+  --bg-primary: #f0f4f8;
+  --bg-gradient: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%);
+  --title-color: #0066cc;
+  --text-color: #475569;
+  --accent: #00aa55;
+  --accent-glow: rgba(0, 170, 85, 0.2);
+}
+
+/* 科技网格背景 */
+.deco-grid {
+  background-image: 
+    linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* 发光装饰圆 */
+.deco-circle {
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  box-shadow: 
+    0 0 30px rgba(0, 255, 136, 0.15),
+    inset 0 0 30px rgba(0, 255, 136, 0.05);
+  animation: techPulse 3s ease-in-out infinite;
+}
+
+@keyframes techPulse {
+  0%, 100% { 
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.15), inset 0 0 30px rgba(0, 255, 136, 0.05);
+  }
+  50% { 
+    box-shadow: 0 0 50px rgba(0, 255, 136, 0.25), inset 0 0 50px rgba(0, 255, 136, 0.1);
+  }
+}
+
+/* 扫描线效果 */
+.scanline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(0, 255, 136, 0.4), 
+    transparent);
+  animation: scanDown 4s linear infinite;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.5;
+}
+
+@keyframes scanDown {
+  0% { top: -3px; opacity: 0; }
+  5% { opacity: 0.5; }
+  95% { opacity: 0.5; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* 发光文字效果 */
+.slide-title {
+  text-shadow: 
+    0 0 10px var(--accent-glow),
+    0 0 20px var(--accent-glow),
+    0 0 40px var(--accent-glow);
+}
+
+@keyframes techGlow {
+  0% { text-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow); }
+  100% { text-shadow: 0 0 15px var(--accent-glow), 0 0 30px var(--accent-glow), 0 0 50px var(--accent-glow); }
+}
+
+/* 终端风格标题装饰 */
+.slide-title::before {
+  content: '> ';
+  color: var(--accent);
+  font-weight: 400;
+}
+
+/* 列表 - 终端风格 */
+.slide-list li {
+  position: relative;
+  padding-left: 1.8rem;
+  font-family: var(--font-main);
+}
+
+.slide-list li::before {
+  content: '├──';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  opacity: 0.6;
+  font-size: 0.9em;
+}
+
+.slide-list li:last-child::before {
+  content: '└──';
+}
+
+/* 代码块 */
+.slide-code {
+  background: #0d1117;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  position: relative;
+}
+
+.slide-code::before {
+  content: '● ● ●';
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  letter-spacing: 4px;
+}
+
+.slide-code code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  color: #e6edf3;
+  line-height: 1.6;
+  display: block;
+  padding-top: 10px;
+}
+
+/* 关键词高亮 */
+.code-keyword { color: #ff7b72; }
+.code-string { color: #a5d6ff; }
+.code-function { color: #d2a8ff; }
+.code-number { color: #79c0ff; }
+.code-comment { color: #8b949e; }
+
+/* 装饰电路线条 */
+.circuit-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.3;
+  animation: circuitFlow 3s linear infinite;
+}
+
+@keyframes circuitFlow {
+  0% { opacity: 0.1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 0.1; }
+}
+
+/* 角落装饰 */
+.corner-tech {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+}
+
+.corner-tech.top-right {
+  top: 40px;
+  right: 40px;
+  border-top: 2px solid var(--accent);
+  border-right: 2px solid var(--accent);
+  opacity: 0.3;
+}
+
+.corner-tech.bottom-left {
+  bottom: 100px;
+  left: 40px;
+  border-bottom: 2px solid var(--accent-secondary);
+  border-left: 2px solid var(--accent-secondary);
+  opacity: 0.3;
+}

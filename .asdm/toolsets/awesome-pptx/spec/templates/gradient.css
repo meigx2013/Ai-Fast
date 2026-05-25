@@ -1,0 +1,245 @@
+/* awesome-pptx - 渐变风格 CSS 模板 */
+/* Gradient Style - Vibrant & Dynamic */
+
+:root {
+  /* 配色 - 彩虹渐变 */
+  --bg-primary: #667eea;
+  --bg-secondary: #764ba2;
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 35%, #f093fb 70%, #f5576c 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 12s ease infinite;
+  
+  --title-color: #ffffff;
+  --text-color: rgba(255, 255, 255, 0.9);
+  
+  --accent: #00d9ff;
+  --accent-secondary: #ff6b9d;
+  --accent-tertiary: #ffd93d;
+  --accent-glow: rgba(0, 217, 255, 0.35);
+  
+  /* 布局变量 */
+  --slide-padding: 8%;
+  --content-max-width: 900px;
+  --content-align: center;
+  
+  /* 字体 */
+  --font-main: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  --title-size: clamp(2.5rem, 6vw, 4.5rem);
+  --title-weight: 700;
+  --title-gap: 1.5rem;
+  --text-size: clamp(1.1rem, 2vw, 1.4rem);
+  --text-line-height: 1.8;
+  --text-gap: 1.5rem;
+  
+  /* 导航 */
+  --dot-bg: rgba(255, 255, 255, 0.3);
+  --dot-active: #ffffff;
+  --dot-hover: rgba(255, 255, 255, 0.7);
+  
+  --btn-bg: rgba(255, 255, 255, 0.2);
+  --btn-color: #ffffff;
+  --btn-hover: rgba(255, 255, 255, 0.4);
+  --btn-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  --btn-radius: 30px;
+  
+  --indicator-color: rgba(255, 255, 255, 0.8);
+  --indicator-bg: rgba(0, 0, 0, 0.15);
+  
+  /* 动画 */
+  --transition-duration: 0.6s;
+  --title-animation: gradientPop 0.8s ease-out forwards;
+  --title-duration: 0.8s;
+  --title-delay: 0.1s;
+  --text-animation: gradientFadeUp 0.7s ease-out forwards;
+  --text-duration: 0.7s;
+  --text-delay: 0.3s;
+  --list-animation: gradientFadeUp 0.7s ease-out forwards;
+  --list-duration: 0.7s;
+  --list-delay: 0.5s;
+  
+  --transform-enter: scale(0.95);
+  --transform-exit: scale(1.05);
+  
+  /* 装饰 */
+  --deco-color: rgba(255, 255, 255, 0.15);
+  --deco-opacity: 0.8;
+}
+
+/* 渐变流动动画 */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes gradientPop {
+  0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+  60% { transform: scale(1.05) translateY(-5px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes gradientFadeUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 深色主题 */
+[data-theme="dark"] {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 35%, #16213e 70%, #0f3460 100%);
+}
+
+/* 浅色主题 */
+[data-theme="light"] {
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 35%, #f093fb 70%, #f5576c 100%);
+}
+
+/* 渐变装饰背景 */
+.deco-grid {
+  background: 
+    radial-gradient(ellipse at 20% 80%, rgba(255, 107, 157, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 217, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 217, 61, 0.15) 0%, transparent 50%);
+}
+
+/* 发光渐变圆 */
+.deco-circle {
+  border: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  box-shadow: 
+    0 0 60px rgba(255, 255, 255, 0.2),
+    0 0 100px var(--accent-glow);
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { 
+    box-shadow: 0 0 60px rgba(255, 255, 255, 0.15), 0 0 100px var(--accent-glow);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 80px rgba(255, 255, 255, 0.25), 0 0 120px var(--accent-glow);
+    transform: scale(1.1);
+  }
+}
+
+/* 标题发光效果 */
+.slide-title {
+  text-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.5),
+    0 0 40px var(--accent-glow);
+  letter-spacing: 0.02em;
+}
+
+/* 渐变文字 */
+.gradient-text {
+  background: linear-gradient(90deg, #ffffff, #00d9ff, #ff6b9d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% auto;
+  animation: textGradient 3s ease infinite;
+}
+
+@keyframes textGradient {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* 波纹效果 */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  animation: rippleExpand 3s ease-out infinite;
+}
+
+@keyframes rippleExpand {
+  0% { width: 0; height: 0; opacity: 1; }
+  100% { width: 300px; height: 300px; opacity: 0; margin: -150px; }
+}
+
+/* 浮动渐变色块 */
+.floating-blob {
+  position: absolute;
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  opacity: 0.15;
+  filter: blur(40px);
+  animation: blobMorph 10s ease-in-out infinite;
+}
+
+@keyframes blobMorph {
+  0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+  25% { border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%; }
+  50% { border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%; }
+  75% { border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%; }
+}
+
+/* 列表 - 渐变标记 */
+.slide-list {
+  list-style: none;
+  padding: 0;
+}
+
+.slide-list li {
+  position: relative;
+  padding-left: 2.2rem;
+  margin-bottom: 0.8rem;
+  text-align: left;
+}
+
+.slide-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* 玻璃态卡片 */
+.glass-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+}
+
+/* 按钮增强 */
+.ctrl-btn {
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* 指示器增强 */
+.page-indicator {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 彩屑粒子 */
+.confetti {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confettiFall 4s linear infinite;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
