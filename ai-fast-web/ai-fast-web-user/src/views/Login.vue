@@ -107,6 +107,11 @@
         <div class="form-footer">
           <span>还没有账户？</span>
           <el-link type="primary" @click="$router.push('/register')">立即注册</el-link>
+          <span class="footer-divider">|</span>
+          <router-link to="/" class="back-home-link">
+            <el-icon><Back /></el-icon>
+            <span>返回首页</span>
+          </router-link>
         </div>
       </div>
     </div>
@@ -117,7 +122,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { User, Lock, Cpu, Monitor, Connection, FolderOpened } from '@element-plus/icons-vue'
+import { User, Lock, Cpu, Monitor, Connection, FolderOpened, Back } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -372,6 +377,24 @@ async function handleLogin() {
 
   .el-link {
     margin-left: 4px;
+  }
+
+  .footer-divider {
+    margin: 0 12px;
+    color: var(--border-color);
+  }
+
+  .back-home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    transition: color var(--duration-fast) var(--ease-standard);
+
+    &:hover {
+      color: var(--accent-primary);
+    }
   }
 }
 

@@ -57,3 +57,31 @@ router.afterEach(() => {
     observeScrollReveals()
   })
 })
+
+// Auto-detect new scroll-reveal elements added to DOM (e.g. after loading state changes)
+const mutationObserver = new MutationObserver((mutations) => {
+  let hasNewRevealElements = false
+  for (const mutation of mutations) {
+    for (const node of mutation.addedNodes) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.classList && (
+          node.classList.contains('scroll-reveal') ||
+          node.classList.contains('scroll-reveal-left') ||
+          node.classList.contains('scroll-reveal-scale')
+        )) {
+          hasNewRevealElements = true
+        }
+        if (node.querySelectorAll) {
+          const reveals = node.querySelectorAll('.scroll-reveal, .scroll-reveal-left, .scroll-reveal-scale')
+          if (reveals.length) hasNewRevealElements = true
+        }
+      }
+    }
+  }
+  if (hasNewRevealElements) {
+    observeScrollReveals()
+  }
+})
+
+// Start observing (document.body already exists after app.mount)
+mutationObserver.observe(document.body, { childList: true, subtree: true })
