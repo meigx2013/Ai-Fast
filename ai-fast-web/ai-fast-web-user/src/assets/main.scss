@@ -48,6 +48,34 @@
 
   --scrollbar-thumb: #c1c1d0;
   --scrollbar-track: transparent;
+
+  /* ===== Footer Theme Tokens ===== */
+  --footer-heading: #e8e8f0;
+  --footer-text: #8080a0;
+  --footer-muted: #606080;
+  --footer-link-hover: #a5b4fc;
+  --footer-divider: rgba(255, 255, 255, 0.08);
+
+  /* ===== Motion Tokens ===== */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-extra-slow: 800ms;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ===== Spacing & Layer Tokens ===== */
+  --spacing-hero: 80px;
+  --card-hover-lift: 8px;
+  --card-cover-scale: 1.05;
+
+  --layer-card: 1;
+  --layer-sticky: 10;
+  --layer-overlay: 100;
+  --layer-modal: 1000;
 }
 
 html.dark {
@@ -78,11 +106,11 @@ html.dark {
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 25px rgba(129, 140, 248, 0.2);
+  --shadow-glow: 0 0 25px rgba(129, 140, 248, 0.25);
 
-  --carousel-gradient-1: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
-  --carousel-gradient-2: linear-gradient(135deg, #be185d 0%, #c2410c 100%);
-  --carousel-gradient-3: linear-gradient(135deg, #0e7490 0%, #1d4ed8 100%);
+  --carousel-gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --carousel-gradient-2: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+  --carousel-gradient-3: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
 
   --tag-bg: rgba(129, 140, 248, 0.12);
   --tag-text: #a5b4fc;
@@ -91,6 +119,34 @@ html.dark {
 
   --scrollbar-thumb: #3a3a55;
   --scrollbar-track: transparent;
+
+  /* ===== Footer Theme Tokens (dark) ===== */
+  --footer-heading: #e0e0f0;
+  --footer-text: #9090b0;
+  --footer-muted: #505070;
+  --footer-link-hover: #c4b5fd;
+  --footer-divider: rgba(255, 255, 255, 0.06);
+
+  /* ===== Motion Tokens (dark) ===== */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-extra-slow: 800ms;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ===== Spacing & Layer Tokens (dark) ===== */
+  --spacing-hero: 80px;
+  --card-hover-lift: 8px;
+  --card-cover-scale: 1.05;
+
+  --layer-card: 1;
+  --layer-sticky: 10;
+  --layer-overlay: 100;
+  --layer-modal: 1000;
 }
 
 /* ===== Global Reset ===== */
@@ -243,4 +299,103 @@ html.dark .el-tabs__item.is-active {
 
 html.dark .el-empty__description p {
   color: var(--text-tertiary) !important;
+}
+
+/* ===== Scroll Reveal Utilities ===== */
+.scroll-reveal,
+.scroll-reveal-left,
+.scroll-reveal-scale {
+  opacity: 0;
+  transition-property: opacity, transform;
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-decelerate);
+}
+
+.scroll-reveal {
+  transform: translateY(40px);
+}
+
+.scroll-reveal-left {
+  transform: translateX(-40px);
+}
+
+.scroll-reveal-scale {
+  transform: scale(0.92);
+}
+
+.scroll-reveal.revealed,
+.scroll-reveal-left.revealed,
+.scroll-reveal-scale.revealed {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1);
+  transition-delay: calc(var(--stagger-index, 0) * 80ms);
+}
+
+/* ===== Page Transition CSS ===== */
+/* slide-fade */
+.slide-fade-enter-active {
+  transition: all var(--duration-normal) var(--ease-decelerate);
+}
+
+.slide-fade-leave-active {
+  transition: all var(--duration-normal) var(--ease-accelerate);
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* fade-scale */
+.fade-scale-enter-active {
+  transition: all var(--duration-normal) var(--ease-decelerate);
+}
+
+.fade-scale-leave-active {
+  transition: all var(--duration-normal) var(--ease-accelerate);
+}
+
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(1.04);
+}
+
+/* fade (default) */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--duration-normal) var(--ease-standard);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal,
+  .scroll-reveal-left,
+  .scroll-reveal-scale {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .slide-fade-enter-from,
+  .slide-fade-leave-to,
+  .fade-scale-enter-from,
+  .fade-scale-leave-to {
+    opacity: 1;
+    transform: none;
+  }
 }

@@ -1,40 +1,39 @@
 <template>
   <div class="home-page">
-    <!-- Carousel Banner -->
-    <section class="carousel-section">
-      <el-carousel :interval="5000" :autoplay="true" height="420px" indicator-position="outside">
-        <el-carousel-item v-for="(slide, index) in bannerSlides" :key="index">
-          <div class="banner-slide" :style="{ background: slide.gradient }">
-            <div class="banner-content">
-              <div class="banner-text">
-                <h1>{{ slide.title }}</h1>
-                <p>{{ slide.description }}</p>
-                <div class="banner-actions">
-                  <el-button type="primary" size="large" round @click="$router.push(slide.link)">
-                    {{ slide.btnText }}
-                    <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-                  </el-button>
-                  <el-button size="large" round class="btn-ghost" @click="$router.push('/workflows')">
-                    浏览全部
-                  </el-button>
-                </div>
-              </div>
-              <div class="banner-visual">
-                <div class="visual-card" v-for="(card, i) in slide.cards" :key="i" :style="{ animationDelay: i * 0.15 + 's' }">
-                  <el-icon :size="28"><component :is="card.icon" /></el-icon>
-                  <span>{{ card.label }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </el-carousel-item>
-      </el-carousel>
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <!-- Dynamic Background -->
+      <div class="hero-bg">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+        <div class="hero-orb hero-orb-3"></div>
+      </div>
+
+      <!-- Hero Content -->
+      <div class="hero-content">
+        <h1 class="hero-title">探索 AI Agent 的无限可能</h1>
+        <p class="hero-desc">发现、学习、分享最前沿的 AI 智能体与工作流，开启智能化之旅</p>
+        <div class="hero-actions">
+          <button class="cta-btn" @click="$router.push('/agents')">
+            开始探索
+            <el-icon class="cta-icon"><ArrowRight /></el-icon>
+          </button>
+          <button class="cta-btn cta-btn--outline" @click="$router.push('/workflows')">
+            浏览工作流
+          </button>
+        </div>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div class="scroll-indicator" @click="scrollToContent">
+        <el-icon :size="20"><ArrowDown /></el-icon>
+      </div>
     </section>
 
     <!-- Hot Agents Section -->
-    <section class="section agents-section">
+    <section ref="agentsSectionRef" class="section agents-section">
       <div class="section-inner">
-        <div class="section-header">
+        <div class="section-header scroll-reveal">
           <div class="section-title-group">
             <div class="section-icon">
               <el-icon :size="24"><Monitor /></el-icon>
@@ -51,38 +50,22 @@
         </div>
 
         <div class="agents-grid">
-          <div
+          <AgentCard
             v-for="(agent, index) in agentStore.hotAgents"
             :key="agent.id"
-            class="agent-card fade-in-up"
-            :style="{ animationDelay: index * 0.1 + 's' }"
-          >
-            <div class="agent-icon-wrap">
-              <el-icon :size="32"><component :is="getAgentIcon(agent.category)" /></el-icon>
-            </div>
-            <div class="agent-info">
-              <h3>{{ agent.name }}</h3>
-              <p>{{ agent.description }}</p>
-            </div>
-            <div class="agent-stats">
-              <span class="stat">
-                <el-icon><User /></el-icon>
-                {{ formatNumber(agent.users) }}
-              </span>
-              <span class="stat">
-                <el-icon><Star /></el-icon>
-                {{ agent.rating }}
-              </span>
-            </div>
-          </div>
+            :agent="agent"
+            :style="{ '--stagger-index': index }"
+            class="scroll-reveal"
+            @click="$router.push(`/agent/${agent.id}`)"
+          />
         </div>
       </div>
     </section>
 
     <!-- Hot Workflows Section -->
-    <section class="section workflows-section">
+    <section ref="workflowsSectionRef" class="section workflows-section">
       <div class="section-inner">
-        <div class="section-header">
+        <div class="section-header scroll-reveal">
           <div class="section-title-group">
             <div class="section-icon workflow-icon">
               <el-icon :size="24"><Connection /></el-icon>
@@ -100,9 +83,11 @@
 
         <div class="workflows-grid">
           <WorkflowCard
-            v-for="workflow in hotWorkflows"
+            v-for="(workflow, index) in hotWorkflows"
             :key="workflow.id"
             :workflow="workflow"
+            :style="{ '--stagger-index': index }"
+            class="scroll-reveal"
             @click="$router.push(`/workflow/${workflow.id}`)"
           />
         </div>
@@ -110,14 +95,19 @@
     </section>
 
     <!-- Stats Section -->
-    <section class="section stats-section">
+    <section ref="statsSectionRef" class="section stats-section">
       <div class="section-inner">
         <div class="stats-grid">
-          <div class="stat-card" v-for="(stat, index) in platformStats" :key="index">
+          <div
+            v-for="(stat, index) in platformStats"
+            :key="index"
+            class="stat-card scroll-reveal"
+            :style="{ '--stagger-index': index }"
+          >
             <div class="stat-icon" :style="{ background: stat.gradient }">
               <el-icon :size="24"><component :is="stat.icon" /></el-icon>
             </div>
-            <div class="stat-number">{{ stat.value }}</div>
+            <div class="stat-number">{{ stat.displayValue }}</div>
             <div class="stat-label">{{ stat.label }}</div>
           </div>
         </div>
@@ -127,23 +117,28 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, reactive } from 'vue'
 import { useWorkflowStore } from '@/stores/workflow'
 import { useAgentStore } from '@/stores/agent'
 import {
-  Monitor, Connection, ArrowRight, Star, User,
-  Cpu, EditPen, DataAnalysis, Service, Picture, Document, TrendCharts, Microphone
+  Monitor, Connection, ArrowRight, ArrowDown, Star, User
 } from '@element-plus/icons-vue'
 import WorkflowCard from '@/components/WorkflowCard.vue'
+import AgentCard from '@/components/AgentCard.vue'
 
 const workflowStore = useWorkflowStore()
 const agentStore = useAgentStore()
+
+const agentsSectionRef = ref(null)
+const workflowsSectionRef = ref(null)
+const statsSectionRef = ref(null)
 
 onMounted(() => {
   workflowStore.setCategory('全部')
   workflowStore.setSearchKeyword('')
   agentStore.setCategory('全部')
   agentStore.setSearchKeyword('')
+  initCountUp()
 })
 
 const hotWorkflows = computed(() => {
@@ -152,77 +147,63 @@ const hotWorkflows = computed(() => {
     .slice(0, 6)
 })
 
-const bannerSlides = [
-  {
-    title: '探索 AI Agent 的无限可能',
-    description: '发现、学习、分享最前沿的 AI 智能体，开启智能化之旅',
-    btnText: '开始探索',
-    link: '/agents',
-    gradient: 'var(--carousel-gradient-1)',
-    cards: [
-      { icon: 'Cpu', label: '智能对话' },
-      { icon: 'EditPen', label: '内容创作' },
-      { icon: 'DataAnalysis', label: '数据分析' },
-      { icon: 'Picture', label: '图像生成' }
-    ]
-  },
-  {
-    title: '工作流让复杂任务变简单',
-    description: '可视化编排 AI 工作流，自动化处理复杂业务场景',
-    btnText: '查看工作流',
-    link: '/workflows',
-    gradient: 'var(--carousel-gradient-2)',
-    cards: [
-      { icon: 'Connection', label: '流程编排' },
-      { icon: 'Monitor', label: '自动化执行' },
-      { icon: 'TrendCharts', label: '数据洞察' },
-      { icon: 'Service', label: '智能服务' }
-    ]
-  },
-  {
-    title: '丰富的资源助力成长',
-    description: '海量教程、模板和工具资源，加速你的 AI 应用开发',
-    btnText: '进入资源库',
-    link: '/resources',
-    gradient: 'var(--carousel-gradient-3)',
-    cards: [
-      { icon: 'Document', label: '技术文档' },
-      { icon: 'Microphone', label: '视频教程' },
-      { icon: 'Cpu', label: '开发工具' },
-      { icon: 'Star', label: '精选模板' }
-    ]
-  }
-]
+// ===== CountUp Logic =====
+const platformStats = reactive([
+  { icon: 'Monitor', targetValue: 1200, suffix: '+', displayValue: '0', label: '智能体', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
+  { icon: 'Connection', targetValue: 3800, suffix: '+', displayValue: '0', label: '工作流', gradient: 'linear-gradient(135deg, #ec4899, #f97316)' },
+  { icon: 'User', targetValue: 50000, suffix: '+', displayValue: '0', label: '活跃用户', gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)' },
+  { icon: 'Star', targetValue: 98, suffix: '%', displayValue: '0', label: '好评率', gradient: 'linear-gradient(135deg, #10b981, #34d399)' }
+])
 
-const platformStats = [
-  { icon: 'Monitor', value: '1,200+', label: '智能体', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
-  { icon: 'Connection', value: '3,800+', label: '工作流', gradient: 'linear-gradient(135deg, #ec4899, #f97316)' },
-  { icon: 'User', value: '50,000+', label: '活跃用户', gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)' },
-  { icon: 'Star', value: '98%', label: '好评率', gradient: 'linear-gradient(135deg, #10b981, #34d399)' }
-]
-
-function getAgentIcon(category) {
-  const iconMap = {
-    '写作': 'EditPen',
-    '数据分析': 'DataAnalysis',
-    '开发': 'Monitor',
-    '客服': 'Service',
-    '设计': 'Picture',
-    '文档': 'Document',
-    '营销': 'TrendCharts',
-    '语音': 'Microphone'
+function formatCountValue(value) {
+  if (value >= 10000) {
+    return (value / 10000).toFixed(0) + '万'
   }
-  return iconMap[category] || 'Cpu'
+  return value.toLocaleString()
 }
 
-function formatNumber(num) {
-  if (num >= 10000) {
-    return (num / 10000).toFixed(1) + '万'
+function animateCountUp(stat) {
+  const duration = 2000
+  const startTime = performance.now()
+  const target = stat.targetValue
+
+  function update(currentTime) {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    // ease-out cubic
+    const eased = 1 - Math.pow(1 - progress, 3)
+    const current = Math.round(target * eased)
+    stat.displayValue = formatCountValue(current) + stat.suffix
+
+    if (progress < 1) {
+      requestAnimationFrame(update)
+    }
   }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k'
+
+  requestAnimationFrame(update)
+}
+
+function initCountUp() {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          platformStats.forEach((stat) => animateCountUp(stat))
+          observer.unobserve(entry.target)
+        }
+      })
+    },
+    { threshold: 0.3 }
+  )
+
+  if (statsSectionRef.value) {
+    observer.observe(statsSectionRef.value)
   }
-  return num
+}
+
+// ===== Scroll to Content =====
+function scrollToContent() {
+  agentsSectionRef.value?.scrollIntoView({ behavior: 'smooth' })
 }
 </script>
 
@@ -231,159 +212,188 @@ function formatNumber(num) {
   background-color: var(--bg-secondary);
 }
 
-/* ===== Carousel ===== */
-.carousel-section {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 32px 0;
-
-  :deep(.el-carousel__container) {
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-
-  :deep(.el-carousel__indicators--outside) {
-    margin-top: 12px;
-
-    .el-carousel__indicator {
-      .el-carousel__button {
-        width: 24px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--text-tertiary);
-        opacity: 0.4;
-      }
-
-      &.is-active .el-carousel__button {
-        width: 36px;
-        background: var(--accent-primary);
-        opacity: 1;
-      }
-    }
-  }
-}
-
-.banner-slide {
-  height: 100%;
-  padding: 60px 64px;
+/* ===== Hero Section ===== */
+.hero-section {
+  position: relative;
+  height: 80vh;
+  min-height: 500px;
   display: flex;
   align-items: center;
-  position: relative;
+  justify-content: center;
   overflow: hidden;
+  background: linear-gradient(135deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: 30%;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.04);
+  html:not(.dark) & {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   }
 }
 
-.banner-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
+/* Dynamic Background Orbs */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+
+  html:not(.dark) & {
+    opacity: 0.4;
+  }
+}
+
+.hero-orb-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #6366f1, #8b5cf6);
+  top: -10%;
+  left: -5%;
+  animation: orb-float-1 20s ease-in-out infinite;
+}
+
+.hero-orb-2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #ec4899, #f97316);
+  bottom: -10%;
+  right: 10%;
+  animation: orb-float-2 16s ease-in-out infinite;
+}
+
+.hero-orb-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, #06b6d4, #3b82f6);
+  top: 40%;
+  right: -5%;
+  animation: orb-float-3 22s ease-in-out infinite;
+}
+
+@keyframes orb-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, 40px) scale(1.1); }
+  66% { transform: translate(-30px, 60px) scale(0.95); }
+}
+
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-50px, -30px) scale(1.05); }
+  66% { transform: translate(40px, -50px) scale(0.9); }
+}
+
+@keyframes orb-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-40px, 30px) scale(1.15); }
+}
+
+/* Hero Content */
+.hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  text-align: center;
+  padding: 0 32px;
+  max-width: 700px;
 }
 
-.banner-text {
-  max-width: 520px;
-
-  h1 {
-    font-size: 40px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 16px;
-    line-height: 1.3;
-  }
-
-  p {
-    font-size: 17px;
-    color: rgba(255, 255, 255, 0.85);
-    margin-bottom: 32px;
-    line-height: 1.6;
-  }
-
-  .banner-actions {
-    display: flex;
-    gap: 16px;
-
-    .el-button--primary {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(8px);
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-        border-color: rgba(255, 255, 255, 0.5);
-      }
-    }
-
-    .btn-ghost {
-      color: #fff;
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.5);
-      }
-    }
-  }
+.hero-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
 }
 
-.banner-visual {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.hero-desc {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+/* CTA Buttons */
+.hero-actions {
+  display: flex;
   gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
-  .visual-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: var(--radius-md);
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-standard);
+  border: none;
+  outline: none;
+
+  &--outline {
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    animation: fadeInUp 0.6s ease forwards;
-    opacity: 0;
-    transition: transform 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(8px);
 
     &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
       transform: translateY(-2px);
-      background: rgba(255, 255, 255, 0.18);
-    }
-
-    .el-icon {
-      color: rgba(255, 255, 255, 0.9);
     }
   }
+
+  background: var(--accent-gradient, linear-gradient(135deg, #6366f1, #8b5cf6));
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6);
+  }
+
+  .cta-icon {
+    transition: transform var(--duration-fast) var(--ease-standard);
+  }
+
+  &:hover .cta-icon {
+    transform: translateX(4px);
+  }
+}
+
+/* Scroll Indicator */
+.scroll-indicator {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  animation: scroll-bounce 2s ease-in-out infinite;
+  transition: color var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+@keyframes scroll-bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+  40% { transform: translateX(-50%) translateY(-10px); }
+  60% { transform: translateX(-50%) translateY(-5px); }
 }
 
 /* ===== Section Common ===== */
 .section {
-  padding: 48px 0;
+  padding: 64px 0;
 
   .section-inner {
     max-width: 1400px;
@@ -439,83 +449,8 @@ function formatNumber(num) {
 
 .agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 20px;
-}
-
-.agent-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  background: var(--bg-card);
-  border: var(--card-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--accent-primary);
-
-    .agent-icon-wrap {
-      transform: scale(1.08);
-    }
-  }
-
-  .agent-icon-wrap {
-    width: 56px;
-    height: 56px;
-    border-radius: var(--radius-md);
-    background: var(--accent-primary-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent-primary);
-    flex-shrink: 0;
-    transition: transform 0.3s;
-  }
-
-  .agent-info {
-    flex: 1;
-    min-width: 0;
-
-    h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    p {
-      font-size: 13px;
-      color: var(--text-tertiary);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  .agent-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex-shrink: 0;
-    align-items: flex-end;
-
-    .stat {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      color: var(--text-tertiary);
-
-      .el-icon {
-        font-size: 14px;
-      }
-    }
-  }
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
 }
 
 /* ===== Hot Workflows ===== */
@@ -542,11 +477,11 @@ function formatNumber(num) {
   background: var(--bg-card);
   border: var(--card-border);
   border-radius: var(--radius-md);
-  transition: all 0.3s;
+  transition: all var(--duration-normal) var(--ease-standard);
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(calc(var(--card-hover-lift) / 2));
+    box-shadow: var(--shadow-lg);
 
     .stat-icon {
       transform: scale(1.1);
@@ -562,7 +497,7 @@ function formatNumber(num) {
     justify-content: center;
     color: #fff;
     margin: 0 auto 16px;
-    transition: transform 0.3s;
+    transition: transform var(--duration-normal) var(--ease-spring);
   }
 
   .stat-number {
@@ -570,6 +505,7 @@ function formatNumber(num) {
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
   }
 
   .stat-label {
@@ -580,16 +516,12 @@ function formatNumber(num) {
 
 /* ===== Responsive ===== */
 @media (max-width: 992px) {
-  .banner-slide {
-    padding: 40px 32px;
+  .hero-title {
+    font-size: 36px;
   }
 
-  .banner-text h1 {
-    font-size: 28px;
-  }
-
-  .banner-visual {
-    display: none;
+  .hero-desc {
+    font-size: 16px;
   }
 
   .agents-grid {
@@ -602,20 +534,31 @@ function formatNumber(num) {
 }
 
 @media (max-width: 768px) {
-  .carousel-section {
-    padding: 16px 16px 0;
+  .hero-section {
+    height: 60vh;
+    min-height: 400px;
   }
 
-  .section .section-inner {
-    padding: 0 16px;
+  .hero-title {
+    font-size: 28px;
   }
 
-  .banner-slide {
-    padding: 32px 20px;
+  .hero-desc {
+    font-size: 15px;
+    margin-bottom: 28px;
   }
 
-  .banner-text h1 {
-    font-size: 24px;
+  .cta-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+
+  .section {
+    padding: 40px 0;
+
+    .section-inner {
+      padding: 0 16px;
+    }
   }
 
   .stats-grid {
@@ -625,6 +568,17 @@ function formatNumber(num) {
 
   .workflows-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .hero-orb {
+    animation: none;
+  }
+
+  .scroll-indicator {
+    animation: none;
   }
 }
 </style>

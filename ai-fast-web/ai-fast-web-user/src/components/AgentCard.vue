@@ -1,19 +1,19 @@
 <template>
-  <div class="workflow-card" @click="$emit('click')">
+  <div class="agent-card" @click="$emit('click')">
     <div class="card-cover">
-      <img :src="workflow.cover" :alt="workflow.title" />
-      <div class="difficulty-badge" :class="difficultyClass">
-        {{ workflow.difficulty }}
+      <div class="icon-wrapper">
+        <el-icon :size="36"><component :is="iconComponent" /></el-icon>
       </div>
+      <el-tag class="category-tag" size="small" effect="dark" round>{{ agent.category }}</el-tag>
     </div>
 
     <div class="card-content">
-      <h3 class="card-title">{{ workflow.title }}</h3>
-      <p class="card-desc">{{ workflow.description }}</p>
+      <h3 class="card-title">{{ agent.name }}</h3>
+      <p class="card-desc">{{ agent.description }}</p>
 
       <div class="card-tags">
         <el-tag
-          v-for="tag in workflow.tags.slice(0, 3)"
+          v-for="tag in agent.tags.slice(0, 3)"
           :key="tag"
           size="small"
           effect="plain"
@@ -24,18 +24,18 @@
 
       <div class="card-footer">
         <div class="author-info">
-          <el-avatar :size="24" :src="workflow.author.avatar" />
-          <span class="author-name">{{ workflow.author.name }}</span>
+          <el-avatar :size="24" :src="agent.author.avatar" />
+          <span class="author-name">{{ agent.author.name }}</span>
         </div>
 
         <div class="card-stats">
           <span class="stat-item">
-            <el-icon><Star /></el-icon>
-            {{ formatNumber(workflow.likes) }}
+            <el-icon><User /></el-icon>
+            {{ formatNumber(agent.users) }}
           </span>
           <span class="stat-item">
-            <el-icon><Download /></el-icon>
-            {{ formatNumber(workflow.views) }}
+            <el-icon><Star /></el-icon>
+            {{ agent.rating }}
           </span>
         </div>
       </div>
@@ -45,10 +45,10 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Star, Download } from '@element-plus/icons-vue'
+import { Star, User, Cpu, EditPen, DataAnalysis, Monitor, Service, Picture, Document, TrendCharts, Microphone } from '@element-plus/icons-vue'
 
 const props = defineProps({
-  workflow: {
+  agent: {
     type: Object,
     required: true
   }
@@ -56,13 +56,18 @@ const props = defineProps({
 
 defineEmits(['click'])
 
-const difficultyClass = computed(() => {
-  const map = {
-    '初级': 'easy',
-    '中级': 'medium',
-    '高级': 'hard'
+const iconComponent = computed(() => {
+  const iconMap = {
+    '写作': EditPen,
+    '数据分析': DataAnalysis,
+    '开发': Monitor,
+    '客服': Service,
+    '设计': Picture,
+    '文档': Document,
+    '营销': TrendCharts,
+    '语音': Microphone
   }
-  return map[props.workflow.difficulty] || 'medium'
+  return iconMap[props.agent.category] || Cpu
 })
 
 function formatNumber(num) {
@@ -73,7 +78,7 @@ function formatNumber(num) {
 </script>
 
 <style lang="scss" scoped>
-.workflow-card {
+.agent-card {
   cursor: pointer;
   background: var(--bg-card);
   border: var(--card-border);
@@ -88,48 +93,67 @@ function formatNumber(num) {
     box-shadow: var(--shadow-xl);
     border-color: var(--accent-primary-light);
 
-    .card-cover img {
-      transform: scale(var(--card-cover-scale));
+    .card-cover .icon-wrapper {
+      transform: scale(1.1);
     }
   }
 }
 
 .card-cover {
   position: relative;
-  height: 220px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-gradient);
   overflow: hidden;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--duration-slow) var(--ease-decelerate);
+  &::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
   }
 
-  .difficulty-badge {
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    left: -10%;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .icon-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: transform var(--duration-slow) var(--ease-spring);
+  }
+
+  .category-tag {
     position: absolute;
     top: 12px;
     right: 12px;
-    padding: 4px 14px;
-    border-radius: var(--radius-xl);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-
-    &.easy {
-      background: rgba(16, 185, 129, 0.9);
-      color: #fff;
-    }
-
-    &.medium {
-      background: rgba(245, 158, 11, 0.9);
-      color: #fff;
-    }
-
-    &.hard {
-      background: rgba(239, 68, 68, 0.9);
-      color: #fff;
-    }
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    z-index: 1;
   }
 }
 
@@ -166,6 +190,7 @@ function formatNumber(num) {
 .card-tags {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
   margin-bottom: 14px;
 }
 

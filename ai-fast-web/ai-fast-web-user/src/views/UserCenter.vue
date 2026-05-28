@@ -1,7 +1,7 @@
 <template>
   <div class="user-center">
     <div class="page-container">
-      <div class="user-profile">
+      <div class="user-profile scroll-reveal">
         <div class="profile-card">
           <div class="profile-banner"></div>
           <div class="profile-body">
@@ -26,30 +26,38 @@
         </div>
       </div>
 
-      <div class="user-content">
-        <el-tabs v-model="activeTab">
+      <div class="user-content scroll-reveal" style="--stagger-index: 1">
+        <el-tabs v-model="activeTab" class="user-tabs">
           <el-tab-pane label="我的收藏" name="favorites">
-            <div class="workflow-grid" v-if="favoriteWorkflows.length">
-              <WorkflowCard
-                v-for="workflow in favoriteWorkflows"
-                :key="workflow.id"
-                :workflow="workflow"
-                @click="$router.push(`/workflow/${workflow.id}`)"
-              />
-            </div>
-            <el-empty v-else description="暂无收藏的工作流" />
+            <transition name="tab-fade" mode="out-in">
+              <div key="fav-list" v-if="favoriteWorkflows.length" class="workflow-grid">
+                <WorkflowCard
+                  v-for="(workflow, index) in favoriteWorkflows"
+                  :key="workflow.id"
+                  :workflow="workflow"
+                  class="scroll-reveal"
+                  :style="{ '--stagger-index': index }"
+                  @click="$router.push(`/workflow/${workflow.id}`)"
+                />
+              </div>
+              <EmptyState v-else key="fav-empty" type="no-data" title="暂无收藏" description="浏览工作流并收藏感兴趣的内容" />
+            </transition>
           </el-tab-pane>
 
           <el-tab-pane label="我的点赞" name="likes">
-            <div class="workflow-grid" v-if="likedWorkflows.length">
-              <WorkflowCard
-                v-for="workflow in likedWorkflows"
-                :key="workflow.id"
-                :workflow="workflow"
-                @click="$router.push(`/workflow/${workflow.id}`)"
-              />
-            </div>
-            <el-empty v-else description="暂无点赞的工作流" />
+            <transition name="tab-fade" mode="out-in">
+              <div key="like-list" v-if="likedWorkflows.length" class="workflow-grid">
+                <WorkflowCard
+                  v-for="(workflow, index) in likedWorkflows"
+                  :key="workflow.id"
+                  :workflow="workflow"
+                  class="scroll-reveal"
+                  :style="{ '--stagger-index': index }"
+                  @click="$router.push(`/workflow/${workflow.id}`)"
+                />
+              </div>
+              <EmptyState v-else key="like-empty" type="no-data" title="暂无点赞" description="为你喜欢的工作流点赞" />
+            </transition>
           </el-tab-pane>
         </el-tabs>
       </div>
@@ -58,8 +66,9 @@
         v-model="showEditDialog"
         title="编辑个人资料"
         width="500px"
+        class="edit-dialog"
       >
-        <el-form :model="editForm" label-width="80px">
+        <el-form :model="editForm" label-width="80px" class="edit-form">
           <el-form-item label="昵称">
             <el-input v-model="editForm.name" />
           </el-form-item>
@@ -91,6 +100,7 @@ import { useWorkflowStore } from '@/stores/workflow'
 import { UserFilled, Calendar, Edit } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import WorkflowCard from '@/components/WorkflowCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const userStore = useUserStore()
 const workflowStore = useWorkflowStore()
@@ -144,20 +154,36 @@ function handleSaveProfile() {
 .profile-card {
   background: var(--bg-card);
   border: var(--card-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   margin-bottom: 24px;
+  transition: box-shadow var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
 
   .profile-banner {
-    height: 120px;
+    height: 140px;
     background: var(--accent-gradient);
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.05));
+    }
   }
 
   .profile-body {
     display: flex;
     align-items: center;
     gap: 24px;
-    padding: 0 32px 24px;
+    padding: 0 32px 28px;
     margin-top: -44px;
 
     @media (max-width: 768px) {
@@ -169,6 +195,11 @@ function handleSaveProfile() {
       border: 4px solid var(--bg-card);
       border-radius: 50%;
       flex-shrink: 0;
+      transition: transform var(--duration-fast) var(--ease-spring);
+
+      &:hover {
+        transform: scale(1.05);
+      }
     }
 
     .profile-info {
@@ -184,6 +215,7 @@ function handleSaveProfile() {
       .bio {
         color: var(--text-secondary);
         margin-bottom: 8px;
+        font-size: 14px;
       }
 
       .join-date {
@@ -198,14 +230,28 @@ function handleSaveProfile() {
         }
       }
     }
+
+    .el-button {
+      flex-shrink: 0;
+      transition: transform var(--duration-fast) var(--ease-spring);
+
+      &:hover {
+        transform: translateY(-2px);
+      }
+    }
   }
 }
 
 .user-content {
   background: var(--bg-card);
   border: var(--card-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: 24px;
+  transition: box-shadow var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
 
   .workflow-grid {
     display: grid;
@@ -215,8 +261,48 @@ function handleSaveProfile() {
   }
 }
 
+/* Tab transition */
+.tab-fade-enter-active {
+  transition: all var(--duration-normal) var(--ease-decelerate);
+}
+
+.tab-fade-leave-active {
+  transition: all var(--duration-normal) var(--ease-accelerate);
+}
+
+.tab-fade-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.tab-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* Edit dialog form card hover */
+.edit-form {
+  :deep(.el-form-item) {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    transition: background var(--duration-fast) var(--ease-standard);
+
+    &:hover {
+      background: var(--bg-tertiary);
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .page-container {
+    padding: 16px;
+  }
+
+  .profile-card .profile-body {
+    padding: 0 16px 20px;
+  }
+
+  .user-content {
     padding: 16px;
   }
 }

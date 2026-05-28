@@ -10,37 +10,37 @@ const routes = [
         path: 'home',
         name: 'Home',
         component: () => import('@/views/Home.vue'),
-        meta: { title: '首页' }
+        meta: { title: '首页', transition: 'fade-scale' }
       },
       {
         path: 'agents',
         name: 'Agents',
         component: () => import('@/views/Agents.vue'),
-        meta: { title: '智能体' }
+        meta: { title: '智能体', transition: 'fade-scale' }
       },
       {
         path: 'workflows',
         name: 'Workflows',
         component: () => import('@/views/Workflows.vue'),
-        meta: { title: '工作流' }
+        meta: { title: '工作流', transition: 'fade-scale' }
       },
       {
         path: 'resources',
         name: 'Resources',
         component: () => import('@/views/Resources.vue'),
-        meta: { title: '资源库' }
+        meta: { title: '资源库', transition: 'fade-scale' }
       },
       {
         path: 'workflow/:id',
         name: 'WorkflowDetail',
         component: () => import('@/views/WorkflowDetail.vue'),
-        meta: { title: '工作流详情' }
+        meta: { title: '工作流详情', transition: 'slide-fade' }
       },
       {
         path: 'user',
         name: 'UserCenter',
         component: () => import('@/views/UserCenter.vue'),
-        meta: { title: '个人中心', requiresAuth: true }
+        meta: { title: '个人中心', requiresAuth: true, transition: 'fade-scale' }
       }
     ]
   },

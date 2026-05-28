@@ -2,6 +2,11 @@
   <div class="workflows-page">
     <div class="page-container">
       <div class="page-hero">
+        <div class="hero-decoration">
+          <div class="deco-circle deco-1"></div>
+          <div class="deco-circle deco-2"></div>
+          <div class="deco-circle deco-3"></div>
+        </div>
         <h1>工作流中心</h1>
         <p>探索和学习精心编排的 AI 工作流，自动化处理复杂任务</p>
         <div class="search-box">
@@ -17,28 +22,46 @@
       </div>
 
       <div class="category-bar">
-        <div
-          v-for="cat in workflowStore.categories"
-          :key="cat.id"
-          class="category-chip"
-          :class="{ active: workflowStore.selectedCategory === cat.name }"
-          @click="handleCategoryClick(cat.name)"
-        >
-          {{ cat.name }}
-          <span class="count" v-if="cat.id !== 1">{{ cat.count }}</span>
-        </div>
+        <transition-group name="chip" tag="div" class="category-bar-inner">
+          <div
+            v-for="cat in workflowStore.categories"
+            :key="cat.id"
+            class="category-chip"
+            :class="{ active: workflowStore.selectedCategory === cat.name }"
+            @click="handleCategoryClick(cat.name)"
+          >
+            {{ cat.name }}
+            <span class="count" v-if="cat.id !== 1">{{ cat.count }}</span>
+          </div>
+        </transition-group>
       </div>
 
-      <div class="workflows-grid" v-if="workflowStore.filteredWorkflows.length">
+      <CardSkeleton v-if="isLoading" type="card" :count="6" />
+
+      <transition-group
+        v-else-if="workflowStore.filteredWorkflows.length"
+        name="card-list"
+        tag="div"
+        class="workflows-grid"
+      >
         <WorkflowCard
-          v-for="workflow in workflowStore.filteredWorkflows"
+          v-for="(workflow, index) in workflowStore.filteredWorkflows"
           :key="workflow.id"
           :workflow="workflow"
+          :style="{ '--stagger-index': index }"
+          class="scroll-reveal"
           @click="$router.push(`/workflow/${workflow.id}`)"
         />
-      </div>
+      </transition-group>
 
-      <el-empty v-else description="暂无相关工作流" />
+      <EmptyState
+        v-else
+        type="no-result"
+        title="未找到相关工作流"
+        description="尝试调整搜索关键词或筛选条件"
+        actionText="清除筛选"
+        @action="clearFilters"
+      />
     </div>
   </div>
 </template>
@@ -48,13 +71,20 @@ import { ref, onMounted } from 'vue'
 import { useWorkflowStore } from '@/stores/workflow'
 import { Search } from '@element-plus/icons-vue'
 import WorkflowCard from '@/components/WorkflowCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import CardSkeleton from '@/components/CardSkeleton.vue'
 
 const workflowStore = useWorkflowStore()
 const searchKeyword = ref('')
+const isLoading = ref(true)
 
 onMounted(() => {
   workflowStore.setCategory('全部')
   workflowStore.setSearchKeyword('')
+  // Simulate loading for skeleton display
+  setTimeout(() => {
+    isLoading.value = false
+  }, 600)
 })
 
 function handleSearch() {
@@ -63,6 +93,12 @@ function handleSearch() {
 
 function handleCategoryClick(name) {
   workflowStore.setCategory(name)
+}
+
+function clearFilters() {
+  searchKeyword.value = ''
+  workflowStore.setSearchKeyword('')
+  workflowStore.setCategory('全部')
 }
 </script>
 
@@ -81,23 +117,73 @@ function handleCategoryClick(name) {
 .page-hero {
   text-align: center;
   padding: 48px 0 40px;
+  position: relative;
+  overflow: hidden;
+
+  .hero-decoration {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .deco-circle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.08;
+    filter: blur(2px);
+  }
+
+  .deco-1 {
+    width: 280px;
+    height: 280px;
+    top: -100px;
+    left: -60px;
+    background: var(--accent-gradient);
+    animation: float 7s ease-in-out infinite;
+  }
+
+  .deco-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -80px;
+    right: -40px;
+    background: var(--accent-secondary);
+    animation: float 9s ease-in-out infinite reverse;
+  }
+
+  .deco-3 {
+    width: 140px;
+    height: 140px;
+    top: 10%;
+    right: 12%;
+    background: var(--accent-primary);
+    opacity: 0.05;
+    animation: float 6s ease-in-out infinite 0.5s;
+  }
 
   h1 {
     font-size: 36px;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
   }
 
   p {
     font-size: 16px;
     color: var(--text-tertiary);
     margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
   }
 
   .search-box {
     max-width: 480px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 
     :deep(.el-input__wrapper) {
       border-radius: var(--radius-xl);
@@ -107,10 +193,15 @@ function handleCategoryClick(name) {
 }
 
 .category-bar {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.category-bar-inner {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 32px;
   justify-content: center;
 }
 
@@ -122,7 +213,7 @@ function handleCategoryClick(name) {
   color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all var(--duration-normal) var(--ease-standard);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -133,11 +224,18 @@ function handleCategoryClick(name) {
     background: var(--bg-tertiary);
     padding: 1px 8px;
     border-radius: 10px;
+    transition: all var(--duration-normal) var(--ease-standard);
   }
 
   &:hover {
     border-color: var(--accent-primary);
     color: var(--accent-primary);
+    transform: translateY(-1px);
+
+    .count {
+      background: var(--accent-primary-bg);
+      color: var(--accent-primary);
+    }
   }
 
   &.active {
@@ -145,13 +243,62 @@ function handleCategoryClick(name) {
     border-color: var(--accent-primary);
     color: var(--accent-primary);
     font-weight: 500;
+    box-shadow: var(--shadow-sm);
+
+    .count {
+      background: var(--accent-primary);
+      color: #fff;
+    }
   }
+}
+
+/* Category chip transition */
+.chip-enter-active {
+  transition: all var(--duration-normal) var(--ease-decelerate);
+}
+
+.chip-leave-active {
+  transition: all var(--duration-fast) var(--ease-accelerate);
+}
+
+.chip-enter-from {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.chip-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
 }
 
 .workflows-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 24px;
+}
+
+/* Card list transition */
+.card-list-enter-active {
+  transition: all var(--duration-slow) var(--ease-decelerate);
+  transition-delay: calc(var(--stagger-index, 0) * 80ms);
+}
+
+.card-list-leave-active {
+  transition: all var(--duration-fast) var(--ease-accelerate);
+}
+
+.card-list-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.96);
+}
+
+.card-list-leave-to {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.card-list-move {
+  transition: transform var(--duration-normal) var(--ease-standard);
 }
 
 @media (max-width: 768px) {
@@ -163,10 +310,22 @@ function handleCategoryClick(name) {
     padding: 32px 0 24px;
 
     h1 { font-size: 24px; }
+
+    .deco-1 { width: 160px; height: 160px; }
+    .deco-2 { width: 120px; height: 120px; }
   }
 
   .workflows-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
   }
 }
 </style>

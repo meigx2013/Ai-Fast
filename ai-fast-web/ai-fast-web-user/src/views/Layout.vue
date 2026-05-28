@@ -1,16 +1,17 @@
 <template>
   <div class="layout">
-    <header class="header">
+    <header class="header" :class="{ 'header-scrolled': isHeaderScrolled }">
       <div class="header-inner">
         <div class="logo" @click="$router.push('/')">
           <div class="logo-icon">
             <el-icon :size="24"><Cpu /></el-icon>
           </div>
-          <span class="logo-text">AI Fast</span>
+          <span class="logo-text" v-show="!isHeaderScrolled">AI Fast</span>
         </div>
 
+        <!-- Desktop nav -->
         <nav class="nav-menu">
-          <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">
+          <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' || $route.path === '/home' }">
             <el-icon><HomeFilled /></el-icon>
             <span>首页</span>
           </router-link>
@@ -68,14 +69,59 @@
               注册
             </el-button>
           </template>
+
+          <!-- Mobile hamburger -->
+          <div class="hamburger" @click="drawerVisible = true">
+            <el-icon :size="22"><Operation /></el-icon>
+          </div>
         </div>
       </div>
     </header>
 
+    <!-- Mobile Drawer -->
+    <el-drawer
+      v-model="drawerVisible"
+      direction="rtl"
+      size="280px"
+      :show-close="false"
+      class="mobile-drawer"
+    >
+      <template #header>
+        <div class="drawer-logo">
+          <div class="logo-icon">
+            <el-icon :size="20"><Cpu /></el-icon>
+          </div>
+          <span>AI Fast</span>
+        </div>
+      </template>
+      <nav class="drawer-nav">
+        <router-link to="/" class="drawer-nav-item" @click="drawerVisible = false">
+          <el-icon><HomeFilled /></el-icon>
+          <span>首页</span>
+        </router-link>
+        <router-link to="/agents" class="drawer-nav-item" @click="drawerVisible = false">
+          <el-icon><Monitor /></el-icon>
+          <span>智能体</span>
+        </router-link>
+        <router-link to="/workflows" class="drawer-nav-item" @click="drawerVisible = false">
+          <el-icon><Connection /></el-icon>
+          <span>工作流</span>
+        </router-link>
+        <router-link to="/resources" class="drawer-nav-item" @click="drawerVisible = false">
+          <el-icon><FolderOpened /></el-icon>
+          <span>资源库</span>
+        </router-link>
+        <router-link to="/user" class="drawer-nav-item" @click="drawerVisible = false">
+          <el-icon><UserFilled /></el-icon>
+          <span>个人中心</span>
+        </router-link>
+      </nav>
+    </el-drawer>
+
     <main class="main-content">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
+      <router-view v-slot="{ Component, route }">
+        <transition :name="route.meta.transition || 'fade'" mode="out-in">
+          <component :is="Component" :key="route.path" />
         </transition>
       </router-view>
     </main>
@@ -124,13 +170,13 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useThemeStore } from '@/stores/theme'
 import {
   Cpu, HomeFilled, Monitor, Connection, FolderOpened,
-  UserFilled, Sunny, Moon, User, SwitchButton
+  UserFilled, Sunny, Moon, User, SwitchButton, Operation
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -138,8 +184,20 @@ const router = useRouter()
 const userStore = useUserStore()
 const themeStore = useThemeStore()
 
+const isHeaderScrolled = ref(false)
+const drawerVisible = ref(false)
+
+function handleScroll() {
+  isHeaderScrolled.value = window.scrollY > 50
+}
+
 onMounted(() => {
   userStore.initUser()
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 
 function handleCommand(command) {
@@ -165,12 +223,12 @@ function handleCommand(command) {
 .header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: var(--layer-sticky);
   background: var(--bg-header);
   backdrop-filter: blur(var(--header-blur));
   -webkit-backdrop-filter: blur(var(--header-blur));
   border-bottom: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  transition: all var(--duration-fast) var(--ease-standard);
 
   .header-inner {
     max-width: 1400px;
@@ -180,6 +238,21 @@ function handleCommand(command) {
     display: flex;
     align-items: center;
     gap: 40px;
+    transition: height var(--duration-fast) var(--ease-standard);
+  }
+
+  /* Scrolled state */
+  &.header-scrolled {
+    box-shadow: var(--shadow-md);
+
+    .header-inner {
+      height: 56px;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+    }
   }
 }
 
@@ -199,7 +272,7 @@ function handleCommand(command) {
     align-items: center;
     justify-content: center;
     color: #fff;
-    transition: transform 0.3s;
+    transition: all var(--duration-fast) var(--ease-standard);
 
     &:hover {
       transform: scale(1.05);
@@ -213,6 +286,7 @@ function handleCommand(command) {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    transition: opacity var(--duration-fast) var(--ease-standard);
   }
 }
 
@@ -231,7 +305,7 @@ function handleCommand(command) {
     color: var(--text-secondary);
     font-size: 14px;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: all var(--duration-fast) var(--ease-standard);
     white-space: nowrap;
 
     .el-icon {
@@ -268,7 +342,7 @@ function handleCommand(command) {
     color: var(--text-secondary);
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    transition: all 0.3s;
+    transition: all var(--duration-fast) var(--ease-standard);
 
     &:hover {
       color: var(--accent-primary);
@@ -284,7 +358,7 @@ function handleCommand(command) {
     cursor: pointer;
     padding: 4px 12px 4px 4px;
     border-radius: var(--radius-xl);
-    transition: all 0.3s;
+    transition: all var(--duration-fast) var(--ease-standard);
 
     &:hover {
       background: var(--accent-primary-bg);
@@ -300,6 +374,81 @@ function handleCommand(command) {
   .el-button {
     font-weight: 500;
   }
+
+  .hamburger {
+    display: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    transition: all var(--duration-fast) var(--ease-standard);
+
+    &:hover {
+      color: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+  }
+}
+
+/* ===== Mobile Drawer ===== */
+.drawer-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+
+  span {
+    font-size: 18px;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+
+  .drawer-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 500;
+    transition: all var(--duration-fast) var(--ease-standard);
+
+    .el-icon {
+      font-size: 18px;
+    }
+
+    &:hover,
+    &.router-link-active {
+      color: var(--accent-primary);
+      background: var(--accent-primary-bg);
+    }
+  }
 }
 
 /* ===== Main ===== */
@@ -311,7 +460,6 @@ function handleCommand(command) {
 /* ===== Footer ===== */
 .footer {
   background: var(--bg-footer);
-  color: #b0b0cc;
   margin-top: auto;
 
   .footer-inner {
@@ -325,7 +473,7 @@ function handleCommand(command) {
     justify-content: space-between;
     gap: 60px;
     padding: 48px 0 32px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--footer-divider);
   }
 
   .footer-brand {
@@ -335,7 +483,7 @@ function handleCommand(command) {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #fff;
+      color: var(--footer-heading);
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 12px;
@@ -344,7 +492,7 @@ function handleCommand(command) {
     .footer-desc {
       font-size: 14px;
       line-height: 1.8;
-      color: #8080a0;
+      color: var(--footer-text);
     }
   }
 
@@ -359,19 +507,19 @@ function handleCommand(command) {
     gap: 10px;
 
     h4 {
-      color: #e8e8f0;
+      color: var(--footer-heading);
       font-size: 14px;
       font-weight: 600;
       margin-bottom: 4px;
     }
 
     a {
-      color: #8080a0;
+      color: var(--footer-text);
       font-size: 13px;
-      transition: color 0.3s;
+      transition: color var(--duration-fast) var(--ease-standard);
 
       &:hover {
-        color: #a5b4fc;
+        color: var(--footer-link-hover);
       }
     }
   }
@@ -384,29 +532,18 @@ function handleCommand(command) {
 
     p {
       font-size: 13px;
-      color: #606080;
+      color: var(--footer-muted);
     }
 
     .footer-slogan {
       font-size: 13px;
-      background: linear-gradient(135deg, #818cf8, #a78bfa);
+      background: var(--accent-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       font-weight: 500;
     }
   }
-}
-
-/* ===== Page Transition ===== */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 
 /* ===== Responsive ===== */
@@ -453,13 +590,22 @@ function handleCommand(command) {
     height: 56px;
   }
 
-  .nav-menu .nav-item span {
-    display: inline;
-    font-size: 12px;
+  .nav-menu {
+    display: none;
   }
 
-  .user-avatar-wrapper .user-name {
-    display: none;
+  .header-actions {
+    .hamburger {
+      display: flex;
+    }
+
+    .el-button {
+      display: none;
+    }
+
+    .user-avatar-wrapper .user-name {
+      display: none;
+    }
   }
 }
 </style>
