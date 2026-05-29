@@ -1,0 +1,1 @@
+Follow .asdm/toolsets/basic-tools/actions/asdm-git-commit-message.md

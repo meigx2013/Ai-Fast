@@ -1,0 +1,70 @@
+---
+description: ASDM default rules for consistent AI behavior and auto-build on code changes
+alwaysApply: true
+---
+
+# ASDM Default Rules
+
+## Project Tech Stack
+
+- Frontend (Admin): Vue 3 / TypeScript / Vite — ai-fast-web/ai-fast-web-admin/
+- Frontend (User): Vue 3 / TypeScript / Vite — ai-fast-web/ai-fast-web-user/
+
+## Build & Compile Commands
+
+- Admin build: cd ai-fast-web/ai-fast-web-admin && npm run build
+- User build: cd ai-fast-web/ai-fast-web-user && npm run build
+
+## ASDM CLI Configuration
+
+The ASDM CLI executable path for this workspace:
+
+- **CLI Command**: `asdm`
+- **Executable Path**: `D:\dev\asdm\asdm-cli-win-x64\asdm.exe`
+- **Installation Method**: npm (Method A) + standalone-binary (fallback)
+- **CLI Version**: `1.1.5.29224-R`
+
+### CLI Invocation Rules
+
+When you need to execute any ASDM CLI command (e.g., `asdm toolset list`, `asdm toolset install`), follow these rules:
+
+1. **Use the full path** if `asdm` is not in PATH: `D:\dev\asdm\asdm-cli-win-x64\asdm.exe` instead of just `asdm`
+2. **Fallback strategy**: If the full path fails, try `asdm` directly (may be available via npm global install or PATH)
+3. **Verify availability**: Before invoking, run `D:\dev\asdm\asdm-cli-win-x64\asdm.exe --version` (or `asdm --version`) to confirm CLI is accessible
+4. **Report path issues**: If neither the full path nor `asdm` works, inform the user that the CLI may need reinstallation
+
+### CLI Path Reference by Platform
+
+| Installation Method | Platform | Executable Path |
+|---------------------|----------|-----------------|
+| npm (Method A) | Any (macOS/Linux/Windows) | Resolved via `which asdm` / `where asdm` at installation time |
+| Standalone Binary (Method B) | Windows | `%USERPROFILE%\.asdm\cli\asdm-cli.exe` |
+
+## Auto-Build Policy
+
+When you modify any source code file in this workspace, you MUST:
+
+1. **Execute the build command** corresponding to the modified file's tech stack immediately after making changes
+2. **Analyze the build output** for errors and warnings
+3. **Auto-fix** any compilation errors found in the build output
+4. **Re-run the build** after each fix
+5. **Repeat** steps 2-4 until the build succeeds with zero errors
+6. **Report** the final build status to the user
+
+### Build Execution Rules
+
+- Always run build commands from the correct project root directory
+- If the build fails, do NOT proceed with other tasks — fix compilation errors first
+- Warnings should be noted but do not block progress
+- If a build error cannot be auto-fixed, report it to the user with the full error context
+
+### Error Fix Loop
+
+```
+while (build has errors) {
+  1. Parse build error output
+  2. Identify the root cause (syntax error, missing import, type mismatch, etc.)
+  3. Apply fix to the relevant source file(s)
+  4. Re-run the build command
+}
+```

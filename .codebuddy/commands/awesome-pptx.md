@@ -1,0 +1,1 @@
+Follow .asdm/toolsets/awesome-pptx/actions/awesome-pptx.md
