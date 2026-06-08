@@ -29,7 +29,7 @@
 | **P1** 基础设施搭建 | 1.1 CSS 变量体系与主题框架就绪 | ⏳ | `main.scss`、`main.js`、`utils/persistence.js`、`stores/theme.js`、Store 持久化改造 |
 | **P2** 登录与布局 | 2.1 管理员可登录进入后台 | ⏳ | `views/Login.vue` |
 | | 2.2 后台布局框架可用 | ⏳ | `views/Layout.vue` |
-| **P3** 数据仪表盘 | 3.1 仪表盘可查看统计数据与图表 | ⏳ | `components/StatCard.vue`、`views/Dashboard.vue` |
+| **P3** 数据仪表盘 | 3.1 仪表盘可查看统计数据与图表 | ✅ | `components/StatCard.vue`、`views/Dashboard.vue` |
 | **P4** 内容管理闭环 | 4.1 工作流列表可搜索筛选浏览 | ⏳ | `components/StatusTag.vue`、`components/SearchFilter.vue`、`views/ContentManage.vue` |
 | | 4.2 工作流可新增与编辑 | ⏳ | `views/ContentEdit.vue` |
 | **P5** 内容审核闭环 | 5.1 待审核内容可通过或拒绝 | ⏳ | `views/ContentReview.vue` |

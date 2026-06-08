@@ -1,3 +1,139 @@
+/* ===== CSS Variables for Theming ===== */
+:root {
+  /* Light Theme - Background */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --bg-tertiary: #ecf0f5;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafbfc;
+  --bg-sidebar: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.95);
+
+  /* Light Theme - Text */
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6a;
+  --text-tertiary: #8a8aaa;
+  --text-inverse: #ffffff;
+
+  /* Light Theme - Border */
+  --border-color: #e8ecf1;
+  --border-light: #f0f2f5;
+
+  /* Light Theme - Accent */
+  --accent-primary: #6366f1;
+  --accent-primary-light: #818cf8;
+  --accent-primary-bg: rgba(99, 102, 241, 0.08);
+  --accent-secondary: #8b5cf6;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #8b5cf6 100%);
+
+  /* Light Theme - Shadow */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Scrollbar */
+  --scrollbar-thumb: #c1c1d0;
+  --scrollbar-track: transparent;
+
+  /* ===== Motion Tokens ===== */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ===== Admin Specific Tokens ===== */
+  --sidebar-width: 220px;
+  --sidebar-collapsed-width: 64px;
+  --header-height: 56px;
+  --content-padding: 24px;
+  --stat-icon-size: 48px;
+
+  /* Status Colors */
+  --status-published: #10b981;
+  --status-pending: #f59e0b;
+  --status-rejected: #ef4444;
+  --status-draft: #6b7280;
+}
+
+html.dark {
+  /* Dark Theme - Background */
+  --bg-primary: #0f0f1a;
+  --bg-secondary: #161625;
+  --bg-tertiary: #1e1e32;
+  --bg-card: #1a1a2e;
+  --bg-card-hover: #22223a;
+  --bg-sidebar: #12121f;
+  --bg-header: rgba(15, 15, 26, 0.95);
+
+  /* Dark Theme - Text */
+  --text-primary: #e8e8f0;
+  --text-secondary: #b0b0cc;
+  --text-tertiary: #7070a0;
+  --text-inverse: #ffffff;
+
+  /* Dark Theme - Border */
+  --border-color: #2a2a40;
+  --border-light: #1e1e32;
+
+  /* Dark Theme - Accent */
+  --accent-primary: #818cf8;
+  --accent-primary-light: #a5b4fc;
+  --accent-primary-bg: rgba(129, 140, 248, 0.1);
+  --accent-secondary: #a78bfa;
+  --accent-gradient: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #c4b5fd 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+
+  /* Dark Theme - Shadow */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 25px rgba(129, 140, 248, 0.25);
+
+  /* Dark Theme - Scrollbar */
+  --scrollbar-thumb: #3a3a55;
+  --scrollbar-track: transparent;
+
+  /* ===== Element Plus Dark Overrides ===== */
+  --el-bg-color: var(--bg-primary);
+  --el-bg-color-overlay: var(--bg-card);
+  --el-bg-color-page: var(--bg-secondary);
+
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-tertiary);
+  --el-text-color-placeholder: #5050a0;
+
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-light);
+  --el-border-color-lighter: #252540;
+
+  --el-fill-color: var(--bg-tertiary);
+  --el-fill-color-light: var(--bg-secondary);
+  --el-fill-color-lighter: #2a2a40;
+  --el-fill-color-blank: var(--bg-card);
+
+  --el-mask-color: rgba(0, 0, 0, 0.6);
+
+  --el-color-primary: var(--accent-primary);
+  --el-color-primary-light-3: #6366f1;
+  --el-color-primary-light-5: #4f46e5;
+  --el-color-primary-dark-2: #a5b4fc;
+}
+
+/* ===== Global Reset ===== */
 * {
   margin: 0;
   padding: 0;
@@ -9,6 +145,9 @@ html, body {
   font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 a {
@@ -20,21 +159,142 @@ ul, li {
   list-style: none;
 }
 
-/* 滚动条样式 */
+/* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c0c4cc;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #909399;
+  background: var(--text-tertiary);
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
+}
+
+/* ===== Animations ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* ===== Page Transition CSS ===== */
+.slide-fade-enter-active {
+  transition: all var(--duration-normal) var(--ease-decelerate);
+}
+
+.slide-fade-leave-active {
+  transition: all var(--duration-normal) var(--ease-accelerate);
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.fade-scale-enter-active {
+  transition: all var(--duration-normal) var(--ease-decelerate);
+}
+
+.fade-scale-leave-active {
+  transition: all var(--duration-normal) var(--ease-accelerate);
+}
+
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(1.04);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--duration-normal) var(--ease-standard);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ===== Element Plus Component Overrides ===== */
+html.dark .el-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark .el-input__wrapper {
+  background-color: var(--bg-tertiary) !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+
+html.dark .el-input__inner {
+  color: var(--text-primary) !important;
+}
+
+html.dark .el-dialog {
+  background-color: var(--bg-card) !important;
+}
+
+html.dark .el-drawer {
+  background-color: var(--bg-card) !important;
+}
+
+html.dark .el-table {
+  --el-table-bg-color: var(--bg-card);
+  --el-table-tr-bg-color: var(--bg-card);
+  --el-table-header-bg-color: var(--bg-tertiary);
+  --el-table-row-hover-bg-color: var(--bg-card-hover);
+  --el-table-border-color: var(--border-color);
+}
+
+html.dark .el-menu {
+  --el-menu-bg-color: transparent;
+  --el-menu-text-color: var(--text-secondary);
+  --el-menu-active-color: var(--accent-primary);
+  --el-menu-hover-bg-color: var(--accent-primary-bg);
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .slide-fade-enter-from,
+  .slide-fade-leave-to,
+  .fade-scale-enter-from,
+  .fade-scale-leave-to {
+    opacity: 1;
+    transform: none;
+  }
 }

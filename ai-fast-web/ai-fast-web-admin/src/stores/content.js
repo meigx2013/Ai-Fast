@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import adminData from '@/data/admin.json'
+import { loadData, saveData, STORAGE_KEYS } from '@/utils/persistence'
 
 export const useContentStore = defineStore('content', () => {
-  const workflows = ref([...adminData.workflows])
-  const categories = ref([...adminData.categories])
+  const workflows = ref(loadData(STORAGE_KEYS.WORKFLOWS, adminData.workflows))
+  const categories = ref(loadData(STORAGE_KEYS.CATEGORIES, adminData.categories))
   const searchKeyword = ref('')
   const filterStatus = ref('all')
   const filterCategory = ref('all')
@@ -101,6 +102,16 @@ export const useContentStore = defineStore('content', () => {
   function setFilterCategory(category) {
     filterCategory.value = category
   }
+
+  // 持久化：workflows 数据变更时自动保存
+  watch(workflows, (newVal) => {
+    saveData(STORAGE_KEYS.WORKFLOWS, newVal)
+  }, { deep: true })
+
+  // 持久化：categories 数据变更时自动保存
+  watch(categories, (newVal) => {
+    saveData(STORAGE_KEYS.CATEGORIES, newVal)
+  }, { deep: true })
 
   return {
     workflows,

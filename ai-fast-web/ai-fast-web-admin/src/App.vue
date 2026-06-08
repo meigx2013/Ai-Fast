@@ -5,6 +5,14 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+import { useThemeStore } from '@/stores/theme'
+
+const themeStore = useThemeStore()
+
+onMounted(() => {
+  themeStore.init()
+})
 </script>
 
 <style>
@@ -17,6 +25,6 @@ html, body, #app {
 
 .app-container {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background-color: var(--bg-secondary);
 }
 </style>

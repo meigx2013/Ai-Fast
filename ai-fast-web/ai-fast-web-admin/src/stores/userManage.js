@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import adminData from '@/data/admin.json'
+import { loadData, saveData, STORAGE_KEYS } from '@/utils/persistence'
 
 export const useUserManageStore = defineStore('userManage', () => {
-  const users = ref([...adminData.users])
+  const users = ref(loadData(STORAGE_KEYS.USERS, adminData.users))
   const searchKeyword = ref('')
   const filterStatus = ref('all')
   const filterRole = ref('all')
@@ -67,6 +68,11 @@ export const useUserManageStore = defineStore('userManage', () => {
   function setFilterRole(role) {
     filterRole.value = role
   }
+
+  // 持久化：users 数据变更时自动保存
+  watch(users, (newVal) => {
+    saveData(STORAGE_KEYS.USERS, newVal)
+  }, { deep: true })
 
   return {
     users,
