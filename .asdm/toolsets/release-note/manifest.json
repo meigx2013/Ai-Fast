@@ -1,0 +1,11 @@
+{
+  "guid": "12f55022-ccab-46e0-8bb5-3ebb5fdaee0f",
+  "registry_id": "release-note",
+  "name": "Release Note Toolset",
+  "description": "根据 Git Tag 或时间段范围内的代码差异，结合用户提供的缺陷清单和用户故事清单，生成结构化的 Release Note 说明文档",
+  "version": "0.0.1",
+  "configType": "toolset",
+  "commands": [
+    "asdm-generate-release-note"
+  ]
+}
