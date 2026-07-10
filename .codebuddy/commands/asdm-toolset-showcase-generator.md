@@ -1,1 +1,0 @@
-Follow .asdm/toolsets/asdm-planner/actions/asdm-toolset-showcase-generator.md

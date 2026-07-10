@@ -1,1 +1,0 @@
-Follow .asdm/toolsets/asdm-planner/actions/asdm-docs-module-update.md
