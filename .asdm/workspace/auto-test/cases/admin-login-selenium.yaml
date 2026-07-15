@@ -1,0 +1,49 @@
+name: admin-login-selenium
+description: 验证管理端登录流程（Selenium框架）
+framework: selenium
+capture: on-fail
+tags: [auth, admin, selenium]
+metadata:
+  targetUrl: http://localhost:3001
+  timeout: 30
+  browser: chrome
+stages:
+  - name: 登录页面访问
+    steps:
+      - action: navigate
+        target: /login
+      - action: wait
+        target: css=.login-form
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A1
+            target: css=.login-form
+            expected: visible
+            message: 管理端登录表单应可见
+  - name: 输入管理员凭证
+    steps:
+      - action: type
+        target: css=.login-form .el-form-item:first-child input
+        value: admin
+      - action: type
+        target: css=.login-form .el-form-item:nth-child(2) input
+        value: admin123
+      - action: click
+        target: css=.login-form .el-button--primary
+        capture: always
+  - name: 登录结果验证
+    steps:
+      - action: wait
+        target: css=.sidebar
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A2
+            target: current-url
+            expected: /admin/dashboard
+            message: 登录成功后应跳转到管理后台首页
+          - type: A4
+            target: css=.sidebar .admin-name
+            expected: admin
+            message: 管理员名称应显示为 admin

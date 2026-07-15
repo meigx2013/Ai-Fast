@@ -1,0 +1,249 @@
+# ASDM Toolset - Web Auto Tester Toolset
+
+toolset-id: web-auto-tester
+toolset-name: Web Auto Tester Toolset
+version: 0.0.1
+updated-date: 2026-07-14
+toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、需求文档 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行 + CI/CD 集成，HTML 报告 + 可选 Allure 导出
+
+## Overview
+
+Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全面自动化测试的 ASDM 工具集，与 `web-smoke-tester`（冒烟测试）互补共存。它通过 YAML DSL 用例驱动测试执行，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架实现双框架兼容，提供 HTML 自定义报告 + 可选 Allure 导出，并支持 Jenkins/GitHub Actions CI/CD 集成。
+
+**核心定位**：
+
+| 维度 | web-smoke-tester | web-auto-tester |
+|------|------------------|-----------------|
+| 测试级别 | 冒烟测试（P0/P1 快速验证） | 全面功能测试（全场景覆盖） |
+| 驱动方式 | 自然语言驱动 | 用例驱动（YAML DSL / AI 生成 / 录制） |
+| 测试框架 | Playwright | Playwright + Selenium |
+| 报告格式 | Markdown 表格 | HTML + 可选 Allure |
+| CI/CD | 不支持 | 支持（Jenkins/GitHub Actions） |
+
+## Features
+
+### Common features
+
+- YAML DSL 用例格式，与 smoke-tester Pipeline YAML 风格一致
+- Playwright 主框架完整支持 + Selenium 辅框架基础兼容
+- 8 种断言类型（A1~A8），覆盖页面可见、跳转、元素状态、内容匹配、API 响应、表单值、元素数量、截图比对
+- 3 种截图策略（on-fail / full / always），失败步骤自动截图
+- 执行结果结构化存储（AutoTestResult JSON）
+- HTML 自定义报告（卡片式摘要 + 用例详情 + 截图内嵌 + 统计图表）
+- 可选 Allure 格式导出
+- CI/CD 配置一键生成（Jenkins / GitHub Actions）
+- 规范驱动架构，所有引擎行为由 spec 文件定义，AI Agent 按规范执行
+
+### Feature 1: 需求文档 AI 生成用例（auto-test-generate）
+
+从 Markdown 需求文档（PRD/用户故事）自动生成 YAML DSL 测试用例。
+
+- 解析 Markdown 文档，提取功能描述和验收标准
+- 为每个功能点生成 1-N 个测试场景（正向/逆向/边界值）
+- 转换为 YAML DSL stages/steps 结构
+- 自动推断断言（基于验收标准）
+- 标记框架偏好和截图配置
+- 输出 YAML 文件并提示用户审核
+
+**输入**：Markdown 需求文档内容或路径、框架偏好、输出目录
+**输出**：YAML DSL 用例文件列表
+
+### Feature 2: 录制操作生成用例（auto-test-record）
+
+通过 Playwright Codegen 录制操作生成 YAML DSL 测试用例。
+
+- 启动 `npx playwright codegen` 录制器，打开目标页面
+- 用户在浏览器中操作，实时录制
+- 录制结束后提取操作序列
+- 转换为 YAML DSL Step 格式
+- 自动添加页面可见断言（A1）
+- 输出 YAML 文件并提示用户补充断言
+
+**输入**：目标 URL、框架偏好、浏览器类型
+**输出**：YAML DSL 用例文件
+
+### Feature 3: 执行自动化测试（auto-test-run）
+
+执行 YAML DSL 测试用例，7 阶段规范流程。
+
+- Phase 1：用例加载（YAML 解析 → Schema 校验 → 结构化）
+- Phase 2：上下文准备（读取 metadata → 初始化浏览器选项）
+- Phase 3：执行引擎（Playwright/Selenium 操作映射 → 逐步骤执行）
+- Phase 4：断言判定（8 种断言类型 → 结果映射）
+- Phase 5：截图采集（on-fail/full/always 三策略）
+- Phase 6：结果记录（AutoTestResult JSON → ATR-{YYYYMMDD}-{NNN} ID）
+- Phase 7：报告输出（摘要输出 + HTML 报告可选）
+
+**输入**：用例文件路径或目录、框架偏好、截图策略、环境配置
+**输出**：AutoTestResult JSON 文件
+
+### Feature 4: 列出用例与结果（auto-test-list）
+
+列出测试用例和执行结果。
+
+- 三种展示模式：cases（用例列表）/ results（结果列表）/ all（合并展示）
+- 按标签、框架、状态筛选过滤
+- Markdown 表格格式化输出
+
+**输入**：列出类型、筛选条件
+**输出**：Markdown 表格
+
+### Feature 5: 生成 HTML 测试报告（auto-test-report）
+
+生成结构化 HTML 测试报告。
+
+- 摘要卡片：渐变背景 + 大数字展示（通过率/失败数/跳过数）
+- 用例列表：状态色标签（绿/红/灰）
+- 步骤详情：折叠面板 + 失败步骤红色高亮
+- 截图展示：内嵌失败/标记步骤截图 + 缩略图 + 点击放大
+- 统计图表：ASCII 图表展示通过率和断言分布
+- 可选 Allure 导出（JSON → Allure 格式 → allure generate）
+
+**输入**：结果文件或目录、报告格式
+**输出**：HTML 报告文件路径
+
+### Feature 6: 生成 CI/CD 配置（auto-test-ci）
+
+生成 Jenkins 或 GitHub Actions CI/CD 配置文件。
+
+- Jenkins：Declarative Pipeline（安装→启动→测试→报告→通知）
+- GitHub Actions：checkout→setup-node→playwright-install→test→report-artifact→notify
+- GitLab CI / Azure Pipelines 模板参考
+- 配置文件可直接使用
+
+**输入**：目标平台、用例目录、Node 版本
+**输出**：CI/CD 配置文件
+
+### Feature 7: 清理测试资源（auto-test-clean）
+
+清理测试工作区中的过期资源。
+
+- 4 种清理范围：results / reports / screenshots / all
+- 清理前列出文件数量和大小
+- 用户确认后执行删除
+- 保留目录结构和 .gitkeep
+
+**输入**：清理范围、确认标志
+**输出**：清理确认信息
+
+## Toolset Workflow
+
+Once Web Auto Tester is installed, user can use the following commands:
+
+1. `/auto-test-generate`：从 Markdown 需求文档自动生成 YAML DSL 测试用例
+2. `/auto-test-record`：通过 Playwright Codegen 录制操作生成 YAML DSL 测试用例
+3. `/auto-test-run`：执行 YAML DSL 测试用例，生成执行结果 JSON
+4. `/auto-test-list`：列出测试用例和执行结果
+5. `/auto-test-report`：生成 HTML 测试报告（可选 Allure 导出）
+6. `/auto-test-ci`：生成 Jenkins/GitHub Actions CI/CD 配置文件
+7. `/auto-test-clean`：清理测试工作区资源
+
+### 使用方式
+
+#### 生成用例：需求文档
+
+```shell
+/auto-test-generate document=docs/PRD.md framework=playwright
+```
+
+#### 生成用例：录制操作
+
+```shell
+/auto-test-record url=http://localhost:3000 browser=chromium
+```
+
+#### 执行测试
+
+```shell
+/auto-test-run case=cases/user-login-test.yaml
+```
+
+#### 列出结果
+
+```shell
+/auto-test-list type=results filter=status:fail
+```
+
+#### 生成报告
+
+```shell
+/auto-test-report result=results/ format=html
+```
+
+#### CI/CD 配置
+
+```shell
+/auto-test-ci platform=github-actions nodeVersion=18
+```
+
+#### 清理资源
+
+```shell
+/auto-test-clean scope=all confirm=true
+```
+
+## Toolset Structure
+
+The Web Auto Tester toolset has the following structure:
+
+```text
+.asdm/toolsets/web-auto-tester/
+├── INSTALL.md                                    # 安装指南
+├── README.md                                     # 入口文档
+├── manifest.json                                 # 工具集元数据注册
+├── actions/
+│   ├── auto-test-generate.md                     # 需求文档生成用例 Action
+│   ├── auto-test-record.md                       # 录制生成用例 Action
+│   ├── auto-test-run.md                          # 执行测试 Action
+│   ├── auto-test-list.md                         # 列出用例与结果 Action
+│   ├── auto-test-report.md                       # 生成报告 Action
+│   ├── auto-test-ci.md                           # CI/CD 配置 Action
+│   └── auto-test-clean.md                        # 清理资源 Action
+└── spec/
+    ├── auto-test-dsl-spec.md                     # YAML DSL 用例格式规范
+    ├── auto-test-execution-spec.md               # 执行引擎 7 阶段规范
+    ├── auto-test-report-spec.md                  # 报告格式规范
+    └── auto-test-ci-spec.md                      # CI/CD 配置规范
+```
+
+### Spec Documents
+
+The toolset uses the following spec documents:
+
+- **auto-test-dsl-spec.md**：YAML DSL 用例格式规范，定义用例文件结构、Stage/Step、断言类型、框架标记、捕获配置、数据模型
+- **auto-test-execution-spec.md**：执行引擎 7 阶段规范，定义用例加载、上下文准备、执行引擎、断言判定、截图采集、结果记录、报告输出
+- **auto-test-report-spec.md**：HTML 报告格式规范，定义报告模板结构、CSS 样式、Allure 导出流程
+- **auto-test-ci-spec.md**：CI/CD 配置规范，定义 Jenkins/GitHub Actions/GitLab CI/Azure Pipelines 配置模板
+
+## Toolset Workspace
+
+The Web Auto Tester toolset has the following workspace structure:
+
+```text
+.asdm/workspace/auto-test/
+├── cases/                          # 测试用例存储（YAML DSL 文件）
+│   ├── user-login-test.yaml
+│   ├── admin-login-selenium.yaml
+│   └── ...
+├── results/                        # 执行结果存储（AutoTestResult JSON）
+│   ├── ATR-20260714-001.json
+│   └── ...
+├── reports/                        # HTML 测试报告
+│   ├── report-20260714.html
+│   ├── allure-results/             # Allure 中间数据（可选）
+│   └── ...
+├── screenshots/                    # 截图存储
+│   ├── ATR-20260714-S03-fail.png
+│   ├── ATR-20260714-S05-marked.png
+│   └── ...
+└── ci/                             # CI/CD 配置输出
+    ├── Jenkinsfile
+    ├── .github/workflows/auto-test.yml
+    └── ...
+```
+
+## Copyright & License
+
+Copyright (c) 2026 LeansoftX.com & iSoftStone. All rights reserved.
+
+Licensed under the PROPRIETARY SOFTWARE LICENSE. See [LICENSE](LICENSE) in the project root for license information.

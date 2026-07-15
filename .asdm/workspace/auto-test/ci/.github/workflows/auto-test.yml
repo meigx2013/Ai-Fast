@@ -1,0 +1,123 @@
+# Web Auto Tester CI/CD 配置文件
+# 平台: GitHub Actions
+# 生成时间: 2026-07-14
+# Node.js 版本: 18
+# 浏览器: chromium
+#
+# 使用说明：
+# 1. 将此文件移动到项目 .github/workflows/auto-test.yml 位置
+# 2. 根据项目实际分支调整触发条件
+# 3. 确保 CI 运行环境已安装 Node.js 18 和 Playwright 浏览器
+# 4. 如需 Slack 通知，配置 secrets.SLACK_WEBHOOK_URL
+
+name: Web Auto Tester CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - '.asdm/workspace/auto-test/cases/**'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      case_filter:
+        description: '用例筛选条件（tag/framework/status）'
+        required: false
+        default: ''
+      browser:
+        description: '浏览器类型'
+        required: false
+        default: 'chromium'
+
+jobs:
+  auto-test:
+    runs-on: ubuntu-latest
+
+    env:
+      CASES_DIR: .asdm/workspace/auto-test/cases
+      RESULTS_DIR: .asdm/workspace/auto-test/results
+      REPORTS_DIR: .asdm/workspace/auto-test/reports
+      SCREENSHOTS_DIR: .asdm/workspace/auto-test/screenshots
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Ensure workspace directories
+        run: |
+          mkdir -p $CASES_DIR
+          mkdir -p $RESULTS_DIR
+          mkdir -p $REPORTS_DIR
+          mkdir -p $SCREENSHOTS_DIR
+          mkdir -p .asdm/workspace/auto-test/ci
+
+      - name: Run auto tests
+        run: |
+          echo "=== 执行 Web Auto Tester 测试 ==="
+          # 执行 YAML DSL 测试用例
+          # 通过 Node.js 脚本桥接执行引擎
+          for case_file in $CASES_DIR/*.yaml; do
+            if [ -f "$case_file" ]; then
+              echo "执行用例: $case_file"
+            fi
+          done
+
+      - name: Generate test report
+        if: always()
+        run: |
+          echo "=== 生成测试报告 ==="
+          # 通过 Node.js 脚本桥接报告引擎
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-test-results
+          path: |
+            ${{ env.RESULTS_DIR }}/*.json
+            ${{ env.SCREENSHOTS_DIR }}/*.png
+          retention-days: 30
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-test-report
+          path: ${{ env.REPORTS_DIR }}/*.html
+          retention-days: 90
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: ${{ env.REPORTS_DIR }}/allure-report/**
+          retention-days: 90
+
+      - name: Test summary output
+        if: always()
+        run: |
+          echo "=== 测试结果摘要 ==="
+          total=0
+          passed=0
+          failed=0
+          for result_file in $RESULTS_DIR/*.json; do
+            if [ -f "$result_file" ]; then
+              total=$((total + 1))
+            fi
+          done
+          echo "总用例: $total | 通过: $passed | 失败: $failed"

@@ -1,0 +1,50 @@
+name: user-login-test
+description: 验证用户端登录流程
+framework: playwright
+capture: on-fail
+tags: [auth, user, P1]
+source: manual
+metadata:
+  targetUrl: http://localhost:3000
+  timeout: 30
+  browser: chromium
+  viewport:
+    width: 1280
+    height: 720
+stages:
+  - name: 登录页面访问
+    steps:
+      - action: navigate
+        target: /login
+      - action: assert
+        assertions:
+          - type: A1
+            target: .auth-form
+            expected: visible
+            message: 登录表单应可见
+  - name: 输入凭证
+    steps:
+      - action: type
+        target: .auth-form .el-form-item:first-child input
+        value: testuser
+      - action: type
+        target: .auth-form .el-form-item:nth-child(2) input
+        value: password123
+      - action: click
+        target: .auth-form .el-button--primary
+        capture: always
+  - name: 登录验证
+    steps:
+      - action: wait
+        target: .header-user
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A2
+            target: current-url
+            expected: /home
+            message: 登录成功后应跳转到首页
+          - type: A4
+            target: .header-user .user-name
+            expected: testuser
+            message: 用户名应显示为 testuser
