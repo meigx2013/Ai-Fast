@@ -22,6 +22,7 @@ description: string         # 可选，用例描述
 framework: string           # 可选，框架偏好：playwright（默认）或 selenium
 capture: string             # 可选，截图策略：on-fail（默认）或 full
 tags: string[]              # 可选，标签列表，用于分类和筛选
+params: object              # 可选，参数名→默认值映射，步骤中使用 {{params.xxx}} 引用
 metadata: object            # 可选，自定义元数据（目标URL、超时等）
 source: string              # 可选，用例来源：generate/record/manual
 stages: Stage[]             # 必填，测试阶段列表
@@ -36,7 +37,8 @@ stages: Stage[]             # 必填，测试阶段列表
 | framework | string | ❌ | 框架偏好：`playwright`（默认）或 `selenium` | `playwright` |
 | capture | string | ❌ | 截图策略：`on-fail`（默认）或 `full` | `on-fail` |
 | tags | string[] | ❌ | 标签列表，用于分类和筛选 | `[auth, user, P1]` |
-| metadata | object | ❌ | 自定义元数据 | `{targetUrl, timeout, browser}` |
+| params | object | ❌ | 参数名→默认值映射，步骤中使用 `{{params.xxx}}` 引用 | `{username: testuser, password: password123}` |
+| metadata | object | ❌ | 自定义元数据（含增强字段） | `{targetUrl, timeout, browser, ...}` |
 | source | string | ❌ | 用例来源 | `generate` / `record` / `manual` |
 | stages | Stage[] | ✅ | 测试阶段列表 | 见 Stage 定义 |
 
@@ -51,6 +53,22 @@ stages: Stage[]             # 必填，测试阶段列表
 | browser | string | 浏览器类型 | `chromium`、`firefox`、`webkit`、`chrome` |
 | viewport | object | 视口尺寸 | `{width: 1280, height: 720}` |
 | auth | object | 认证配置 | `{type: login, username: admin, password: xxx}` |
+| recordedAt | string | 录制时间（ISO 8601） | `2026-07-20T10:30:00Z` |
+| duration | number | 录制耗时（秒） | `45` |
+| pageTitle | string | 页面标题 | `登录` |
+| pageStructure | object | 页面结构信息 | 见 pageStructure 子字段 |
+| viewportActual | object | 实际视口尺寸（录制时） | `{width: 1280, height: 720}` |
+| frontFramework | string | 前端框架识别 | `vue`、`react`、`angular`、`unknown` |
+
+**pageStructure 子字段**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| hasSidebar | boolean | 是否有侧边栏 |
+| hasNavbar | boolean | 是否有导航栏 |
+| hasFooter | boolean | 是否有页脚 |
+| mainContentSelector | string | 主内容区域选择器 |
+| layoutType | string | 布局类型：`sidebar-left` / `sidebar-right` / `top-nav` / `full-page` |
 
 **auth 子字段**：
 
@@ -90,6 +108,8 @@ steps:
   - action: string          # 必填，操作类型
     target: string          # 必填，目标选择器或 URL
     value: string           # 可选，输入值（type/select 操作必填）
+    pageContext: string     # 可选，页面上下文：main（默认）/ popup / newTab
+    pageTransition: string  # 可选，页面跳转类型：none（默认）/ navigate / new-tab / new-window
     capture: string         # 可选，步骤截图策略
     timeout: number         # 可选，步骤超时秒数
     frameworkOverride: string  # 可选，步骤级框架偏好覆盖
@@ -100,7 +120,9 @@ steps:
 |------|------|:----:|------|
 | action | string | ✅ | 操作类型：navigate/click/type/wait/scroll/upload/hover/select/screenshot/assert |
 | target | string | ✅ | 目标选择器或 URL |
-| value | string | ❌ | 输入值（type/select 操作必填） |
+| value | string | ❌ | 输入值（type/select 操作必填），支持 `{{params.xxx}}` 参数引用 |
+| pageContext | string | ❌ | 页面上下文：`main`（默认）/ `popup` / `newTab`，标记步骤在哪个页面执行 |
+| pageTransition | string | ❌ | 页面跳转类型：`none`（默认）/ `navigate` / `new-tab` / `new-window`，标记步骤引起的页面跳转 |
 | capture | string | ❌ | 步骤截图策略：`always` 强制截图，或继承用例/stage 配置 |
 | timeout | number | ❌ | 步骤超时秒数，覆盖全局配置 |
 | frameworkOverride | string | ❌ | 步骤级框架偏好覆盖（仅限 Selenium 用例中特定步骤降级为 playwright） |
@@ -142,6 +164,8 @@ steps:
     - type: string          # 必填，断言类型 A1~A8
       target: string        # 必填，断言目标选择器
       expected: string      # 必填，预期值
+      confidence: string    # 可选，推断置信度：high / medium / low（仅推断断言标注）
+      inferredFrom: string  # 可选，推断来源描述（仅推断断言标注）
       message: string       # 可选，断言失败时的自定义消息
 ```
 
@@ -150,6 +174,8 @@ steps:
 | type | string | ✅ | 断言类型：A1~A8 |
 | target | string | ✅ | 断言目标选择器或 URL |
 | expected | string | ✅ | 预期值 |
+| confidence | string | ❌ | 推断置信度：`high` / `medium` / `low`，仅推断断言标注 |
+| inferredFrom | string | ❌ | 推断来源描述，仅推断断言标注，如 `"navigate后[data-testid]"` |
 | message | string | ❌ | 断言失败时的自定义消息 |
 
 ### 8 种断言类型
@@ -226,11 +252,12 @@ steps:
 | ATC-04 | framework | string | 框架偏好：playwright/selenium |
 | ATC-05 | capture | string | 截图策略：on-fail/full |
 | ATC-06 | tags | string[] | 标签列表 |
-| ATC-07 | metadata | object | 元数据配置 |
-| ATC-08 | stages | Stage[] | 阶段列表 |
-| ATC-09 | source | string | 用例来源：generate/record/manual |
-| ATC-10 | createdAt | string | 创建时间（ISO 8601） |
-| ATC-11 | updatedAt | string | 更新时间（ISO 8601） |
+| ATC-07 | params | object | 参数名→默认值映射，步骤中 `{{params.xxx}}` 引用 |
+| ATC-08 | metadata | object | 元数据配置（含增强字段） |
+| ATC-09 | stages | Stage[] | 阶段列表 |
+| ATC-10 | source | string | 用例来源：generate/record/manual |
+| ATC-11 | createdAt | string | 创建时间（ISO 8601） |
+| ATC-12 | updatedAt | string | 更新时间（ISO 8601） |
 
 **Stage 子模型**：
 
@@ -245,7 +272,9 @@ steps:
 |------|------|------|
 | action | string | 操作类型 |
 | target | string | 目标选择器 |
-| value | string | 输入值 |
+| value | string | 输入值（支持 `{{params.xxx}}` 引用） |
+| pageContext | string | 页面上下文：main/popup/newTab |
+| pageTransition | string | 页面跳转类型：none/navigate/new-tab/new-window |
 | capture | string | 截图策略 |
 | timeout | number | 步骤超时 |
 | frameworkOverride | string | 步骤级框架覆盖 |
@@ -258,6 +287,8 @@ steps:
 | type | string | 断言类型（A1~A8） |
 | target | string | 断言目标 |
 | expected | string | 预期值 |
+| confidence | string | 推断置信度：high/medium/low（可选，仅推断断言） |
+| inferredFrom | string | 推断来源描述（可选，仅推断断言） |
 | message | string | 失败消息 |
 
 ### 7.2 AutoTestResult 数据模型（ATR）
@@ -473,6 +504,117 @@ stages:
             expected: 手机
 ```
 
+### 9.4 录制用例示例 — 带 params 参数化与增强 metadata
+
+```yaml
+name: user-login-recorded
+description: 验证用户端登录流程（录制产出，参数化）
+framework: playwright
+capture: on-fail
+tags: [auth, user, P1]
+source: record
+params:
+  username: testuser
+  password: password123
+metadata:
+  targetUrl: http://localhost:3000
+  timeout: 30
+  browser: chromium
+  recordedAt: "2026-07-20T10:30:00Z"
+  duration: 45
+  pageTitle: 登录
+  frontFramework: vue
+  pageStructure:
+    hasSidebar: false
+    hasNavbar: true
+    hasFooter: false
+    mainContentSelector: .auth-form
+    layoutType: top-nav
+  viewportActual:
+    width: 1280
+    height: 720
+stages:
+  - name: 登录页面访问
+    steps:
+      - action: navigate
+        target: /login
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .auth-form
+            expected: visible
+            confidence: high
+            inferredFrom: "navigate后[data-testid]"
+            message: 登录表单应可见
+  - name: 输入凭证
+    steps:
+      # [form-fill-group] 表单填写组：登录表单
+      - action: type
+        target: input[name="username"]
+        value: "{{params.username}}"
+      - action: type
+        target: input[name="password"]
+        value: "{{params.password}}"
+      - action: click
+        target: button[type="submit"]
+  - name: 登录验证
+    steps:
+      - action: assert
+        assertions:
+          - type: A2
+            target: current-url
+            expected: /home
+            confidence: high
+            inferredFrom: "click后URL实际跳转"
+            message: 登录成功后应跳转到首页
+          - type: A4
+            target: .header-user .user-name
+            expected: testuser
+            confidence: medium
+            inferredFrom: "click后文案变化"
+            message: 用户名应显示为 testuser
+```
+
+### 9.5 多页面录制用例示例 — 带 pageContext/pageTransition
+
+```yaml
+name: user-help-popup-test
+description: 验证帮助弹窗打开与关闭流程（录制产出）
+framework: playwright
+capture: on-fail
+tags: [help, popup, P2]
+source: record
+metadata:
+  targetUrl: http://localhost:3000
+  timeout: 30
+  browser: chromium
+  recordedAt: "2026-07-20T10:35:00Z"
+stages:
+  - name: 主页面操作
+    steps:
+      - action: navigate
+        target: /dashboard
+        pageTransition: navigate
+      - action: click
+        target: .help-link
+        pageTransition: new-tab
+  - name: 弹窗/新标签页操作
+    steps:
+      - action: click
+        target: .close-btn
+        pageContext: popup
+      - action: assert
+        assertions:
+          - type: A1
+            target: .dashboard-content
+            expected: visible
+            pageContext: main
+            confidence: high
+            inferredFrom: "click后页面结构[data-testid]"
+            message: 关闭弹窗后主页面内容应可见
+```
+
 ---
 
 ## 10. Schema 校验规则
@@ -491,6 +633,28 @@ stages:
 - `framework` 只接受 `playwright` 或 `selenium`
 - Selenium 用例的 `target` 应使用 `css=` / `id=` / `xpath=` 前缀
 - Selenium 用例不应包含 A5/A8 断言（如包含则降级为 playwright）
+
+### 参数引用校验（params）
+
+- `params` 键名仅允许小写英文字母 + 下划线（`[a-z_]+`）
+- 步骤 `value` 中 `{{params.xxx}}` 引用时，`xxx` 必须在顶层 `params` 中有对应键名
+- `params` 默认值类型应为 string / number / boolean
+- 未定义 `params` 时，步骤 `value` 中不应出现 `{{params.xxx}}` 引用
+
+### 页面上下文校验（pageContext/pageTransition）
+
+- `pageContext` 仅接受 `main` / `popup` / `newTab`（默认 `main`）
+- `pageTransition` 仅接受 `none` / `navigate` / `new-tab` / `new-window`（默认 `none`）
+- `pageContext: popup` 或 `pageContext: newTab` 的步骤，应紧跟 `pageTransition: new-tab` 或 `pageTransition: new-window` 的步骤之后
+- `pageContext: main` 的步骤无需紧跟 pageTransition 步骤
+
+### 断言推断校验（confidence/inferredFrom）
+
+- `confidence` 仅接受 `high` / `medium` / `low`
+- `inferredFrom` 为自由格式字符串，描述推断来源
+- 推断断言（AI 生成的）必须标注 `confidence` 和 `inferredFrom`
+- 手写断言（用户编写的）不标注 `confidence` 和 `inferredFrom`
+- `confidence: low` 的断言建议用户删除或重写
 
 ### 命名规范
 
