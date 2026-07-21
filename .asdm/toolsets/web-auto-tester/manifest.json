@@ -2,8 +2,8 @@
   "guid": "a1b2c3d4-e5f6-4789-abcd-ef0123456789",
   "registry_id": "web-auto-tester",
   "name": "Web Auto Tester Toolset",
-  "description": "Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、需求文档 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行 + CI/CD 集成，HTML 报告 + 可选 Allure 导出",
-  "version": "0.0.1",
+  "description": "Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、需求文档 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行，HTML 报告 + 可选 Allure 导出",
+  "version": "0.0.2",
   "configType": "toolset",
   "commands": [
     "auto-test-generate",
@@ -11,7 +11,6 @@
     "auto-test-run",
     "auto-test-list",
     "auto-test-report",
-    "auto-test-ci",
     "auto-test-clean"
   ]
 }

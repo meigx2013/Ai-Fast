@@ -28,9 +28,8 @@
   - [2.2 录制操作生成测试用例](#22-录制操作生成测试用例)
   - [2.3 手动编写 YAML DSL 测试用例](#23-手动编写-yaml-dsl-测试用例)
   - [2.4 本地执行自动化测试](#24-本地执行自动化自动化测试)
-  - [2.5 CI/CD 集成执行自动化测试](#25-cicd-集成执行自动化测试)
-  - [2.6 生成 HTML 测试报告](#26-生成-html-测试报告)
-  - [2.7 清理测试资源](#27-清理测试资源)
+  - [2.5 生成 HTML 测试报告](#25-生成-html-测试报告)
+  - [2.6 清理测试资源](#26-清理测试资源)
 - [3. 技术方案 — 架构、引擎与执行流程](#3-技术方案)
   - [3.1 系统架构](#31-系统架构)
   - [3.2 测试引擎架构](#32-测试引擎架构)
@@ -39,7 +38,6 @@
   - [3.5 断言引擎](#35-断言引擎)
   - [3.6 截图采集引擎](#36-截图采集引擎)
   - [3.7 报告生成引擎](#37-报告生成引擎)
-  - [3.8 CI/CD 配置生成引擎](#38-cicd-配置生成引擎)
 - [4. YAML DSL 规范 — 用例格式定义](#4-yaml-dsl-规范)
   - [4.1 用例文件结构](#41-用例文件结构)
   - [4.2 顶层字段说明](#42-顶层字段说明)
@@ -60,8 +58,7 @@
   - [6.4 /auto-test-run — 执行测试](#64-auto-test-run)
   - [6.5 /auto-test-list — 列出用例与结果](#65-auto-test-list)
   - [6.6 /auto-test-report — 生成报告](#66-auto-test-report)
-  - [6.7 /auto-test-ci — 生成 CI/CD 配置](#67-auto-test-ci)
-  - [6.8 /auto-test-clean — 清理资源](#68-auto-test-clean)
+  - [6.7 /auto-test-clean — 清理资源](#67-auto-test-clean)
 - [7. 变更摘要 — 模块级变更范围](#7-变更摘要)
 - [8. 依赖关系 — 前置、后续与第三方依赖](#8-依赖关系)
   - [8.1 前置依赖](#81-前置依赖)
@@ -87,7 +84,7 @@
 
 - **用例编写成本高**：测试人员需要手工编写大量测试脚本，耗时且易出错
 - **单框架局限**：现有工具仅支持 Playwright，无法兼容 Selenium 用户的技术栈和存量脚本
-- **手工执行效率低**：功能测试依赖人工逐项执行，缺乏自动化执行和 CI/CD 集成能力
+- **手工执行效率低**：功能测试依赖人工逐项执行，缺乏自动化执行能力
 - **测试结果不可追溯**：缺少结构化的 HTML 报告和截图存档，难以回溯和定位问题
 
 ### 1.2 特性目标
@@ -96,7 +93,7 @@
 
 - **降低用例编写门槛**：支持三种用例生成方式（需求文档自动生成、录制操作生成、手动编写），覆盖从零基础到专业测试人员的全谱系用户
 - **双框架兼容**：以 Playwright 为主框架、Selenium 为可选辅框架，兼容不同团队技术栈
-- **自动化执行闭环**：本地一键执行 + CI/CD 平台集成（Jenkins/GitHub Actions），实现测试全流程自动化
+- **自动化执行闭环**：本地一键执行，实现测试全流程自动化
 - **结构化报告输出**：HTML 测试报告 + 截图存档，支持自定义报告和可选 Allure 导出
 
 ### 1.3 核心概念
@@ -108,11 +105,10 @@
 | **YAML DSL** | 手动编写测试用例的结构化格式，与 smoke-tester Pipeline YAML 风格一致 |
 | **主/辅框架** | Playwright 为主框架（优先支持、完整功能），Selenium 为辅框架（兼容适配、基础功能） |
 | **测试报告 (Report)** | 测试执行结果的 HTML 结构化输出，包含摘要、详情、截图和统计数据 |
-| **CI/CD 配置** | 自动生成的 Jenkinsfile 或 GitHub Actions YAML，可直接用于持续集成 |
 
 ### 1.4 定位与边界
 
-**定位**：`web-auto-tester` 是独立于 `web-smoke-tester` 的**正式自动化测试工具集**，两者互补共存：
+**定位**：`web-auto-tester` 是独立于 `web-smoke-tester` 的**正式自动化测试工具集**，两者不互补，各自独立运行：
 
 | 维度 | web-smoke-tester | web-auto-tester |
 |------|------------------|-----------------|
@@ -120,12 +116,12 @@
 | 驱动方式 | 自然语言驱动 | 用例驱动（YAML DSL / AI 生成 / 录制） |
 | 测试框架 | Playwright | Playwright + Selenium |
 | 报告格式 | Markdown 表格 | HTML + 可选 Allure |
-| CI/CD | 不支持 | 支持（Jenkins/GitHub Actions） |
+| CI/CD | 不支持 | 不支持（专注本地执行） |
 
 **边界**：
 - 仅覆盖 **Web系统**的自动化测试，不涉及移动端或 API 纯接口测试
 - 不替代单元测试框架（如 Jest、JUnit），定位为端到端功能测试
-- CI/CD 配置生成覆盖 Jenkins 和 GitHub Actions 两个主流平台，其他平台提供模板参考
+- 不提供 CI/CD 集成功能，专注于本地自动化测试执行
 
 ### 1.5 已确认决策汇总
 
@@ -133,12 +129,13 @@
 
 | # | 决策点 | 已确认方案 |
 |---|--------|-----------|
-| 1 | 工具集定位与命名 | 独立新工具集 `web-auto-tester`，与 `web-smoke-tester` 互补共存 |
+| 1 | 工具集定位与命名 | 独立新工具集 `web-auto-tester`，与 `web-smoke-tester` **不互补**，各自独立运行 |
 | 2 | 测试框架优先级 | Playwright 为主框架，Selenium 为可选辅框架 |
 | 3 | 用例生成方式 | Markdown 需求文档生成 + Playwright Codegen 录制 + YAML DSL 手动编写 |
-| 4 | CI/CD 集成方式 | 生成常用平台配置（Jenkins/GitHub Actions）+ 其他平台模板参考 |
+| 4 | CI/CD 集成 | ❌ 去掉 CI/CD 功能 |
 | 5 | HTML 报告格式 | 默认自定义 HTML 报告 + 可选 Allure 导出 |
 | 6 | 截图策略 | 默认仅失败截图，可选全步骤截图 |
+| 7 | 斜杠命令设计 | 6 个命令：generate/record/run/list/report/clean |
 | 7 | 斜杠命令设计 | 7 个命令：generate/record/run/list/report/ci/clean |
 
 ### 1.6 变更范围
@@ -200,19 +197,7 @@
 
 **预期结果**：本地浏览器自动化执行测试用例，失败步骤自动截图，结果结构化存储
 
-### 2.5 CI/CD 集成执行自动化测试
-
-**角色**：DevOps 工程师
-
-1. 用户执行 `/auto-test-ci` 命令，选择目标 CI/CD 平台（Jenkins 或 GitHub Actions）
-2. 系统根据用户选择的平台，生成对应的 CI/CD 配置文件（Jenkinsfile 或 GitHub Actions YAML）
-3. 配置文件包含测试执行、报告生成和失败通知的完整流程
-4. 生成的配置文件可直接放入项目仓库的对应位置使用
-5. 其他平台（GitLab CI、Azure Pipelines）提供模板参考文档
-
-**预期结果**：一键生成可直接使用的 Jenkins 或 GitHub Actions CI/CD 配置文件，实现测试自动化持续执行
-
-### 2.6 生成 HTML 测试报告
+### 2.5 生成 HTML 测试报告
 
 **角色**：测试负责人 / 项目经理
 
@@ -224,7 +209,7 @@
 
 **预期结果**：生成结构化 HTML 测试报告，包含卡片式摘要、用例详情、截图和统计数据，可选导出 Allure 格式
 
-### 2.7 清理测试资源
+### 2.6 清理测试资源
 
 **角色**：测试工程师
 
@@ -246,7 +231,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                     用户交互层                                │
 │  /auto-test-generate  /auto-test-record  /auto-test-run      │
-│  /auto-test-list  /auto-test-report  /auto-test-ci  /clean   │
+│  /auto-test-list  /auto-test-report  /auto-test-clean        │
 ├─────────────────────────────────────────────────────────────┤
 │                    Action 指令层                              │
 │  actions/auto-test-{command}.md — 流程定义、参数、输出规范     │
@@ -257,10 +242,10 @@
 │  │用例生成  │ │执行引擎  │ │断言引擎  │ │截图采集  │       │
 │  │引擎      │ │(PW/SEL) │ │引擎      │ │引擎      │       │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                    │
-│  │报告生成  │ │CI/CD    │ │结果记录  │                    │
-│  │引擎      │ │配置引擎  │ │引擎      │                    │
-│  └──────────┘ └──────────┘ └──────────┘                    │
+│  ┌──────────┐ ┌──────────┐                                 │
+│  │报告生成  │ │结果记录  │                                 │
+│  │引擎      │ │引擎      │                                 │
+│  └──────────┘ └──────────┘                                 │
 ├─────────────────────────────────────────────────────────────┤
 │                    数据存储层                                 │
 │  .asdm/workspace/auto-test/                                  │
@@ -423,31 +408,6 @@ Selenium 通过适配层支持基础操作，功能集缩减：
 - 将 AutoTestResult JSON 转换为 Allure 结果格式
 - 调用 `allure generate` 生成 Allure HTML 报告
 - 需用户预先安装 Allure 命令行工具
-
-### 3.8 CI/CD 配置生成引擎
-
-| 平台 | 生成文件 | 内容 |
-|------|----------|------|
-| **Jenkins** | `Jenkinsfile` | Pipeline 定义：安装依赖→启动目标服务→执行测试→生成报告→失败通知 |
-| **GitHub Actions** | `.github/workflows/auto-test.yml` | Workflow 定义：checkout→setup→test→report→notify |
-| **GitLab CI** | `.gitlab-ci.yml`（模板参考） | 同 GitHub Actions 结构 |
-| **Azure Pipelines** | `azure-pipelines.yml`（模板参考） | 同 Jenkins 结构 |
-
-**Jenkins 配置要点**：
-
-- 支持 Declarative Pipeline 和 Scripted Pipeline 两种风格
-- 包含 Playwright 安装阶段（`npx playwright install`）
-- 测试结果归档（`archiveArtifacts`）
-- HTML 报告发布（`publishHTML`）
-- 失败邮件通知（`emailext`）
-
-**GitHub Actions 配置要点**：
-
-- 使用 `actions/checkout` + `actions/setup-node`
-- Playwright 安装步骤
-- 测试执行命令
-- 报告上传为 Artifact
-- 失败时 Slack/Email 通知（可选 Action）
 
 ---
 
@@ -751,7 +711,6 @@ AutoTestReport ──1:N──→ AutoTestResult
 | `/auto-test-run` | 待分配 | 执行自动化测试 | `actions/auto-test-run.md` |
 | `/auto-test-list` | 待分配 | 列出用例与执行结果 | `actions/auto-test-list.md` |
 | `/auto-test-report` | 待分配 | 生成 HTML 测试报告 | `actions/auto-test-report.md` |
-| `/auto-test-ci` | 待分配 | 生成 CI/CD 配置 | `actions/auto-test-ci.md` |
 | `/auto-test-clean` | 待分配 | 清理测试资源 | `actions/auto-test-clean.md` |
 
 ### 6.2 /auto-test-generate
@@ -852,26 +811,7 @@ AutoTestReport ──1:N──→ AutoTestResult
 
 **输出**：HTML 报告文件路径
 
-### 6.7 /auto-test-ci
-
-**功能**：生成 CI/CD 配置文件
-
-**输入参数**：
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|:----:|------|
-| platform | string | ✅ | 目标平台：jenkins/github-actions/gitlab-ci/azure-pipelines |
-| casesDir | string | ❌ | 用例目录路径 |
-| nodeVersion | string | ❌ | Node.js 版本，默认 18 |
-
-**执行流程**：
-1. 根据平台选择配置模板
-2. 填充项目信息（用例路径、Node 版本等）
-3. 生成配置文件
-
-**输出**：CI/CD 配置文件
-
-### 6.8 /auto-test-clean
+### 6.7 /auto-test-clean
 
 **功能**：清理测试资源
 
@@ -900,12 +840,11 @@ AutoTestReport ──1:N──→ AutoTestResult
 | `.asdm/toolsets/web-auto-tester/manifest.json` | 🔲 新增 | 工具集元数据注册文件 | D1 工具集定位 |
 | `.asdm/toolsets/web-auto-tester/README.md` | 🔲 新增 | 工具集概览文档 | D1 工具集定位 |
 | `.asdm/toolsets/web-auto-tester/INSTALL.md` | 🔲 新增 | 安装指南 | D7 斜杠命令 |
-| `.asdm/toolsets/web-auto-tester/actions/` | 🔲 新增 | 7个斜杠命令 Action 文件 | D7 斜杠命令 |
+| `.asdm/toolsets/web-auto-tester/actions/` | 🔲 新增 | 6个斜杠命令 Action 文件 | D7 斜杠命令 |
 | `.asdm/toolsets/web-auto-tester/spec/auto-test-dsl-spec.md` | 🔲 新增 | YAML DSL 用例格式规范 | D3 用例生成 |
 | `.asdm/toolsets/web-auto-tester/spec/auto-test-execution-spec.md` | 🔲 新增 | 执行引擎7阶段规范 | D2 双框架 |
 | `.asdm/toolsets/web-auto-tester/spec/auto-test-report-spec.md` | 🔲 新增 | 报告格式规范（HTML+Allure） | D5 报告格式 |
-| `.asdm/toolsets/web-auto-tester/spec/auto-test-ci-spec.md` | 🔲 新增 | CI/CD 配置生成规范 | D4 CI/CD |
-| `.codebuddy/commands/auto-test-*.md` | 🔲 新增 | 7个命令快捷入口 | D7 斜杠命令 |
+| `.codebuddy/commands/auto-test-*.md` | 🔲 新增 | 6个命令快捷入口 | D7 斜杠命令 |
 | `.asdm/workspace/auto-test/` | 🔲 新增 | 工作区目录结构 | D6 截图策略 |
 
 ---
@@ -968,7 +907,7 @@ AutoTestReport ──1:N──→ AutoTestResult
 | 9.1.9 | 断言引擎 | 8种断言类型（A1~A8）规范定义 | ❌ | 需在 execution-spec 中定义 |
 | 9.1.10 | 截图采集引擎 | on-fail/full/always 三策略 + 文件命名规范 | ❌ | 需在 execution-spec 中定义 |
 | 9.1.11 | 报告生成引擎 | HTML 自定义报告 + 可选 Allure 导出规范 | ❌ | 需编写 report-spec |
-| 9.1.12 | CI/CD 配置生成 | Jenkins/GitHub Actions 配置 + 其他平台模板 | ❌ | 需编写 ci-spec |
+| 9.1.12 | CI/CD 配置生成 | ❌ 去掉 | ❌ 已移除 | CI/CD功能已去掉 |
 | 9.1.13 | 命令注册 | 7个 `.codebuddy/commands/` 快捷入口 | ❌ | 需创建7个 Follow 文件 |
 | 9.1.14 | 工作区目录 | cases/results/reports/screenshots/ci 结构 | ❌ | 需创建目录和 .gitkeep |
 
@@ -997,7 +936,7 @@ AutoTestReport ──1:N──→ AutoTestResult
 | 9.4.1 | Playwright 完整功能 | 全部9种操作 + A1~A8 断言 + tracing 截图 | ❌ | 需在 execution-spec 中完整定义 |
 | 9.4.2 | Selenium 基础功能 | 基础9种操作 + A1~A7 断言（不含A5/A8） | ❌ | 需定义 Selenium 适配层 |
 | 9.4.3 | 框架降级策略 | Selenium 用例含 Playwright 专有操作时降级提示 | ❌ | 需在 execution-spec 中定义 |
-| 9.4.4 | CI/CD 多平台 | Jenkins + GitHub Actions 直接生成 + 2个模板参考 | ❌ | 需在 ci-spec 中定义 |
+| 9.4.4 | CI/CD 多平台 | ❌ 去掉 | ❌ 已移除 | CI/CD功能已去掉 |
 
 ---
 

@@ -2,15 +2,15 @@
 
 toolset-id: web-auto-tester
 toolset-name: Web Auto Tester Toolset
-version: 0.0.1
-updated-date: 2026-07-14
-toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、需求文档 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行 + CI/CD 集成，HTML 报告 + 可选 Allure 导出
+version: 0.0.2
+updated-date: 2026-07-20
+toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、需求文档 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行，HTML 报告 + 可选 Allure 导出
 
 ## Overview
 
-Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全面自动化测试的 ASDM 工具集，与 `web-smoke-tester`（冒烟测试）互补共存。它通过 YAML DSL 用例驱动测试执行，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架实现双框架兼容，提供 HTML 自定义报告 + 可选 Allure 导出，并支持 Jenkins/GitHub Actions CI/CD 集成。
+Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全面自动化测试的独立 ASDM 工具集。它通过 YAML DSL 用例驱动测试执行，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架实现双框架兼容，提供 HTML 自定义报告 + 可选 Allure 导出。
 
-**核心定位**：
+**核心定位**：web-auto-tester 是一个独立的自动化测试工具集，专注于本地环境下的全面功能测试，不与 web-smoke-tester 形成互补关系。
 
 | 维度 | web-smoke-tester | web-auto-tester |
 |------|------------------|-----------------|
@@ -18,7 +18,7 @@ Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全
 | 驱动方式 | 自然语言驱动 | 用例驱动（YAML DSL / AI 生成 / 录制） |
 | 测试框架 | Playwright | Playwright + Selenium |
 | 报告格式 | Markdown 表格 | HTML + 可选 Allure |
-| CI/CD | 不支持 | 支持（Jenkins/GitHub Actions） |
+| CI/CD | 不支持 | 不支持（专注本地执行） |
 
 ## Features
 
@@ -31,7 +31,6 @@ Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全
 - 执行结果结构化存储（AutoTestResult JSON）
 - HTML 自定义报告（卡片式摘要 + 用例详情 + 截图内嵌 + 统计图表）
 - 可选 Allure 格式导出
-- CI/CD 配置一键生成（Jenkins / GitHub Actions）
 - 规范驱动架构，所有引擎行为由 spec 文件定义，AI Agent 按规范执行
 
 ### Feature 1: 需求文档 AI 生成用例（auto-test-generate）
@@ -102,19 +101,7 @@ Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全
 **输入**：结果文件或目录、报告格式
 **输出**：HTML 报告文件路径
 
-### Feature 6: 生成 CI/CD 配置（auto-test-ci）
-
-生成 Jenkins 或 GitHub Actions CI/CD 配置文件。
-
-- Jenkins：Declarative Pipeline（安装→启动→测试→报告→通知）
-- GitHub Actions：checkout→setup-node→playwright-install→test→report-artifact→notify
-- GitLab CI / Azure Pipelines 模板参考
-- 配置文件可直接使用
-
-**输入**：目标平台、用例目录、Node 版本
-**输出**：CI/CD 配置文件
-
-### Feature 7: 清理测试资源（auto-test-clean）
+### Feature 6: 清理测试资源（auto-test-clean）
 
 清理测试工作区中的过期资源。
 
@@ -135,8 +122,7 @@ Once Web Auto Tester is installed, user can use the following commands:
 3. `/auto-test-run`：执行 YAML DSL 测试用例，生成执行结果 JSON
 4. `/auto-test-list`：列出测试用例和执行结果
 5. `/auto-test-report`：生成 HTML 测试报告（可选 Allure 导出）
-6. `/auto-test-ci`：生成 Jenkins/GitHub Actions CI/CD 配置文件
-7. `/auto-test-clean`：清理测试工作区资源
+6. `/auto-test-clean`：清理测试工作区资源
 
 ### 使用方式
 
@@ -170,12 +156,6 @@ Once Web Auto Tester is installed, user can use the following commands:
 /auto-test-report result=results/ format=html
 ```
 
-#### CI/CD 配置
-
-```shell
-/auto-test-ci platform=github-actions nodeVersion=18
-```
-
 #### 清理资源
 
 ```shell
@@ -197,13 +177,11 @@ The Web Auto Tester toolset has the following structure:
 │   ├── auto-test-run.md                          # 执行测试 Action
 │   ├── auto-test-list.md                         # 列出用例与结果 Action
 │   ├── auto-test-report.md                       # 生成报告 Action
-│   ├── auto-test-ci.md                           # CI/CD 配置 Action
 │   └── auto-test-clean.md                        # 清理资源 Action
 └── spec/
     ├── auto-test-dsl-spec.md                     # YAML DSL 用例格式规范
     ├── auto-test-execution-spec.md               # 执行引擎 7 阶段规范
-    ├── auto-test-report-spec.md                  # 报告格式规范
-    └── auto-test-ci-spec.md                      # CI/CD 配置规范
+    └── auto-test-report-spec.md                  # 报告格式规范
 ```
 
 ### Spec Documents
@@ -213,7 +191,6 @@ The toolset uses the following spec documents:
 - **auto-test-dsl-spec.md**：YAML DSL 用例格式规范，定义用例文件结构、Stage/Step、断言类型、框架标记、捕获配置、数据模型
 - **auto-test-execution-spec.md**：执行引擎 7 阶段规范，定义用例加载、上下文准备、执行引擎、断言判定、截图采集、结果记录、报告输出
 - **auto-test-report-spec.md**：HTML 报告格式规范，定义报告模板结构、CSS 样式、Allure 导出流程
-- **auto-test-ci-spec.md**：CI/CD 配置规范，定义 Jenkins/GitHub Actions/GitLab CI/Azure Pipelines 配置模板
 
 ## Toolset Workspace
 
@@ -232,13 +209,9 @@ The Web Auto Tester toolset has the following workspace structure:
 │   ├── report-20260714.html
 │   ├── allure-results/             # Allure 中间数据（可选）
 │   └── ...
-├── screenshots/                    # 截图存储
-│   ├── ATR-20260714-S03-fail.png
-│   ├── ATR-20260714-S05-marked.png
-│   └── ...
-└── ci/                             # CI/CD 配置输出
-    ├── Jenkinsfile
-    ├── .github/workflows/auto-test.yml
+└── screenshots/                    # 截图存储
+    ├── ATR-20260714-S03-fail.png
+    ├── ATR-20260714-S05-marked.png
     └── ...
 ```
 

@@ -8,7 +8,7 @@
 2. 实现最小闭环：手动编写 YAML DSL 用例 → Playwright 执行 → 结果记录 + 失败截图
 3. 扩展用例生成方式：需求文档 AI 生成 + Playwright Codegen 录制
 4. 增强输出能力：HTML 自定义报告 + Allure 导出 + Selenium 辅框架适配
-5. 集成与运维：CI/CD 配置生成 + 清理/列表命令 + Selenium 适配完善
+5. 运维命令：清理/列表命令
 
 ### 前置依赖
 
@@ -29,7 +29,7 @@
 |-------|------|:----:|--------|
 | **P1: 工具集骨架与 DSL 规范** | 1.1 工具集元数据注册与入口文档 | ✅ | manifest.json, README.md, INSTALL.md |
 | | 1.2 YAML DSL 用例格式规范 | ✅ | auto-test-dsl-spec.md |
-| | 1.3 工作区目录结构与命令快捷入口 | ✅ | workspace 目录, 7 个 Follow 文件 |
+| | 1.3 工作区目录结构与命令快捷入口 | ✅ | workspace 目录, 6 个 Follow 文件 |
 | **P2: 手动用例→执行→结果闭环** | 2.1 执行引擎 Action 与 7 阶段规范 | ✅ | auto-test-run.md, execution-spec.md |
 | | 2.2 手动编写用例端到端验证 | ✅ | user-login-test.yaml, admin-login-test.yaml |
 | | 2.3 结果记录与列表命令 | ✅ | auto-test-list.md |
@@ -37,8 +37,7 @@
 | | 3.2 Playwright Codegen 录制用例命令 | ✅ | auto-test-record.md |
 | **P4: 报告与截图增强** | 4.1 HTML 自定义报告生成命令与规范 | ✅ | auto-test-report.md, report-spec.md |
 | | 4.2 Selenium 辅框架适配与双框架执行 | ✅ | execution-spec Selenium 适配章节, admin-login-selenium.yaml |
-| **P5: CI/CD 集成与运维命令** | 5.1 CI/CD 配置生成命令与规范 | ✅ | auto-test-ci.md, ci-spec.md |
-| | 5.2 清理资源命令 | ✅ | auto-test-clean.md |
+| **P5: 运维命令** | 5.1 清理资源命令 | ✅ | auto-test-clean.md |
 
 ---
 
@@ -54,9 +53,9 @@
 
 创建 `web-auto-tester` 工具集的三件入口文件，遵循 `release-note` 工具集的标准格式：
 
-1. **manifest.json**：全局唯一 GUID、registry_id=`web-auto-tester`、name=`Web Auto Tester Toolset`、version=`0.0.1`、configType=`toolset`、commands 数组包含 7 个命令名
-2. **README.md**：Header 元数据（toolset-id/name/version/description）→ Overview → Features（7个命令）→ Workflow → Structure → Spec Documents → Workspace → Copyright
-3. **INSTALL.md**：Overview → 安装步骤（创建工作区目录→检测 AI 引擎可用性→注册 7 个命令→验证）→ Verification → Usage Examples → Notes
+1. **manifest.json**：全局唯一 GUID、registry_id=`web-auto-tester`、name=`Web Auto Tester Toolset`、version=`0.0.2`、configType=`toolset`、commands 数组包含 6 个命令名
+2. **README.md**：Header 元数据（toolset-id/name/version/description）→ Overview → Features（6个命令）→ Workflow → Structure → Spec Documents → Workspace → Copyright
+3. **INSTALL.md**：Overview → 安装步骤（创建工作区目录→检测 AI 引擎可用性→注册 6 个命令→验证）→ Verification → Usage Examples → Notes
 
 #### 交付物
 
@@ -68,7 +67,7 @@
 
 - [ ] **V1.1.1** manifest.json 格式校验通过 → JSON 解析无错、guid 唯一、registry_id 正确
   `cat .asdm/toolsets/web-auto-tester/manifest.json | python -m json.tool`
-- [ ] **V1.1.2** manifest.json commands 字段包含7个命令名 → 数组长度为7且与 action 文件名对应
+- [ ] **V1.1.2** manifest.json commands 字段包含6个命令名 → 数组长度为6且与 action 文件名对应
   `cat .asdm/toolsets/web-auto-tester/manifest.json | python -m json.tool | grep -c "auto-test"`
 - [ ] **V1.1.3** README.md 包含完整章节结构 → Header + Overview + Features + Workflow + Structure + Spec + Workspace
   `grep -c "^##" .asdm/toolsets/web-auto-tester/README.md`
@@ -126,27 +125,25 @@
 | results 目录 | `results/` | 执行结果 JSON 存放 |
 | reports 目录 | `reports/` | HTML 报告存放 |
 | screenshots 目录 | `screenshots/` | 截图文件存放 |
-| ci 目录 | `ci/` | CI/CD 配置输出 |
 | 命令文件格式 | `Follow .asdm/toolsets/web-auto-tester/actions/{action-name}.md` | CodeBuddy 格式 |
 
 #### 交付物
 
-- `.asdm/workspace/auto-test/` 目录结构（含 5 个子目录 + .gitkeep）
+- `.asdm/workspace/auto-test/` 目录结构（含 4 个子目录 + .gitkeep）
 - `.codebuddy/commands/auto-test-generate.md`
 - `.codebuddy/commands/auto-test-record.md`
 - `.codebuddy/commands/auto-test-run.md`
 - `.codebuddy/commands/auto-test-list.md`
 - `.codebuddy/commands/auto-test-report.md`
-- `.codebuddy/commands/auto-test-ci.md`
 - `.codebuddy/commands/auto-test-clean.md`
 
 #### 验证步骤
 
-- [ ] **V1.3.1** 工作区目录5个子目录存在 → cases/results/reports/screenshots/ci 目录均存在
+- [ ] **V1.3.1** 工作区目录4个子目录存在 → cases/results/reports/screenshots 目录均存在
   `ls .asdm/workspace/auto-test/`
-- [ ] **V1.3.2** 每个子目录含 .gitkeep → 5 个 .gitkeep 文件存在
+- [ ] **V1.3.2** 每个子目录含 .gitkeep → 4 个 .gitkeep 文件存在
   `find .asdm/workspace/auto-test -name ".gitkeep" | wc -l`
-- [ ] **V1.3.3** 7个命令快捷入口文件存在 → auto-test-generate/record/run/list/report/ci/clean
+- [ ] **V1.3.3** 6个命令快捷入口文件存在 → auto-test-generate/record/run/list/report/clean
   `ls .codebuddy/commands/auto-test-*.md | wc -l`
 - [ ] **V1.3.4** 每个命令文件内容为 Follow 指向 → 格式正确且路径指向 web-auto-tester/actions/
   `head -1 .codebuddy/commands/auto-test-run.md`
@@ -444,57 +441,13 @@
 
 ---
 
-## Phase 5: CI/CD 集成与运维命令
+## Phase 5: 运维命令
 
 ### 目标
 
-完成 CI/CD 配置生成和运维管理命令，使工具集功能完整闭环。用户可一键生成 Jenkins/GitHub Actions 配置，并可通过清理命令管理工作区。
+完成运维管理命令，使工具集功能完整闭环。用户可通过清理命令管理工作区。
 
-### 任务 5.1: CI/CD 配置生成命令与规范
-
-#### 核心逻辑
-
-创建 `/auto-test-ci` 命令的 Action 文件和 CI/CD 配置生成规范：
-
-1. **auto-test-ci.md（Action 文件）**：Metadata + Purpose + Context Injection + Steps：
-   - Step 1：根据 platform 参数选择配置模板
-   - Step 2：填充项目信息（用例路径、Node 版本、浏览器安装）
-   - Step 3：生成 Jenkins/GitHub Actions 配置文件（可直接使用）
-   - Step 4：其他平台（GitLab CI/Azure Pipelines）提供模板参考文档
-   - Step 5：保存配置文件到 ci/ 目录或项目对应位置
-
-2. **auto-test-ci-spec.md（Spec 文件）**：定义 CI/CD 配置生成的完整规范：
-   - Jenkins 配置模板（Declarative Pipeline：安装→启动→测试→报告→通知）
-   - GitHub Actions 配置模板（checkout→setup-node→playwright-install→test→report-artifact→notify）
-   - GitLab CI 模板参考
-   - Azure Pipelines 模板参考
-   - 各平台的关键配置要点（Playwright 安装、报告归档、失败通知）
-
-#### 交付物
-
-- `.asdm/toolsets/web-auto-tester/actions/auto-test-ci.md`
-- `.asdm/toolsets/web-auto-tester/spec/auto-test-ci-spec.md`
-
-#### 验证步骤
-
-- [ ] **V5.1.1** auto-test-ci.md Action 文件存在且格式完整 → Metadata + Steps + Output
-  `grep -c "^##" .asdm/toolsets/web-auto-tester/actions/auto-test-ci.md`
-- [ ] **V5.1.2** ci-spec 包含 Jenkins 配置模板 → Declarative Pipeline 完整流程
-  `grep "Jenkinsfile" .asdm/toolsets/web-auto-tester/spec/auto-test-ci-spec.md`
-- [ ] **V5.1.3** ci-spec 包含 GitHub Actions 配置模板 → checkout→setup→test→report→notify
-  `grep "github/workflows" .asdm/toolsets/web-auto-tester/spec/auto-test-ci-spec.md`
-- [ ] **V5.1.4** ci-spec 包含 GitLab CI 和 Azure Pipelines 模板参考 → 4 个平台全覆盖
-  `grep "GitLab" .asdm/toolsets/web-auto-tester/spec/auto-test-ci-spec.md`
-- [ ] **V5.1.5** 执行 `/auto-test-ci platform=github-actions` → 生成 workflow YAML 文件
-  （手动验证：执行命令后检查生成的 YAML）
-- [ ] **V5.1.6** 执行 `/auto-test-ci platform=jenkins` → 生成 Jenkinsfile
-  （手动验证：执行命令后检查生成的 Jenkinsfile）
-- [ ] **V5.1.7** Jenkinsfile 包含 Playwright 安装阶段 → npx playwright install
-  `grep "playwright install" .asdm/workspace/auto-test/ci/Jenkinsfile`
-
----
-
-### 任务 5.2: 清理资源命令
+### 任务 5.1: 清理资源命令
 
 #### 核心逻辑
 
@@ -513,15 +466,15 @@
 
 #### 验证步骤
 
-- [ ] **V5.2.1** auto-test-clean.md Action 文件存在且格式完整 → Metadata + Steps + Output
+- [ ] **V5.1.1** auto-test-clean.md Action 文件存在且格式完整 → Metadata + Steps + Output
   `grep -c "^##" .asdm/toolsets/web-auto-tester/actions/auto-test-clean.md`
-- [ ] **V5.2.2** Action 定义4种清理范围 → results/reports/screenshots/all
+- [ ] **V5.1.2** Action 定义4种清理范围 → results/reports/screenshots/all
   `grep "scope" .asdm/toolsets/web-auto-tester/actions/auto-test-clean.md`
-- [ ] **V5.2.3** Action 定义确认机制 → 清理前列出文件数量和大小
+- [ ] **V5.1.3** Action 定义确认机制 → 清理前列出文件数量和大小
   `grep "确认" .asdm/toolsets/web-auto-tester/actions/auto-test-clean.md`
-- [ ] **V5.2.4** Action 定义保留目录结构 → 不删除子目录和 .gitkeep
+- [ ] **V5.1.4** Action 定义保留目录结构 → 不删除子目录和 .gitkeep
   `grep ".gitkeep" .asdm/toolsets/web-auto-tester/actions/auto-test-clean.md`
-- [ ] **V5.2.5** 执行 `/auto-test-clean scope=results` → results/ 目录下文件被清空但目录保留
+- [ ] **V5.1.5** 执行 `/auto-test-clean scope=results` → results/ 目录下文件被清空但目录保留
   （手动验证：执行命令后检查目录状态）
 
 ---
@@ -538,8 +491,7 @@
 8. **P3 任务 3.2**：录制生成命令 → 扩展生成方式
 9. **P4 任务 4.1**：报告命令 + Spec → 可视化输出
 10. **P4 任务 4.2**：Selenium 适配 → 双框架能力
-11. **P5 任务 5.1**：CI/CD 命令 + Spec → 集成能力
-12. **P5 任务 5.2**：清理命令 → 运维完善
+11. **P5 任务 5.1**：清理命令 → 运维完善
 
 ---
 
@@ -565,13 +517,11 @@
 | `.asdm/toolsets/web-auto-tester/spec/auto-test-dsl-spec.md` | P1 | YAML DSL 用例格式规范 |
 | `.asdm/toolsets/web-auto-tester/spec/auto-test-execution-spec.md` | P2, P4 | 执行引擎规范 + Selenium 适配 |
 | `.asdm/toolsets/web-auto-tester/spec/auto-test-report-spec.md` | P4 | 报告格式规范 |
-| `.asdm/toolsets/web-auto-tester/spec/auto-test-ci-spec.md` | P5 | CI/CD 配置规范 |
 | `.asdm/toolsets/web-auto-tester/actions/auto-test-run.md` | P2 | 执行测试 Action |
 | `.asdm/toolsets/web-auto-tester/actions/auto-test-list.md` | P2 | 列出结果 Action |
 | `.asdm/toolsets/web-auto-tester/actions/auto-test-generate.md` | P3 | AI 生成用例 Action |
 | `.asdm/toolsets/web-auto-tester/actions/auto-test-record.md` | P3 | 录制用例 Action |
 | `.asdm/toolsets/web-auto-tester/actions/auto-test-report.md` | P4 | 报告生成 Action |
-| `.asdm/toolsets/web-auto-tester/actions/auto-test-ci.md` | P5 | CI/CD 配置 Action |
 | `.asdm/toolsets/web-auto-tester/actions/auto-test-clean.md` | P5 | 清理资源 Action |
-| `.codebuddy/commands/auto-test-*.md` | P1 | 7个命令快捷入口 |
+| `.codebuddy/commands/auto-test-*.md` | P1 | 6个命令快捷入口 |
 | `.asdm/workspace/auto-test/` | P1, P2 | 工作区目录 + 示例用例 |

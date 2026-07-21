@@ -4,7 +4,7 @@
 
 ## Overview
 
-本文档提供了 Web Auto Tester 工具集的安装和设置说明。该工具集通过 YAML DSL 用例驱动 Web 系统自动化测试，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架，提供 HTML 报告和 CI/CD 集成能力。
+本文档提供了 Web Auto Tester 工具集的安装和设置说明。该工具集通过 YAML DSL 用例驱动 Web 系统自动化测试，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架，提供 HTML 报告能力。本工具集为独立工具集，不与 web-smoke-tester 形成互补关系，不提供 CI/CD 集成功能。
 
 ## AI Guided Installation
 
@@ -25,14 +25,12 @@ mkdir -p .asdm/workspace/auto-test/cases
 mkdir -p .asdm/workspace/auto-test/results
 mkdir -p .asdm/workspace/auto-test/reports
 mkdir -p .asdm/workspace/auto-test/screenshots
-mkdir -p .asdm/workspace/auto-test/ci
 
 # 创建 .gitkeep 保持目录结构
 touch .asdm/workspace/auto-test/cases/.gitkeep
 touch .asdm/workspace/auto-test/results/.gitkeep
 touch .asdm/workspace/auto-test/reports/.gitkeep
 touch .asdm/workspace/auto-test/screenshots/.gitkeep
-touch .asdm/workspace/auto-test/ci/.gitkeep
 ```
 
 ### 2. Detect the current `Agentic Engine` provider
@@ -104,16 +102,6 @@ argument-hint: "[result] [format=html]"
 
 EOF
 cat .asdm/toolsets/web-auto-tester/actions/auto-test-report.md >> .claude/commands/auto-test-report.md
-
-# CI/CD 配置
-cat > .claude/commands/auto-test-ci.md << 'EOF'
----
-description: "生成 Jenkins/GitHub Actions CI/CD 配置文件"
-argument-hint: "[platform] [nodeVersion=18]"
----
-
-EOF
-cat .asdm/toolsets/web-auto-tester/actions/auto-test-ci.md >> .claude/commands/auto-test-ci.md
 
 # 清理资源
 cat > .claude/commands/auto-test-clean.md << 'EOF'
@@ -188,17 +176,6 @@ argument-hint: '[result] [format=html]'
 EOF
 cat .asdm/toolsets/web-auto-tester/actions/auto-test-report.md >> .github/prompts/auto-test-report.prompt.md
 
-# CI/CD 配置
-cat > .github/prompts/auto-test-ci.prompt.md << 'EOF'
----
-agent: 'agent'
-description: '生成 Jenkins/GitHub Actions CI/CD 配置文件'
-argument-hint: '[platform] [nodeVersion=18]'
----
-
-EOF
-cat .asdm/toolsets/web-auto-tester/actions/auto-test-ci.md >> .github/prompts/auto-test-ci.prompt.md
-
 # 清理资源
 cat > .github/prompts/auto-test-clean.prompt.md << 'EOF'
 ---
@@ -224,7 +201,6 @@ cp .asdm/toolsets/web-auto-tester/actions/auto-test-record.md .codebuddy/command
 cp .asdm/toolsets/web-auto-tester/actions/auto-test-run.md .codebuddy/commands/
 cp .asdm/toolsets/web-auto-tester/actions/auto-test-list.md .codebuddy/commands/
 cp .asdm/toolsets/web-auto-tester/actions/auto-test-report.md .codebuddy/commands/
-cp .asdm/toolsets/web-auto-tester/actions/auto-test-ci.md .codebuddy/commands/
 cp .asdm/toolsets/web-auto-tester/actions/auto-test-clean.md .codebuddy/commands/
 ```
 
@@ -248,7 +224,6 @@ cp .asdm/toolsets/web-auto-tester/actions/auto-test-clean.md .codebuddy/commands
    - 执行测试：`auto-test-run.md`
    - 列出用例与结果：`auto-test-list.md`
    - 生成报告：`auto-test-report.md`
-   - CI/CD 配置：`auto-test-ci.md`
    - 清理资源：`auto-test-clean.md`
 
 3. **在 AI 编码助手中输入提示**：
@@ -284,8 +259,7 @@ Follow the instructions in .asdm/toolsets/web-auto-tester/actions/auto-test-run.
 3. **`/auto-test-run`** - 执行 YAML DSL 测试用例
 4. **`/auto-test-list`** - 列出测试用例和执行结果
 5. **`/auto-test-report`** - 生成 HTML 测试报告
-6. **`/auto-test-ci`** - 生成 Jenkins/GitHub Actions CI/CD 配置文件
-7. **`/auto-test-clean`** - 清理测试工作区资源
+6. **`/auto-test-clean`** - 清理测试工作区资源
 
 ## Toolset Structure
 
@@ -296,8 +270,7 @@ Follow the instructions in .asdm/toolsets/web-auto-tester/actions/auto-test-run.
 ├── cases/          # 测试用例存储
 ├── results/        # 执行结果存储
 ├── reports/        # HTML 测试报告
-├── screenshots/    # 截图存储
-└── ci/             # CI/CD 配置输出
+└── screenshots/    # 截图存储
 ```
 
 ## Spec Documents
@@ -307,15 +280,14 @@ Follow the instructions in .asdm/toolsets/web-auto-tester/actions/auto-test-run.
 1. **`auto-test-dsl-spec.md`** - YAML DSL 用例格式规范
 2. **`auto-test-execution-spec.md`** - 执行引擎 7 阶段规范
 3. **`auto-test-report-spec.md`** - 报告格式规范
-4. **`auto-test-ci-spec.md`** - CI/CD 配置规范
 
 ## Verification
 
 安装完成后，请验证：
 
-1. `.asdm/workspace/auto-test/` 目录及其 5 个子目录已创建（cases/results/reports/screenshots/ci）
+1. `.asdm/workspace/auto-test/` 目录及其 4 个子目录已创建（cases/results/reports/screenshots）
 2. 每个子目录含 `.gitkeep` 文件
-3. Web Auto Tester（toolset ID: `web-auto-tester`）的 7 个快捷命令已在对应的提供商目录中创建
+3. Web Auto Tester（toolset ID: `web-auto-tester`）的 6 个快捷命令已在对应的提供商目录中创建
 4. Web Auto Tester 工具集文件位于 `.asdm/toolsets/web-auto-tester/`
 
 **验证命令**：
@@ -375,13 +347,7 @@ ls .codebuddy/commands/auto-test-*.md | wc -l
 /auto-test-report format=html
 ```
 
-### Example 8: 生成 GitHub Actions 配置
-
-```shell
-/auto-test-ci platform=github-actions nodeVersion=18
-```
-
-### Example 9: 清理结果和截图
+### Example 8: 清理结果和截图
 
 ```shell
 /auto-test-clean scope=all confirm=true
@@ -398,7 +364,6 @@ ls .codebuddy/commands/auto-test-*.md | wc -l
 - `/auto-test-run`：执行自动化测试
 - `/auto-test-list`：列出用例与结果
 - `/auto-test-report`：生成 HTML 报告
-- `/auto-test-ci`：生成 CI/CD 配置
 - `/auto-test-clean`：清理测试资源
 
 ### For Other Providers (Manual Usage)
@@ -417,12 +382,12 @@ ls .codebuddy/commands/auto-test-*.md | wc -l
 
 ## Integration with Other Toolsets
 
-Web Auto Tester 与 `web-smoke-tester` 互补共存：
+Web Auto Tester 是一个**独立**的工具集，与 `web-smoke-tester` 不形成互补关系：
 
-- `web-smoke-tester`：冒烟测试（P0/P1 快速验证），自然语言驱动
-- `web-auto-tester`：全面功能测试（全场景覆盖），用例驱动
+- `web-smoke-tester`：冒烟测试（P0/P1 快速验证），自然语言驱动，独立运行
+- `web-auto-tester`：全面功能测试（全场景覆盖），用例驱动，独立运行
 
-YAML DSL 格式与 smoke-tester Pipeline YAML 风格一致，数据模型继承 smoke-tester 的 ID 生成规则和断言分类骨架。
+两者定位不同，各自独立使用和演进。YAML DSL 格式与 smoke-tester Pipeline YAML 风格一致，数据模型继承 smoke-tester 的 ID 生成规则和断言分类骨架。
 
 ### Getting Help
 

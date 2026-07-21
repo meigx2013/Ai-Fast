@@ -12,7 +12,7 @@
     "guid": "a1b2c3d4-e5f6-4789-abcd-ef0123456789",
     "id": "web-auto-tester",
     "name": "Web Auto Tester Toolset",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   "scenario": "auto-test-cleanup"
 }
@@ -131,9 +131,8 @@
 确保清理后目录结构完整保留：
 
 1. **不删除的项**：
-   - 目录本身（results/, reports/, screenshots/, ci/, cases/）
+   - 目录本身（results/, reports/, screenshots/, cases/）
    - `.gitkeep` 文件（所有子目录的 .gitkeep）
-   - `ci/` 目录及其内容（CI/CD 配置文件不属于清理范围）
    - `cases/` 目录及其内容（测试用例文件不属于清理范围）
 
 2. **清理后目录状态**：
@@ -154,9 +153,6 @@
 │       └── .gitkeep
 ├── screenshots/    ← 清理后仅保留 .gitkeep
 │   └── .gitkeep
-└── ci/             ← 不清理（保留 CI 配置文件）
-    ├── .gitkeep
-    └── ...
 ```
 
 3. **目录完整性检查**：
@@ -181,7 +177,6 @@
 - ✅ 目录结构完整保留
 - ✅ .gitkeep 文件保留
 - ✅ cases/ 用例文件未受影响
-- ✅ ci/ 配置文件未受影响
 ```
 
 2. 输出结构化 JSON：
@@ -199,10 +194,9 @@
   "total_deleted": 16,
   "total_freed_kb": 1454.5,
   "preserved": {
-    "directories": ["cases", "results", "reports", "screenshots", "ci"],
-    "gitkeep_files": 5,
-    "cases_dir_intact": true,
-    "ci_dir_intact": true
+    "directories": ["cases", "results", "reports", "screenshots"],
+    "gitkeep_files": 4,
+    "cases_dir_intact": true
   },
   "timestamp": "ISO 8601 datetime"
 }
@@ -224,7 +218,6 @@
 - `.gitkeep` 文件
 - 目录本身（仅删除目录内的文件）
 - `cases/` 目录及其内容（测试用例）
-- `ci/` 目录及其内容（CI/CD 配置）
 - YAML 用例文件（*.yaml）
 
 ### 错误处理
@@ -289,7 +282,6 @@
 
 **未受影响**：
 - ✅ cases/ 目录（{casesCount} 个用例）
-- ✅ ci/ 目录（{ciCount} 个配置）
 ```
 
 ### 交互式确认提示

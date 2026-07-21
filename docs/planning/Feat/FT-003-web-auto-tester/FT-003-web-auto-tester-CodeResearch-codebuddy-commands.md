@@ -76,7 +76,6 @@ AI 每次执行斜杠命令时实时读取 action 文件，确保使用最新版
 | auto-test-run.md | `.asdm/toolsets/web-auto-tester/actions/auto-test-run.md` |
 | auto-test-list.md | `.asdm/toolsets/web-auto-tester/actions/auto-test-list.md` |
 | auto-test-report.md | `.asdm/toolsets/web-auto-tester/actions/auto-test-report.md` |
-| auto-test-ci.md | `.asdm/toolsets/web-auto-tester/actions/auto-test-ci.md` |
 | auto-test-clean.md | `.asdm/toolsets/web-auto-tester/actions/auto-test-clean.md` |
 
 ---
