@@ -66,9 +66,10 @@
 | Submodule | 技术栈 | 构建工具 | 路径 | 说明 |
 |-----------|--------|----------|------|------|
 | asdm-admin | Java 17+ / Spring Boot | Maven | `./asdm-admin` | 后端主服务 |
+| asdm-portal | Vue 3 / TypeScript / Vite | npm (vite build) | `./asdm-portal` | 用户门户前端 |
 | asdm-agentorbit | TypeScript / Node.js 18+ | pnpm monorepo | `./asdm-agentorbit` | AgentOrbit 前端+后端 |
 | asdm-cli | TypeScript / Node.js | npm (tsc) | `./asdm-cli/asdm-bootstrapper-cli` | CLI 工具 |
-| asdm-mcp-server | TypeScript / Node.js 16+ (ESM) | npm (tsc) | `./asdm-mcp-server` | MCP 服务器 |
+| asdm-mcp-server-hosted | TypeScript / Node.js 16+ (ESM) | npm (tsc) | `./asdm-mcp-server-hosted` | MCP 托管服务器 |
 | asdm-docs | TypeScript / React 18 / Vite | npm (vite build) | `./asdm-docs` | 文档站 |
 
 ## Steps to Generate Release Note
@@ -154,9 +155,10 @@ git submodule status
 或直接使用以下 Submodule 列表（从 `.gitmodules` 获取）：
 
 - `asdm-admin`
+- `asdm-portal`
 - `asdm-agentorbit`
 - `asdm-cli`
-- `asdm-mcp-server`
+- `asdm-mcp-server-hosted`
 - `asdm-docs`
 
 如果用户指定了特定 Submodule，仅扫描指定的。
@@ -174,7 +176,7 @@ test -d <workspace-root>/<submodule-path>/.git && echo "INITIALIZED" || echo "NO
 **遍历检查所有 Submodule**：
 
 ```bash
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   if test -d <workspace-root>/${submodule}/.git; then
     echo "${submodule}: INITIALIZED"
   else
@@ -203,7 +205,7 @@ git config --file <workspace-root>/.gitmodules --get submodule.<submodule-path>.
 
 ```bash
 # 逐个克隆未初始化的 Submodule
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   if [ ! -d <workspace-root>/${submodule}/.git ]; then
     remote_url=$(git config --file <workspace-root>/.gitmodules --get submodule.${submodule}.url)
     echo "Cloning ${submodule} from ${remote_url} ..."
@@ -236,9 +238,10 @@ cd <workspace-root>/<submodule-path> && git log --oneline --no-merges <from-tag>
 | Submodule | 远程 URL |
 |-----------|---------|
 | asdm-admin | `git@ssh.dev.azure.com:v3/leansoftx/ASDM/asdm-admin` |
+| asdm-portal | `git@ssh.dev.azure.com:v3/leansoftx/ASDM/asdm-portal` |
 | asdm-agentorbit | `git@ssh.dev.azure.com:v3/leansoftx/ASDM/asdm-agentorbit` |
 | asdm-cli | `git@ssh.dev.azure.com:v3/leansoftx/ASDM/asdm-cli` |
-| asdm-mcp-server | `git@ssh.dev.azure.com:v3/leansoftx/ASDM/asdm-mcp-server` |
+| asdm-mcp-server-hosted | `git@ssh.dev.azure.com:v3/leansoftx/ASDM/asdm-mcp-server-hosted` |
 | asdm-docs | `git@ssh.dev.azure.com:v3/leansoftx/ASDM/asdm-docs` |
 
 > **重要**：上表为当前快照，AI 模型应优先通过 `git config --file .gitmodules` 动态获取最新 URL，仅当命令不可用时才使用此表作为回退。
@@ -266,7 +269,7 @@ cd <workspace-root>/<submodule-path> && git branch -r --list origin/<target-bran
 ```bash
 TARGET_BRANCH="${target-branch:-release}"  # 默认 release
 
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   SUBMODULE_PATH="<workspace-root>/${submodule}"
 
   if [ ! -d "${SUBMODULE_PATH}/.git" ]; then
@@ -355,7 +358,7 @@ git diff $(git log -1 --format=%H --before="<from-date>" <target-branch>)..$(git
 完整的 Submodule 遍历列表（与步骤 3.2 一致）：
 
 ```text
-asdm-admin, asdm-agentorbit, asdm-cli, asdm-mcp-server, asdm-docs
+asdm-admin, asdm-portal, asdm-agentorbit, asdm-cli, asdm-mcp-server-hosted, asdm-docs
 ```
 
 根据步骤 3.2b 的处理结果，所有 Submodule（无论是本地已初始化还是通过 `--no-checkout` 克隆）均已在子模块路径下可用，命令统一。根据步骤 3.2c 的分支检查结果，对于目标分支不存在的 Submodule，**跳过**该 Submodule 并在步骤 3.6 中标注。
@@ -376,7 +379,7 @@ cd <workspace-root>/<submodule-path> && git log <target-branch> --oneline --no-m
 
 ```bash
 # Tag 范围
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   echo "=== ${submodule} ==="
   cd <workspace-root>/${submodule} && git log --oneline --no-merges <from-tag>..<to-tag>
 done
@@ -384,7 +387,7 @@ done
 # 时间段范围
 TARGET_BRANCH="${target-branch:-release}"
 
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   echo "=== ${submodule} ==="
   cd <workspace-root>/${submodule} && git log ${TARGET_BRANCH} --oneline --no-merges --since="<from-date>" --until="<to-date>"
 done
@@ -418,7 +421,7 @@ cd <workspace-root>/<submodule-path> && git diff --stat $(git log -1 --format=%H
 
 ```bash
 # Tag 范围
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   echo "=== ${submodule} ==="
   cd <workspace-root>/${submodule} && git diff --stat <from-tag>..<to-tag>
 done
@@ -426,7 +429,7 @@ done
 # 时间段范围
 TARGET_BRANCH="${target-branch:-release}"
 
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   echo "=== ${submodule} ==="
   cd <workspace-root>/${submodule} && git diff --stat $(git log -1 --format=%H --before="<from-date>" ${TARGET_BRANCH})..$(git log -1 --format=%H --before="<to-date>" ${TARGET_BRANCH})
 done
@@ -464,7 +467,7 @@ cd <workspace-root>/<submodule-path> && git diff $(git log -1 --format=%H --befo
 
 ```bash
 # Tag 范围
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   echo "=== ${submodule} ==="
   cd <workspace-root>/${submodule} && git diff <from-tag>..<to-tag>
 done
@@ -472,7 +475,7 @@ done
 # 时间段范围
 TARGET_BRANCH="${target-branch:-release}"
 
-for submodule in asdm-admin asdm-agentorbit asdm-cli asdm-mcp-server asdm-docs; do
+for submodule in asdm-admin asdm-portal asdm-agentorbit asdm-cli asdm-mcp-server-hosted asdm-docs; do
   echo "=== ${submodule} ==="
   cd <workspace-root>/${submodule} && git diff $(git log -1 --format=%H --before="<from-date>" ${TARGET_BRANCH})..$(git log -1 --format=%H --before="<to-date>" ${TARGET_BRANCH})
 done
@@ -496,9 +499,10 @@ done
 | Submodule | 提交数 | 变更文件数 | 新增行数 | 删除行数 | 是否有变更 |
 |-----------|--------|-----------|---------|---------|-----------|
 | asdm-admin | <数量> | <数量> | <数量> | <数量> | ✅/— |
+| asdm-portal | <数量> | <数量> | <数量> | <数量> | ✅/— |
 | asdm-agentorbit | <数量> | <数量> | <数量> | <数量> | ✅/— |
 | asdm-cli | <数量> | <数量> | <数量> | <数量> | ✅/— |
-| asdm-mcp-server | <数量> | <数量> | <数量> | <数量> | ✅/— |
+| asdm-mcp-server-hosted | <数量> | <数量> | <数量> | <数量> | ✅/— |
 | asdm-docs | <数量> | <数量> | <数量> | <数量> | ✅/— |
 
 ### 4. 读取缺陷和用户故事清单
@@ -534,9 +538,10 @@ done
 | Submodule | 主要关联功能模块 | 映射依据 |
 |-----------|-----------------|----------|
 | asdm-admin | 认证与用户管理(1)、组织管理(2)、项目管理(3)、资源库管理(4)、工作区管理(5)、流水线集成(6)、制品与历史记录(7)、集成与工具链(8)、系统设置(9)、API集成能力(10)、仪表盘(11)、MCP Hosting(13)、AgentOrbit集成(15) | 后端服务覆盖大部分业务模块 |
+| asdm-portal | 认证与用户管理(1)、仪表盘(11) | 用户门户前端 |
 | asdm-agentorbit | AgentOrbit集成(15)、工作区管理(5) | AgentOrbit 前端+后端 |
 | asdm-cli | CLI工具(12) | CLI 命令行工具 |
-| asdm-mcp-server | ASDM MCP服务器(14)、API集成能力(10) | MCP 服务器 |
+| asdm-mcp-server-hosted | ASDM MCP服务器(14)、API集成能力(10) | MCP 托管服务器 |
 | asdm-docs | — | 文档站，非核心功能模块 |
 
 **注意**：以上映射仅为初始参考，AI 模型应结合实际代码变更内容和功能模块列表进行智能映射。具体变更可能涉及多个模块，例如：
