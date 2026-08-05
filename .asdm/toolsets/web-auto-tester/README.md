@@ -10,21 +10,13 @@ toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例
 
 Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全面自动化测试的独立 ASDM 工具集。它通过 YAML DSL 用例驱动测试执行，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架实现双框架兼容，提供 HTML 自定义报告 + 可选 Allure 导出。
 
-**核心定位**：web-auto-tester 是一个独立的自动化测试工具集，专注于本地环境下的全面功能测试，不与 web-smoke-tester 形成互补关系。
-
-| 维度 | web-smoke-tester | web-auto-tester |
-|------|------------------|-----------------|
-| 测试级别 | 冒烟测试（P0/P1 快速验证） | 全面功能测试（全场景覆盖） |
-| 驱动方式 | 自然语言驱动 | 用例驱动（YAML DSL / AI 生成 / 录制） |
-| 测试框架 | Playwright | Playwright + Selenium |
-| 报告格式 | Markdown 表格 | HTML + 可选 Allure |
-| CI/CD | 不支持 | 不支持（专注本地执行） |
+**核心定位**：web-auto-tester 是一个独立的自动化测试工具集，专注于本地环境下的全面功能测试。
 
 ## Features
 
 ### Common features
 
-- YAML DSL 用例格式，与 smoke-tester Pipeline YAML 风格一致
+- YAML DSL 用例格式
 - Playwright 主框架完整支持 + Selenium 辅框架基础兼容
 - 8 种断言类型（A1~A8），覆盖页面可见、跳转、元素状态、内容匹配、API 响应、表单值、元素数量、截图比对
 - 3 种截图策略（on-fail / full / always），失败步骤自动截图

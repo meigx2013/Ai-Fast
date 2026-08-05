@@ -18,16 +18,6 @@
 | **工作目录** | `.asdm/workspace/auto-test/` |
 | **语言** | 中文（简体中文） |
 
-### 与 web-smoke-tester 的区别
-
-| 维度 | web-smoke-tester | web-auto-tester |
-|------|------------------|-----------------|
-| 测试级别 | 冒烟测试（P0/P1 快速验证） | 全面功能测试（全场景覆盖） |
-| 驱动方式 | 自然语言驱动 | 用例驱动（YAML DSL / AI 生成 / 录制） |
-| 测试框架 | Playwright | Playwright + Selenium |
-| 报告格式 | Markdown 表格 | HTML + 可选 Allure |
-| CI/CD | 不支持 | 不支持（专注本地执行） |
-
 ---
 
 ## 二、6 个斜杠命令速查表
