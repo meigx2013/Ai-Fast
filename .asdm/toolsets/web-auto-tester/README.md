@@ -4,11 +4,11 @@ toolset-id: web-auto-tester
 toolset-name: Web Auto Tester Toolset
 version: 0.0.2
 updated-date: 2026-07-20
-toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、需求文档 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行，HTML 报告 + 可选 Allure 导出
+toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、测试用例描述 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行，HTML 报告 + 可选 Allure 导出
 
 ## Overview
 
-Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全面自动化测试的独立 ASDM 工具集。它通过 YAML DSL 用例驱动测试执行，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架实现双框架兼容，提供 HTML 自定义报告 + 可选 Allure 导出。
+Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全面自动化测试的独立 ASDM 工具集。它通过 YAML DSL 用例驱动测试执行，支持三种用例生成方式（测试用例描述 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架实现双框架兼容，提供 HTML 自定义报告 + 可选 Allure 导出。
 
 **核心定位**：web-auto-tester 是一个独立的自动化测试工具集，专注于本地环境下的全面功能测试。
 
@@ -25,18 +25,20 @@ Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全
 - 可选 Allure 格式导出
 - 规范驱动架构，所有引擎行为由 spec 文件定义，AI Agent 按规范执行
 
-### Feature 1: 需求文档 AI 生成用例（auto-test-generate）
+### Feature 1: 测试用例描述 AI 生成用例（auto-test-generate）
 
-从 Markdown 需求文档（PRD/用户故事）自动生成 YAML DSL 测试用例。
+根据用户提供的测试用例描述自动生成 YAML DSL 测试用例，支持三种输入方式。
 
-- 解析 Markdown 文档，提取功能描述和验收标准
-- 为每个功能点生成 1-N 个测试场景（正向/逆向/边界值）
-- 转换为 YAML DSL stages/steps 结构
-- 自动推断断言（基于验收标准）
+- 支持自然语言描述、结构化步骤描述、Markdown 测试文档三种输入格式
+- 自动解析操作步骤、UI 元素、输入值和验证点
+- 为每个用例生成正向/逆向/边界值测试场景
+- 自动推断选择器（基于 UI 元素描述和位置信息）
+- 自动推断断言（基于操作类型和验证点）
+- 支持数据参数化（`dataParam=true` 时提取输入值为参数变量）
 - 标记框架偏好和截图配置
 - 输出 YAML 文件并提示用户审核
 
-**输入**：Markdown 需求文档内容或路径、框架偏好、输出目录
+**输入**：测试用例描述内容或文件路径、框架偏好、输出目录、覆盖深度、数据参数化开关
 **输出**：YAML DSL 用例文件列表
 
 ### Feature 2: 录制操作生成用例（auto-test-record）
@@ -109,7 +111,7 @@ Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全
 
 Once Web Auto Tester is installed, user can use the following commands:
 
-1. `/auto-test-generate`：从 Markdown 需求文档自动生成 YAML DSL 测试用例
+1. `/auto-test-generate`：根据测试用例描述自动生成 YAML DSL 测试用例
 2. `/auto-test-record`：通过 Playwright Codegen 录制操作生成 YAML DSL 测试用例
 3. `/auto-test-run`：执行 YAML DSL 测试用例，生成执行结果 JSON
 4. `/auto-test-list`：列出测试用例和执行结果
@@ -118,10 +120,16 @@ Once Web Auto Tester is installed, user can use the following commands:
 
 ### 使用方式
 
-#### 生成用例：需求文档
+#### 生成用例：测试用例描述
 
 ```shell
-/auto-test-generate document=docs/PRD.md framework=playwright
+/auto-test-generate description="1. 浏览器地址栏输入：https://platform-dt02.asdm.ai/ 2. 点击【登录】 3. 输入邮箱：admin@test.com 4. 输入密码：pass123 5. 点击【登录】按钮"
+```
+
+#### 生成用例：Markdown 文件
+
+```shell
+/auto-test-generate description=docs/test-cases/login-test.md
 ```
 
 #### 生成用例：录制操作
@@ -164,7 +172,7 @@ The Web Auto Tester toolset has the following structure:
 ├── README.md                                     # 入口文档
 ├── manifest.json                                 # 工具集元数据注册
 ├── actions/
-│   ├── auto-test-generate.md                     # 需求文档生成用例 Action
+│   ├── auto-test-generate.md                     # 测试用例描述生成用例 Action
 │   ├── auto-test-record.md                       # 录制生成用例 Action
 │   ├── auto-test-run.md                          # 执行测试 Action
 │   ├── auto-test-list.md                         # 列出用例与结果 Action

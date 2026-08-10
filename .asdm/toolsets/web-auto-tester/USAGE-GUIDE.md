@@ -24,7 +24,7 @@
 
 | 命令 | 用途 | 快捷入口 |
 |------|------|----------|
-| `/auto-test-generate` | 从需求文档 AI 自动生成 YAML DSL 测试用例 | `.codebuddy/commands/auto-test-generate.md` |
+| `/auto-test-generate` | 根据测试用例描述 AI 自动生成 YAML DSL 测试用例 | `.codebuddy/commands/auto-test-generate.md` |
 | `/auto-test-record` | 通过 Playwright Codegen 录制操作生成 YAML DSL 用例 | `.codebuddy/commands/auto-test-record.md` |
 | `/auto-test-run` | 执行 YAML DSL 测试用例，生成执行结果 JSON | `.codebuddy/commands/auto-test-run.md` |
 | `/auto-test-list` | 列出测试用例和执行结果 | `.codebuddy/commands/auto-test-list.md` |
@@ -37,85 +37,107 @@
 
 ### 3.1 `/auto-test-generate` — AI 生成测试用例
 
-**用途**：从 Markdown 需求文档（PRD/用户故事）自动生成 YAML DSL 测试用例，覆盖正向/逆向/边界值场景。
+**用途**：根据用户提供的测试用例描述自动生成 YAML DSL 测试用例，支持自然语言描述、结构化步骤描述、Markdown 测试文档三种输入方式，覆盖正向/逆向/边界值场景。
 
 **参数说明**：
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|:----:|------|
-| `document` | string | ✅ | Markdown 文档内容或文件路径 |
+| `description` | string | ✅ | 测试用例描述内容或文件路径（支持自然语言、结构化步骤、Markdown 文档） |
 | `framework` | string | ❌ | 框架偏好，默认 `playwright` |
 | `outputDir` | string | ❌ | 输出目录，默认 `.asdm/workspace/auto-test/cases/` |
 | `coverage` | string | ❌ | 覆盖深度：`min` / `standard`（默认）/ `deep` |
+| `dataParam` | string | ❌ | 数据参数化开关：`true` / `false`（默认） |
 
 **执行流程（6 步）**：
 
-1. **读取与解析需求文档** — 提取功能描述、验收标准、用户交互流程、业务规则、数据要求
-2. **生成测试场景** — 每个功能点生成正向 + 逆向 + 边界值场景（标准覆盖：1 正向 + N 逆向 + 2 边界值）
-3. **转换为 YAML DSL 结构** — 按操作类型映射表将场景操作转为 Step，推断选择器
+1. **读取与解析测试用例描述** — 自动识别输入格式（结构化步骤/自然语言/Markdown文档），提取操作步骤、UI元素、输入值和验证点
+2. **生成测试场景** — 为每个用例生成正向 + 逆向 + 边界值场景（标准覆盖：1 正向 + N 逆向）
+3. **转换为 YAML DSL 结构** — 按操作类型映射表将场景操作转为 Step，推断选择器（基于 UI 元素描述和位置信息）
 4. **自动推断断言** — navigate→A1/A2，click→A1/A2/A4，错误提示→A1+A4，边界值→A1/A4
-5. **设置元数据与框架标记** — 标记 `source: generate`，自动推断标签
+5. **设置元数据与框架标记** — 标记 `source: generate`，自动推断标签，支持数据参数化
 6. **输出 YAML 文件与审核提示** — 保存用例，提示用户验证选择器和断言
 
 **命令示例**：
 
 ```
-/auto-test-generate document=docs/prd/user-login.md
-/auto-test-generate document=docs/prd/user-login.md framework=playwright
-/auto-test-generate document=docs/prd/user-login.md outputDir=cases/ coverage=deep
-/auto-test-generate document="## 用户登录功能\n### 验收标准\n1. 登录成功跳转首页"
+# 结构化步骤描述
+/auto-test-generate description="1. 浏览器地址栏输入：https://platform-dt02.asdm.ai/ 2. 点击【登录】 3. 输入邮箱：admin@test.com 4. 输入密码：pass123 5. 点击【登录】按钮"
+
+# Markdown 文件路径
+/auto-test-generate description=docs/test-cases/login-test.md
+
+# 自然语言描述
+/auto-test-generate description="打开ASDM平台，点击右上角登录按钮，输入邮箱和密码，点击登录"
+
+# 带参数
+/auto-test-generate description="1. 打开 https://example.com 2. 输入用户名 3. 输入密码 4. 点击登录" framework=playwright coverage=deep dataParam=true
 ```
 
 **输出示例**：
 
 ```yaml
-name: user-login-happy-path
-description: 验证用户正常登录成功流程（正向场景）
+name: asdm-login-happy-path
+description: 验证用户通过ASDM平台登录流程（正向场景）
 framework: playwright
 capture: on-fail
-tags: [auth, user, happy-path, P1]
+tags: [auth, login, happy-path, P1]
 source: generate
+params:
+  email: super-admin@asdm.ai
+  password: superadmin@20260214
 metadata:
-  targetUrl: http://localhost:3000
+  targetUrl: https://platform-dt02.asdm.ai/
   timeout: 30
   browser: chromium
 stages:
-  - name: 登录页面访问
+  - name: 访问ASDM平台
     steps:
       - action: navigate
-        target: /login
+        target: https://platform-dt02.asdm.ai/
       - action: assert
         assertions:
           - type: A1
-            target: .auth-form
+            target: .header
+            expected: visible
+            message: ASDM平台页面应可见
+  - name: 点击登录入口
+    steps:
+      - action: click
+        target: .header .login-btn
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .login-form
             expected: visible
             message: 登录表单应可见
   - name: 输入凭证
     steps:
       - action: type
-        target: .auth-form [name="username"]
-        value: testuser
+        target: .login-form input[name="email"]
+        value: "{{params.email}}"
       - action: type
-        target: .auth-form [name="password"]
-        value: password123
+        target: .login-form input[name="password"]
+        value: "{{params.password}}"
       - action: click
-        target: .auth-form .btn-primary
+        target: .login-form .btn-primary
         capture: always
   - name: 登录验证
     steps:
       - action: wait
-        target: .header-user
+        target: .user-info
         timeout: 5
       - action: assert
         assertions:
           - type: A2
             target: current-url
-            expected: /home
-            message: 登录成功后应跳转到首页
-          - type: A4
-            target: .header-user .user-name
-            expected: testuser
-            message: 用户名应显示为 testuser
+            expected: /dashboard
+            message: 登录成功后应跳转到仪表盘页面
+          - type: A1
+            target: .user-info
+            expected: visible
+            message: 用户信息区域应可见
 ```
 
 ---
@@ -709,10 +731,10 @@ steps:
 
 ## 七、典型使用流程
 
-### 流程一：从需求文档生成用例 → 执行 → 报告
+### 流程一：从测试用例描述生成用例 → 执行 → 报告
 
 ```
-1. /auto-test-generate document=docs/PRD.md framework=playwright
+1. /auto-test-generate description="1. 浏览器地址栏输入：https://platform-dt02.asdm.ai/ 2. 点击【登录】 3. 输入邮箱：admin@test.com 4. 输入密码：pass123 5. 点击【登录】按钮" framework=playwright
    → 生成 YAML 用例到 cases/
 
 2. /auto-test-list type=cases
@@ -919,7 +941,7 @@ npm install -g allure-commandline
 
 | Action 文件 | 路径 | 说明 |
 |-------------|------|------|
-| AI 生成用例 | `actions/auto-test-generate.md` | 需求文档解析→场景生成→YAML转换→断言推断→输出 |
+| AI 生成用例 | `actions/auto-test-generate.md` | 测试用例描述解析→场景生成→YAML转换→断言推断→输出 |
 | 逐用例录制 | `actions/auto-test-record.md` | 会话初始化→操作录制→8子步骤后处理→YAML保存 |
 | 执行测试 | `actions/auto-test-run.md` | 7阶段执行Pipeline→结果JSON→摘要输出 |
 | 列出用例/结果 | `actions/auto-test-list.md` | 3种模式+4种筛选→Markdown表格 |

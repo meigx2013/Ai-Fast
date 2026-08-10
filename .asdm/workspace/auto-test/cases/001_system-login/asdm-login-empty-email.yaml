@@ -1,0 +1,47 @@
+name: asdm-login-empty-email
+description: 验证空邮箱登录失败（逆向场景）
+framework: playwright
+capture: on-fail
+tags: [auth, login, negative, P2]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+stages:
+  - name: 访问ASDM平台并打开登录
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/
+      - action: click
+        target: .header .login-btn
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .login-form
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击登录后页面跳转"
+            message: 登录表单应可见
+  - name: 空邮箱登录
+    steps:
+      - action: type
+        target: .login-form input[name="password"]
+        value: superadmin@20260214
+      - action: click
+        target: .login-form .btn-primary
+      - action: assert
+        assertions:
+          - type: A1
+            target: .error-message
+            expected: visible
+            confidence: medium
+            inferredFrom: "空邮箱登录应显示错误提示"
+            message: 错误提示应可见
+          - type: A4
+            target: .error-message
+            expected: 邮箱不能为空
+            confidence: low
+            inferredFrom: "空邮箱常见提示文案"
+            message: 错误提示内容应为"邮箱不能为空"

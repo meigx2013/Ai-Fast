@@ -4,7 +4,7 @@
 
 ## Overview
 
-本文档提供了 Web Auto Tester 工具集的安装和设置说明。该工具集通过 YAML DSL 用例驱动 Web 系统自动化测试，支持三种用例生成方式（需求文档 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架，提供 HTML 报告能力。本工具集为独立工具集，不与 web-smoke-tester 形成互补关系，不提供 CI/CD 集成功能。
+本文档提供了 Web Auto Tester 工具集的安装和设置说明。该工具集通过 YAML DSL 用例驱动 Web 系统自动化测试，支持三种用例生成方式（测试用例描述 AI 生成、Playwright Codegen 录制、手动编写），以 Playwright 为主框架、Selenium 为可选辅框架，提供 HTML 报告能力。本工具集为独立工具集，不与 web-smoke-tester 形成互补关系，不提供 CI/CD 集成功能。
 
 ## AI Guided Installation
 
@@ -53,11 +53,11 @@ Claude Code 使用带有 Frontmatter 元数据的 Markdown 文件作为斜杠命
 ```bash
 mkdir -p .claude/commands/
 
-# 需求文档生成用例
+# 测试用例描述生成用例
 cat > .claude/commands/auto-test-generate.md << 'EOF'
 ---
-description: "从 Markdown 需求文档自动生成 YAML DSL 测试用例"
-argument-hint: "[document] [framework=playwright] [outputDir=cases]"
+description: "根据测试用例描述自动生成 YAML DSL 测试用例"
+argument-hint: "[description] [framework=playwright] [outputDir=cases] [coverage=standard] [dataParam=false]"
 ---
 
 EOF
@@ -121,12 +121,12 @@ GitHub Copilot 使用 `.prompt.md` 文件和 YAML frontmatter。通过拼接 Git
 ```bash
 mkdir -p .github/prompts/
 
-# 需求文档生成用例
+# 测试用例描述生成用例
 cat > .github/prompts/auto-test-generate.prompt.md << 'EOF'
 ---
 agent: 'agent'
-description: '从 Markdown 需求文档自动生成 YAML DSL 测试用例'
-argument-hint: '[document] [framework=playwright] [outputDir=cases]'
+description: '根据测试用例描述自动生成 YAML DSL 测试用例'
+argument-hint: '[description] [framework=playwright] [outputDir=cases] [coverage=standard] [dataParam=false]'
 ---
 
 EOF
@@ -219,7 +219,7 @@ cp .asdm/toolsets/web-auto-tester/actions/auto-test-clean.md .codebuddy/commands
    ```
 
 2. **右键点击所需的指令文件**，复制其相对路径：
-   - 需求文档生成用例：`auto-test-generate.md`
+   - 测试用例描述生成用例：`auto-test-generate.md`
    - 录制生成用例：`auto-test-record.md`
    - 执行测试：`auto-test-run.md`
    - 列出用例与结果：`auto-test-list.md`
@@ -254,7 +254,7 @@ Follow the instructions in .asdm/toolsets/web-auto-tester/actions/auto-test-run.
 
 安装完成后，您可以使用以下命令：
 
-1. **`/auto-test-generate`** - 从 Markdown 需求文档自动生成 YAML DSL 测试用例
+1. **`/auto-test-generate`** - 根据测试用例描述自动生成 YAML DSL 测试用例
 2. **`/auto-test-record`** - 通过 Playwright Codegen 录制操作生成 YAML DSL 测试用例
 3. **`/auto-test-run`** - 执行 YAML DSL 测试用例
 4. **`/auto-test-list`** - 列出测试用例和执行结果
@@ -305,10 +305,16 @@ ls .codebuddy/commands/auto-test-*.md | wc -l
 
 ## Usage Examples
 
-### Example 1: 从需求文档生成用例
+### Example 1: 从测试用例描述生成用例
 
 ```shell
-/auto-test-generate document=docs/PRD.md framework=playwright
+/auto-test-generate description="1. 浏览器地址栏输入：https://platform-dt02.asdm.ai/ 2. 点击【登录】 3. 输入邮箱：admin@test.com 4. 输入密码：pass123 5. 点击【登录】按钮"
+```
+
+### Example 2: 从 Markdown 文件生成用例
+
+```shell
+/auto-test-generate description=docs/test-cases/login-test.md
 ```
 
 ### Example 2: 录制操作生成用例
@@ -359,7 +365,7 @@ ls .codebuddy/commands/auto-test-*.md | wc -l
 
 安装完成后，您可以使用以下命令：
 
-- `/auto-test-generate`：需求文档生成测试用例
+- `/auto-test-generate`：根据测试用例描述生成测试用例
 - `/auto-test-record`：录制操作生成测试用例
 - `/auto-test-run`：执行自动化测试
 - `/auto-test-list`：列出用例与结果
