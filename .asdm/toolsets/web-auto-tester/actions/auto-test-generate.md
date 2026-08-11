@@ -7,7 +7,7 @@
   "guid": "a1b2c3d4-e5f6-4789-abcd-ef0123456791",
   "name": "auto-test-generate",
   "displayName": "AI 生成测试用例",
-  "description": "根据用户提供的测试用例描述自动生成 YAML DSL 测试用例，支持自然语言描述、结构化步骤描述、Markdown 测试文档三种输入方式，自动推断选择器和断言，输出符合 DSL 规范的 YAML 用例文件",
+  "description": "根据用户提供的测试用例描述自动生成 YAML DSL 测试用例，支持自然语言描述、结构化步骤描述、Markdown 测试文档三种输入方式，自动推断选择器和断言，支持正向/逆向/边界值场景生成，输出符合 DSL 规范的 YAML 用例文件",
   "toolset": {
     "guid": "a1b2c3d4-e5f6-4789-abcd-ef0123456789",
     "id": "web-auto-tester",
@@ -20,7 +20,7 @@
 
 ## Purpose
 
-本 action 是 Web Auto Tester 的用例生成命令。用户传入测试用例描述（自然语言描述、结构化操作步骤、或 Markdown 测试文档），AI 自动解析操作步骤和验证点，生成正向/逆向/边界值测试场景，转换为 YAML DSL 用例格式，自动推断选择器和断言，输出可执行的测试用例文件。用例标记 `source: generate` 以追溯来源。
+本 action 是 Web Auto Tester 的用例生成命令。用户传入测试用例描述（自然语言描述、结构化操作步骤、或 Markdown 测试文档），AI 自动解析操作步骤和验证点，根据 `scenarioType` 参数生成正向/逆向/边界值测试场景（默认仅生成正向场景），转换为 YAML DSL 用例格式，自动推断选择器和断言，输出可执行的测试用例文件。用例标记 `source: generate` 以追溯来源。
 
 ## Language Setting
 
@@ -102,11 +102,35 @@
    识别特征：包含 Markdown 标题层级（`#` ~ `####`），结构化的测试用例文档。
 
    解析规则：
-   - **用例标题**：识别 `###` 或 `####` 级标题（如"用例1：系统登录"）
+   - **用例标题**：识别 `#` 级标题（如"# 用例名称： 系统登录"）→ 提取用例名称
    - **用例描述**：标题下方的描述段落
-   - **操作步骤**：识别"操作步骤"/"步骤"/"Steps"关键词段落
-   - **预期结果**：识别"预期结果"/"验证点"/"Expected"关键词段落
-   - **前置条件**：识别"前置条件"/"前提"/"Prerequisite"关键词段落
+   - **操作步骤**：识别"## 操作步骤"/"步骤"/"Steps"关键词段落下的编号列表
+   - **预期结果**：识别"## 预期结果"/"验证点"/"Expected"关键词段落下的编号列表
+   - **前置条件**：识别"## 前置条件"/"前提"/"Prerequisite"关键词段落下的编号列表
+
+   示例解析（Markdown 测试文档格式）：
+   ```
+   输入描述：
+   # 用例名称： 系统登录
+   本用例适用于用户进行ASDM平台登录。
+   ## 操作步骤
+   1. 浏览器地址栏输入： https://platform-dt02.asdm.ai/
+   2. portal页面右上角点击【登录】, 页面跳转到ASDM登录页面
+   3. 输入邮箱地址： super-admin@asdm.ai
+   4. 输入密码： superadmin@20260214
+   5. 点击【登录】按钮，完成登录
+   ## 预期结果
+   1. 页面跳转到 ASDM管理后台 首页面
+   ## 前置条件
+   1. 用户已注册
+
+   解析结果：
+   - caseName: "系统登录"
+   - description: "本用例适用于用户进行ASDM平台登录"
+   - steps: 5个操作步骤（navigate→click→type→type→click）
+   - verificationPoints: ["页面跳转到ASDM管理后台首页面"]
+   - prerequisites: ["用户已注册"]
+   ```
 
 3. 为每个用例建立结构化摘要：
 
@@ -155,8 +179,10 @@
     }
   ],
   "verificationPoints": [
-    "登录成功后页面跳转",
-    "用户信息正确显示"
+    "页面跳转到ASDM管理后台首页面"
+  ],
+  "prerequisites": [
+    "用户已注册"
   ],
   "targetUrl": "https://platform-dt02.asdm.ai/",
   "dataFields": [
@@ -168,17 +194,19 @@
 
 ### Step 2: 生成测试场景
 
-基于解析出的操作步骤，为每个用例生成覆盖三类场景的测试用例：
+基于解析出的操作步骤，根据 `scenarioType` 参数为每个用例生成测试用例：
 
-#### 2.1 正向场景（Happy Path）
+#### 2.1 正向场景（Happy Path）— 默认且必选
 
 - **严格按用户描述的步骤生成**：将用户描述的每个步骤逐一转换为 YAML DSL Step
 - 保留用户提供的所有操作细节（URL、输入值、点击目标等）
 - 补充必要的断言验证（如页面跳转、元素可见）
+- **预期结果**：将用户描述中的"预期结果"部分直接转换为断言
+- **前置条件**：将用户描述中的"前置条件"记录到用例 metadata 的 `prerequisites` 字段
 - 场景命名规则：`{用例名}-{正向场景描述}`
 - 示例：`asdm-login-happy-path`
 
-#### 2.2 逆向场景（Negative Path）
+#### 2.2 逆向场景（Negative Path）— 仅当 scenarioType=all 时生成
 
 - 基于正向场景中的输入字段和业务规则生成逆向测试
 - 从用户描述中推断可测试的逆向场景：
@@ -189,7 +217,7 @@
 - 场景命名规则：`{用例名}-{逆向场景描述}`
 - 示例：`asdm-login-wrong-password`、`asdm-login-empty-email`
 
-#### 2.3 边界值场景（Boundary Value）
+#### 2.3 边界值场景（Boundary Value）— 仅当 scenarioType=all 时生成
 
 - 基于输入字段的特征推断边界值
 - 边界值测试类型：
@@ -201,10 +229,15 @@
 
 #### 2.4 场景数量控制
 
-- 每个用例至少生成：1 个正向 + 1 个逆向
-- 如用户描述中包含多个输入字段，逆向场景按字段数量增加
-- 总场景数量建议控制在 3~10 个/用例
-- 用户可通过参数 `coverage=min/standard/deep` 控制覆盖深度（默认 standard）
+- **scenarioType=positive-only（默认）**：每个用例仅生成 1 个正向场景
+  - 严格按用户描述的步骤和预期结果生成
+  - 不生成逆向和边界值场景
+  - 适用于冒烟测试、回归测试等快速验证场景
+- **scenarioType=all**：生成完整场景覆盖
+  - 每个用例至少生成：1 个正向 + 1 个逆向
+  - 如用户描述中包含多个输入字段，逆向场景按字段数量增加
+  - 总场景数量建议控制在 3~10 个/用例
+- 用户可通过参数 `coverage=min/standard/deep` 控制覆盖深度（默认 standard，仅在 scenarioType=all 时生效）
 
 ### Step 3: 转换为 YAML DSL 结构
 
@@ -286,19 +319,22 @@
 #### 4.2 正向场景断言
 
 - 正向场景：验证操作成功的结果
-- 优先基于用户描述中的验证点生成断言
+- **优先基于用户描述中的"预期结果"生成断言**：
+  - "页面跳转到 XXX" → A2 页面跳转断言
+  - "应显示 XXX" → A1 页面可见断言
+  - "内容包含 XXX" → A4 内容匹配断言
 - 如用户描述中无明确验证点，基于操作类型自动推断
-- 示例：
+- 示例（用户预期结果："页面跳转到 ASDM管理后台 首页面"）：
   ```yaml
   assertions:
     - type: A2
       target: current-url
       expected: /dashboard
-      message: 登录成功后应跳转到仪表盘页面
+      message: 页面应跳转到ASDM管理后台首页面
     - type: A1
-      target: .user-info
+      target: .dashboard
       expected: visible
-      message: 用户信息区域应可见
+      message: ASDM管理后台首页面应可见
   ```
 
 #### 4.3 逆向场景断言
@@ -337,6 +373,7 @@
      - `targetUrl`：从用户描述中提取的 URL（如 navigate 步骤中的 URL）
      - `timeout`：默认 30
      - `browser`：默认 chromium
+     - `prerequisites`：从用户描述中提取的"前置条件"（如有）
 
 2. **标签自动推断规则**：
    - 功能模块标签：基于用例描述标题提取（如 auth/login/dashboard）
@@ -374,15 +411,14 @@
 
 | # | 用例名称 | 类型 | 功能点 | 阶段数 | 步骤数 | 断言数 | 标签 |
 |:-:|---------|:----:|--------|:------:|:------:|:------:|------|
-| 1 | asdm-login-happy-path | 正向 | 系统登录 | 3 | 5 | 3 | auth, login, happy-path, P1 |
-| 2 | asdm-login-wrong-password | 逆向 | 系统登录 | 2 | 4 | 2 | auth, login, negative, P1 |
-| 3 | asdm-login-empty-email | 逆向 | 系统登录 | 2 | 3 | 2 | auth, login, negative, P2 |
+| 1 | asdm-login-happy-path | 正向 | 系统登录 | 4 | 7 | 3 | auth, login, happy-path, P1 |
 
 **⚠️ 审核提示**：
 - 选择器推断基于用例描述，请验证是否符合实际 UI 结构
 - 断言推断基于操作步骤和验证点，请补充遗漏的验证点
 - 建议执行 `/auto-test-run` 验证用例可执行性
 - 可使用 `/auto-test-record` 录制补充选择器
+- 如需生成逆向/边界值场景，请使用 `scenarioType=all` 参数
 
 **文件路径**：`.asdm/workspace/auto-test/cases/{序号}_{用例名}/{name}.yaml`
 ```
@@ -393,17 +429,18 @@
 {
   "phase": "auto-test-generate",
   "status": "success",
-  "total_cases": 3,
+  "scenario_type": "positive-only",
+  "total_cases": 1,
   "positive_cases": 1,
-  "negative_cases": 2,
+  "negative_cases": 0,
   "boundary_cases": 0,
   "cases": [
     {
       "name": "asdm-login-happy-path",
       "type": "positive",
       "feature": "系统登录",
-      "stages_count": 3,
-      "steps_count": 5,
+      "stages_count": 4,
+      "steps_count": 7,
       "assertions_count": 3,
       "tags": ["auth", "login", "happy-path", "P1"],
       "file_path": ".asdm/workspace/auto-test/cases/001_system-login/asdm-login-happy-path.yaml"
@@ -425,10 +462,14 @@
 
 ### 场景覆盖策略
 
-- **最小覆盖**：1 正向（仅用户描述的步骤）+ 1 逆向（最基础验证）
-- **标准覆盖**：1 正向 + N 逆向（按输入字段数量）+ 可选边界值
-- **深度覆盖**：多条验证点 → 多个正向场景 + 全字段逆向 + 全边界值
-- 用户可通过参数 `coverage=min/standard/deep` 控制覆盖深度（默认 standard）
+- **scenarioType=positive-only（默认）**：仅生成 1 个正向场景，严格按用户描述的步骤和预期结果生成
+  - 适用于冒烟测试、快速验证、回归测试等场景
+  - 生成速度快，用例数量少，易于维护
+- **scenarioType=all**：生成完整场景覆盖
+  - **最小覆盖**：1 正向（仅用户描述的步骤）+ 1 逆向（最基础验证）
+  - **标准覆盖**：1 正向 + N 逆向（按输入字段数量）+ 可选边界值
+  - **深度覆盖**：多条验证点 → 多个正向场景 + 全字段逆向 + 全边界值
+  - 用户可通过参数 `coverage=min/standard/deep` 控制覆盖深度（默认 standard）
 
 ### 选择器推断保守策略
 
@@ -467,28 +508,32 @@
 | description | string | ✅ | 测试用例描述内容或文件路径（支持自然语言描述、结构化步骤、Markdown 测试文档） |
 | framework | string | ❌ | 框架偏好，默认 playwright |
 | outputDir | string | ❌ | 输出目录，默认 .asdm/workspace/auto-test/cases/ |
-| coverage | string | ❌ | 覆盖深度：min/standard/deep，默认 standard |
+| scenarioType | string | ❌ | 场景类型：positive-only（仅正向，默认）/ all（正向+逆向+边界值） |
+| coverage | string | ❌ | 覆盖深度：min/standard/deep，默认 standard（仅在 scenarioType=all 时生效） |
 | dataParam | string | ❌ | 数据参数化开关：true/false，默认 false |
 
 ### 命令示例
 
 ```
-# 结构化步骤描述
+# 结构化步骤描述（仅正向场景）
 /auto-test-generate description="1. 浏览器地址栏输入：https://platform-dt02.asdm.ai/ 2. 点击【登录】 3. 输入邮箱：admin@test.com 4. 输入密码：pass123 5. 点击【登录】按钮"
 
-# Markdown 文件路径
+# Markdown 文件路径（仅正向场景）
 /auto-test-generate description=docs/test-cases/login-test.md
 
-# 自然语言描述
+# 自然语言描述（仅正向场景）
 /auto-test-generate description="打开ASDM平台，点击右上角登录按钮，输入邮箱和密码，点击登录"
 
-# 带参数
-/auto-test-generate description="1. 打开 https://example.com 2. 输入用户名 3. 输入密码 4. 点击登录" framework=playwright coverage=deep dataParam=true
+# 生成完整场景（正向+逆向+边界值）
+/auto-test-generate description="1. 打开 https://example.com 2. 输入用户名 3. 输入密码 4. 点击登录" scenarioType=all coverage=deep dataParam=true
+
+# 带参数（仅正向场景 + 数据参数化）
+/auto-test-generate description="1. 打开 https://example.com 2. 输入用户名 3. 输入密码 4. 点击登录" dataParam=true
 ```
 
 ## Output
 
-### YAML 用例文件示例 — ASDM 平台登录
+### YAML 用例文件示例 — ASDM 平台登录（仅正向场景）
 
 ```yaml
 name: asdm-login-happy-path
@@ -504,6 +549,8 @@ metadata:
   targetUrl: https://platform-dt02.asdm.ai/
   timeout: 30
   browser: chromium
+  prerequisites:
+    - 用户已注册
 stages:
   - name: 访问ASDM平台
     steps:
@@ -525,8 +572,8 @@ stages:
           - type: A1
             target: .login-form
             expected: visible
-            message: 登录表单应可见
-  - name: 输入凭证
+            message: ASDM登录页面应可见
+  - name: 输入凭证并登录
     steps:
       - action: type
         target: .login-form input[name="email"]
@@ -540,21 +587,21 @@ stages:
   - name: 登录验证
     steps:
       - action: wait
-        target: .user-info
+        target: .dashboard
         timeout: 5
       - action: assert
         assertions:
           - type: A2
             target: current-url
             expected: /dashboard
-            message: 登录成功后应跳转到仪表盘页面
+            message: 页面应跳转到ASDM管理后台首页面
           - type: A1
-            target: .user-info
+            target: .dashboard
             expected: visible
-            message: 用户信息区域应可见
+            message: ASDM管理后台首页面应可见
 ```
 
-### 逆向场景示例 — 错误密码登录
+### 逆向场景示例 — 错误密码登录（仅当 scenarioType=all 时生成）
 
 ```yaml
 name: asdm-login-wrong-password
@@ -567,6 +614,8 @@ metadata:
   targetUrl: https://platform-dt02.asdm.ai/
   timeout: 30
   browser: chromium
+  prerequisites:
+    - 用户已注册
 stages:
   - name: 访问ASDM平台
     steps:
@@ -606,7 +655,7 @@ stages:
             message: 错误提示内容应为"密码错误"
 ```
 
-### 逆向场景示例 — 空邮箱登录
+### 逆向场景示例 — 空邮箱登录（仅当 scenarioType=all 时生成）
 
 ```yaml
 name: asdm-login-empty-email
@@ -619,6 +668,8 @@ metadata:
   targetUrl: https://platform-dt02.asdm.ai/
   timeout: 30
   browser: chromium
+  prerequisites:
+    - 用户已注册
 stages:
   - name: 访问ASDM平台
     steps:
