@@ -398,8 +398,8 @@
 1. 将生成的用例保存为 YAML 文件：
    - 输出目录：`outputDir` 参数指定（默认 `.asdm/workspace/auto-test/cases/`）
    - 按用例分组创建子目录：`{序号}_{用例名}`（如 `001_system-login`）
-   - 文件命名：`{name}.yaml`
-   - 完整路径：`{outputDir}/{序号}_{用例名}/{name}.yaml`
+   - 文件命名：`{用例名称}.yaml`（用例名称取自用户描述中的用例标题，如"系统登录"→`系统登录.yaml`）
+   - 完整路径：`{outputDir}/{序号}_{用例名}/{用例名称}.yaml`
    - 文件编码：UTF-8
 
 2. 输出生成摘要：
@@ -409,9 +409,9 @@
 
 > 从测试用例描述生成了 {totalCases} 个测试用例 | 正向: {positiveCount} | 逆向: {negativeCount} | 边界值: {boundaryCount}
 
-| # | 用例名称 | 类型 | 功能点 | 阶段数 | 步骤数 | 断言数 | 标签 |
-|:-:|---------|:----:|--------|:------:|:------:|:------:|------|
-| 1 | asdm-login-happy-path | 正向 | 系统登录 | 4 | 7 | 3 | auth, login, happy-path, P1 |
+| # | 用例名称 | 文件名 | 类型 | 功能点 | 阶段数 | 步骤数 | 断言数 | 标签 |
+|:-:|---------|--------|:----:|--------|:------:|:------:|:------:|------|
+| 1 | asdm-login-happy-path | 系统登录.yaml | 正向 | 系统登录 | 4 | 7 | 3 | auth, login, happy-path, P1 |
 
 **⚠️ 审核提示**：
 - 选择器推断基于用例描述，请验证是否符合实际 UI 结构
@@ -420,7 +420,7 @@
 - 可使用 `/auto-test-record` 录制补充选择器
 - 如需生成逆向/边界值场景，请使用 `scenarioType=all` 参数
 
-**文件路径**：`.asdm/workspace/auto-test/cases/{序号}_{用例名}/{name}.yaml`
+**文件路径**：`.asdm/workspace/auto-test/cases/{序号}_{用例名}/{用例名称}.yaml`
 ```
 
 3. 结构化输出：
@@ -443,7 +443,7 @@
       "steps_count": 7,
       "assertions_count": 3,
       "tags": ["auth", "login", "happy-path", "P1"],
-      "file_path": ".asdm/workspace/auto-test/cases/001_system-login/asdm-login-happy-path.yaml"
+      "file_path": ".asdm/workspace/auto-test/cases/001_system-login/系统登录.yaml"
     }
   ],
   "timestamp": "ISO 8601 datetime"
@@ -485,9 +485,12 @@
 
 ### 用例命名规范
 
-- 用例名称使用英文小写 + 连字符
-- 命名格式：`{feature}-{scenario-type}-{detail}`
-- 示例：`asdm-login-happy-path`、`asdm-login-wrong-password`、`asdm-login-empty-email`
+- YAML 文件命名：使用用户描述中的用例名称（中文），格式为 `{用例名称}.yaml`
+  - 示例：用例名称为"系统登录"→ 文件名 `系统登录.yaml`
+  - 用例名称取自 Markdown 标题中的 `# 用例名称：XXX` 或用户描述的标题
+  - 同一用例描述生成多个场景时，文件名规则：`{用例名称}-{场景描述}.yaml`（如 `系统登录-错误密码.yaml`、`系统登录-空邮箱.yaml`）
+- YAML 内部 `name` 字段：使用英文小写 + 连字符，格式为 `{feature}-{scenario-type}-{detail}`
+  - 示例：`asdm-login-happy-path`、`asdm-login-wrong-password`、`asdm-login-empty-email`
 
 ### 输出目录处理
 
