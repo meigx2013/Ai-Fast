@@ -1,0 +1,98 @@
+name: 006_generate-pat-succ
+description: 验证用户进行PAT令牌创建（正向场景）
+framework: playwright
+capture: on-fail
+tags: [pat, token, happy-path, P2]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  prerequisites:
+    - 用户已完成系统登录
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/
+      - action: assert
+        assertions:
+          - type: A1
+            target: .dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "navigate后页面结构"
+            message: ASDM管理后台首页应可见
+  - name: 点击用户信息区域
+    steps:
+      - action: click
+        target: .header .user-info
+      - action: assert
+        assertions:
+          - type: A1
+            target: .user-dropdown
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击用户信息后弹出面板"
+            message: 用户信息弹出面板应可见
+  - name: 进入访问令牌页面
+    steps:
+      - action: click
+        target: .user-dropdown .access-token-link
+        pageTransition: navigate
+      - action: wait
+        target: .profile-page
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A1
+            target: .pat-tab
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击链接后页面跳转"
+            message: 访问令牌Tab页签应可见
+  - name: 打开创建令牌窗口
+    steps:
+      - action: click
+        target: .pat-page .create-token-btn
+      - action: wait
+        target: .create-pat-dialog
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A1
+            target: .create-pat-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击创建按钮后弹窗"
+            message: 创建个人访问令牌窗口应可见
+  - name: 录入令牌信息并提交
+    steps:
+      - action: type
+        target: .create-pat-dialog input[name="tokenName"]
+        value: asdm-pat
+      - action: select
+        target: .create-pat-dialog .expiry-select
+        value: 30天
+      - action: click
+        target: .create-pat-dialog .create-btn
+        capture: always
+  - name: 验证令牌生成结果
+    steps:
+      - action: wait
+        target: .token-result
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A1
+            target: .token-result
+            expected: visible
+            confidence: high
+            inferredFrom: "用户预期结果-令牌生成成功"
+            message: 令牌生成结果应可见
+          - type: A4
+            target: .token-result .token-value
+            expected: pat_
+            confidence: high
+            inferredFrom: "令牌格式pat_前缀"
+            message: 生成的令牌应以pat_开头

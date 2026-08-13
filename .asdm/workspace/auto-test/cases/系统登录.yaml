@@ -1,0 +1,68 @@
+name: 001_system-login-succ
+description: 验证用户通过ASDM平台登录流程（正向场景）
+framework: playwright
+capture: on-fail
+tags: [auth, login, happy-path, P1]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  prerequisites:
+    - 用户已注册
+stages:
+  - name: 访问ASDM平台
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/
+      - action: assert
+        assertions:
+          - type: A1
+            target: .header
+            expected: visible
+            confidence: medium
+            inferredFrom: "navigate后页面头部元素"
+            message: ASDM平台页面应可见
+  - name: 点击登录入口
+    steps:
+      - action: click
+        target: .header .login-btn
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .login-form
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击登录后页面跳转"
+            message: ASDM登录页面应可见
+  - name: 输入凭证并登录
+    steps:
+      - action: type
+        target: .login-form input[name="email"]
+        value: super-admin@asdm.ai
+      - action: type
+        target: .login-form input[name="password"]
+        value: superadmin@20260214
+      - action: click
+        target: .login-form .btn-primary
+        capture: always
+  - name: 登录验证
+    steps:
+      - action: wait
+        target: .dashboard
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A2
+            target: current-url
+            expected: /dashboard
+            confidence: high
+            inferredFrom: "用户预期结果-页面跳转"
+            message: 页面应跳转到ASDM管理后台首页面
+          - type: A1
+            target: .dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "navigate后页面结构"
+            message: ASDM管理后台首页面应可见

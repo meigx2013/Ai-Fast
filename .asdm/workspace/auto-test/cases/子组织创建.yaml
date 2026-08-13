@@ -1,0 +1,63 @@
+name: 004_create-sub-org-succ
+description: 验证管理员进行子组织的创建（正向场景）
+framework: playwright
+capture: on-fail
+tags: [org, management, happy-path, P2]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  prerequisites:
+    - 用户已完成系统登录
+    - 测试组织01已创建
+stages:
+  - name: 定位组织节点
+    steps:
+      - action: wait
+        target: .org-tree
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: .org-tree
+            expected: 测试组织01
+            confidence: medium
+            inferredFrom: "前置条件-组织已存在"
+            message: 组织树中应存在"测试组织01"节点
+  - name: 打开创建子组织窗口
+    steps:
+      - action: click
+        target: .org-tree .org-node:has-text("测试组织01") .more-actions
+      - action: wait
+        target: .create-sub-org-dialog
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A1
+            target: .create-sub-org-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击更多操作后弹窗"
+            message: 创建子组织窗口应可见
+  - name: 录入子组织信息并提交
+    steps:
+      - action: type
+        target: .create-sub-org-dialog input[name="orgName"]
+        value: 测试组织0101
+      - action: click
+        target: .create-sub-org-dialog .create-btn
+        capture: always
+  - name: 验证子组织创建结果
+    steps:
+      - action: wait
+        target: .org-tree
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: .org-tree
+            expected: 测试组织0101
+            confidence: high
+            inferredFrom: "用户预期结果-子节点增加"
+            message: 测试组织01下应增加子节点"测试组织0101"

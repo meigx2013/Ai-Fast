@@ -1,0 +1,88 @@
+name: 003_create-org-succ
+description: 验证管理员进行组织架构的创建（正向场景）
+framework: playwright
+capture: on-fail
+tags: [org, management, happy-path, P1]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  prerequisites:
+    - 用户已完成系统登录
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/
+      - action: assert
+        assertions:
+          - type: A1
+            target: .dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "navigate后页面结构"
+            message: ASDM管理后台首页应可见
+  - name: 打开平台级设置
+    steps:
+      - action: click
+        target: .sidebar .settings-btn
+      - action: wait
+        target: .settings-page
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A1
+            target: .settings-page
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击设置后页面切换"
+            message: 平台级设置页面应可见
+  - name: 切换到组织Tab
+    steps:
+      - action: click
+        target: .tabs .org-tab
+      - action: assert
+        assertions:
+          - type: A1
+            target: .org-tree
+            expected: visible
+            confidence: medium
+            inferredFrom: "切换Tab后组织树展示"
+            message: 组织树应可见
+  - name: 创建顶层组织
+    steps:
+      - action: click
+        target: .org-page .create-top-org-btn
+      - action: wait
+        target: .create-org-dialog
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A1
+            target: .create-org-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击创建按钮后弹窗"
+            message: 创建顶层组织窗口应可见
+  - name: 录入组织信息并提交
+    steps:
+      - action: type
+        target: .create-org-dialog input[name="orgName"]
+        value: 测试组织01
+      - action: click
+        target: .create-org-dialog .create-btn
+        capture: always
+  - name: 验证组织创建结果
+    steps:
+      - action: wait
+        target: .org-tree
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: .org-tree
+            expected: 测试组织01
+            confidence: high
+            inferredFrom: "用户预期结果-组织树增加节点"
+            message: 组织树应增加一个节点"测试组织01"
