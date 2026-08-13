@@ -20,7 +20,7 @@
 
 ## Purpose
 
-本 action 是 Web Auto Tester 的用例生成命令。用户传入测试用例描述（自然语言描述、结构化操作步骤、或 Markdown 测试文档），AI 自动解析操作步骤和验证点，根据 `scenarioType` 参数生成正向/逆向/边界值测试场景（默认仅生成正向场景），转换为 YAML DSL 用例格式，自动推断选择器和断言，输出可执行的测试用例文件。用例标记 `source: generate` 以追溯来源。
+本 action 是 Web Auto Tester 的用例生成命令。用户可传入**单个测试用例描述**（自然语言描述、结构化操作步骤、或 Markdown 测试文档），或传入**包含多个 Markdown 测试用例文档的目录**。AI 自动解析操作步骤和验证点，根据 `scenarioType` 参数生成正向/逆向/边界值测试场景（默认仅生成正向场景），转换为 YAML DSL 用例格式，自动推断选择器和断言，输出可执行的测试用例文件。当传入目录时，自动扫描目录下所有 `.md` 文件并逐一解析生成。用例标记 `source: generate` 以追溯来源。
 
 ## Language Setting
 
@@ -397,9 +397,8 @@
 
 1. 将生成的用例保存为 YAML 文件：
    - 输出目录：`outputDir` 参数指定（默认 `.asdm/workspace/auto-test/cases/`）
-   - 按用例分组创建子目录：`{序号}_{用例名}`（如 `001_system-login`）
    - 文件命名：`{用例名称}.yaml`（用例名称取自用户描述中的用例标题，如"系统登录"→`系统登录.yaml`）
-   - 完整路径：`{outputDir}/{序号}_{用例名}/{用例名称}.yaml`
+   - 完整路径：`{outputDir}/{用例名称}.yaml`
    - 文件编码：UTF-8
 
 2. 输出生成摘要：
@@ -411,7 +410,7 @@
 
 | # | 用例名称 | 文件名 | 类型 | 功能点 | 阶段数 | 步骤数 | 断言数 | 标签 |
 |:-:|---------|--------|:----:|--------|:------:|:------:|:------:|------|
-| 1 | asdm-login-happy-path | 系统登录.yaml | 正向 | 系统登录 | 4 | 7 | 3 | auth, login, happy-path, P1 |
+| 1 | 001_system-login | 系统登录.yaml | 正向 | 系统登录 | 4 | 7 | 3 | auth, login, P1 |
 
 **⚠️ 审核提示**：
 - 选择器推断基于用例描述，请验证是否符合实际 UI 结构
@@ -420,7 +419,7 @@
 - 可使用 `/auto-test-record` 录制补充选择器
 - 如需生成逆向/边界值场景，请使用 `scenarioType=all` 参数
 
-**文件路径**：`.asdm/workspace/auto-test/cases/{序号}_{用例名}/{用例名称}.yaml`
+**文件路径**：`.asdm/workspace/auto-test/cases/{用例名称}.yaml`
 ```
 
 3. 结构化输出：
@@ -436,14 +435,14 @@
   "boundary_cases": 0,
   "cases": [
     {
-      "name": "asdm-login-happy-path",
+      "name": "001_system-login",
       "type": "positive",
       "feature": "系统登录",
       "stages_count": 4,
       "steps_count": 7,
       "assertions_count": 3,
-      "tags": ["auth", "login", "happy-path", "P1"],
-      "file_path": ".asdm/workspace/auto-test/cases/001_system-login/系统登录.yaml"
+      "tags": ["auth", "login", "P1"],
+      "file_path": ".asdm/workspace/auto-test/cases/系统登录.yaml"
     }
   ],
   "timestamp": "ISO 8601 datetime"
@@ -490,13 +489,12 @@
   - 用例名称取自 Markdown 标题中的 `# 用例名称：XXX` 或用户描述的标题
   - 同一用例描述生成多个场景时，文件名规则：`{用例名称}-{场景描述}.yaml`（如 `系统登录-错误密码.yaml`、`系统登录-空邮箱.yaml`）
 - YAML 内部 `name` 字段：使用英文小写 + 连字符，格式为 `{feature}-{scenario-type}-{detail}`
-  - 示例：`asdm-login-happy-path`、`asdm-login-wrong-password`、`asdm-login-empty-email`
+  - 示例：`001_system-login-succ`、`001_system-login-wrong-password`、`001_system-login-empty-email`
 
 ### 输出目录处理
 
 - 如 `outputDir` 目录不存在 → 自动创建
-- 按用例分组创建子目录：`{序号}_{用例名}`（如 `001_system-login`、`002_user-register`）
-  - 序号规则：3位数字，从 001 递增，按已有目录自动计算下一个序号
+- 如 `outputDir` 目录存在 → 检查是否有同名 YAML 文件
   - 用例名规则：从用例描述标题提取，中文转英文小写+连字符（如 系统登录→system-login）
   - 同一用例描述生成的多个场景文件（正向/逆向/边界值）放入同一子目录
 - 如同名 YAML 文件已存在 → 覆盖（重新生成）
@@ -539,7 +537,7 @@
 ### YAML 用例文件示例 — ASDM 平台登录（仅正向场景）
 
 ```yaml
-name: asdm-login-happy-path
+name: 001_system-login-succ
 description: 验证用户通过ASDM平台登录流程（正向场景）
 framework: playwright
 capture: on-fail
@@ -607,7 +605,7 @@ stages:
 ### 逆向场景示例 — 错误密码登录（仅当 scenarioType=all 时生成）
 
 ```yaml
-name: asdm-login-wrong-password
+name: 001_system-login-wrong-password
 description: 验证错误密码登录失败（逆向场景）
 framework: playwright
 capture: on-fail
@@ -661,7 +659,7 @@ stages:
 ### 逆向场景示例 — 空邮箱登录（仅当 scenarioType=all 时生成）
 
 ```yaml
-name: asdm-login-empty-email
+name: 001_system-login-empty-email
 description: 验证空邮箱登录失败（逆向场景）
 framework: playwright
 capture: on-fail
