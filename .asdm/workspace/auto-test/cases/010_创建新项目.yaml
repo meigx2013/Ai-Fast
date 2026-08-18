@@ -1,0 +1,85 @@
+name: 010_create-project-succ
+description: 验证用户进行新项目创建（正向场景）
+framework: playwright
+capture: on-fail
+tags: [project, create, happy-path, P1]
+source: generate
+params:
+  loginEmail: test01@asdm.ai
+  loginPassword: admin@2026
+  orgName: 测试组织0101
+  projectName: 测试组织0101-项目01
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  prerequisites:
+    - 用户已完成系统登录
+    - 已创建组织"测试组织0101"
+    - 已创建用户"test01@asdm.ai"
+stages:
+  - name: 系统登录
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/
+      - action: click
+        target: .header .login-btn
+        pageTransition: navigate
+      - action: type
+        target: .login-form input[name="email"]
+        value: "{{params.loginEmail}}"
+      - action: type
+        target: .login-form input[name="password"]
+        value: "{{params.loginPassword}}"
+      - action: click
+        target: .login-form .btn-primary
+      - action: wait
+        target: .dashboard
+        timeout: 5
+  - name: 打开组织与项目
+    steps:
+      - action: click
+        target: .workspace .org-project-nav
+      - action: assert
+        assertions:
+          - type: A1
+            target: .org-project-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后组织与项目导航窗口打开"
+            message: 组织与项目导航窗口应可见
+  - name: 选择组织
+    steps:
+      - action: click
+        target: .org-project-dialog .org-tree .org-node:has-text("测试组织0101")
+  - name: 创建项目
+    steps:
+      - action: click
+        target: .project-list .create-project-btn
+      - action: assert
+        assertions:
+          - type: A1
+            target: .create-project-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后新建项目窗口打开"
+            message: 新建项目窗口应可见
+      - action: type
+        target: .create-project-dialog input[name="projectName"]
+        value: "{{params.projectName}}"
+      - action: click
+        target: .create-project-dialog .create-project-btn
+        capture: always
+  - name: 验证项目创建
+    steps:
+      - action: wait
+        target: .project-list
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: .project-list
+            expected: "{{params.projectName}}"
+            confidence: high
+            inferredFrom: "预期结果-项目列表中增加一条记录"
+            message: 项目列表中应增加一条记录"{{params.projectName}}"

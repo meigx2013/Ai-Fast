@@ -1,0 +1,106 @@
+name: 011_project-config-succ
+description: 验证用户在项目中进行项目设置（正向场景）
+framework: playwright
+capture: on-fail
+tags: [project, config, repo, happy-path, P1]
+source: generate
+params:
+  projectName: 测试组织0101-项目01
+  repoType: github
+  authMethod: Token
+  repoUrl: "https://github.com/meigx2013/Ai-Fast"
+  repoBranch: develop
+  repoToken: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  prerequisites:
+    - 用户test01@asdm.ai已完成系统登录
+    - 项目"测试组织0101-项目01"已创建
+    - 已进入"测试组织0101-项目01"项目页面
+stages:
+  - name: 进入项目页面
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/dashboard
+      - action: click
+        target: .project-list .project-item:has-text("测试组织0101-项目01") .project-name
+      - action: assert
+        assertions:
+          - type: A1
+            target: .workspace .project-page
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后右侧工作区打开项目页面"
+            message: 项目设置页面应可见
+  - name: 打开项目设置
+    steps:
+      - action: click
+        target: .project-page .other-tab
+      - action: assert
+        assertions:
+          - type: A1
+            target: .repo-config-list
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后仓库配置列表区域"
+            message: 其他Tab页签应可见
+  - name: 添加仓库配置
+    steps:
+      - action: click
+        target: .repo-config-list .add-repo-btn
+      - action: assert
+        assertions:
+          - type: A1
+            target: .add-repo-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后添加仓库配置窗口打开"
+            message: 添加仓库配置窗口应可见
+      - action: select
+        target: .add-repo-dialog select[name="repoType"]
+        value: "{{params.repoType}}"
+      - action: select
+        target: .add-repo-dialog select[name="authMethod"]
+        value: "{{params.authMethod}}"
+      - action: type
+        target: .add-repo-dialog input[name="repoUrl"]
+        value: "{{params.repoUrl}}"
+      - action: type
+        target: .add-repo-dialog input[name="repoBranch"]
+        value: "{{params.repoBranch}}"
+      - action: type
+        target: .add-repo-dialog input[name="repoToken"]
+        value: "{{params.repoToken}}"
+      - action: click
+        target: .add-repo-dialog .save-btn
+        capture: always
+  - name: 验证仓库配置
+    steps:
+      - action: wait
+        target: .repo-config-list
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: .repo-config-list
+            expected: "{{params.repoUrl}}"
+            confidence: high
+            inferredFrom: "预期结果-仓库配置列表中增加一条记录"
+            message: 仓库配置列表中应增加一条记录
+  - name: 检测可用性
+    steps:
+      - action: click
+        target: .repo-config-list .repo-item:first-child .check-availability-btn
+      - action: wait
+        target: .check-result
+        timeout: 10
+      - action: assert
+        assertions:
+          - type: A4
+            target: .check-result
+            expected: 成功
+            confidence: high
+            inferredFrom: "预期结果-检测可用性成功"
+            message: 检测可用性应返回成功

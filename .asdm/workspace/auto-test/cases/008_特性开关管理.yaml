@@ -1,0 +1,125 @@
+name: 008_feature-flag-succ
+description: 验证管理员进行特性开关配置（正向场景）
+framework: playwright
+capture: on-fail
+tags: [feature-flag, config, happy-path, P1]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  prerequisites:
+    - 用户已完成系统登录
+    - 特性开关项"hide_admin_resource_management"、"minio_storage_enabled"、"hide_mcp_management"存在
+stages:
+  - name: 进入管理后台
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/dashboard
+      - action: click
+        target: .sidebar .platform-settings-btn
+      - action: assert
+        assertions:
+          - type: A1
+            target: .workspace .settings-page
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后右侧工作区打开设置页面"
+            message: 平台级设置页面应可见
+  - name: 打开特性开关页签
+    steps:
+      - action: click
+        target: .settings-page .feature-flag-tab
+      - action: assert
+        assertions:
+          - type: A1
+            target: .feature-flag-list
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后特性开关列表区域"
+            message: 特性开关Tab页签应可见
+  - name: 编辑hide_admin_resource_management
+    steps:
+      - action: type
+        target: .feature-flag-list .search-input
+        value: hide_admin_resource_management
+      - action: click
+        target: .feature-flag-list .flag-item:has-text("hide_admin_resource_management") .edit-btn
+      - action: assert
+        assertions:
+          - type: A1
+            target: .edit-feature-flag-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后编辑特性开关窗口打开"
+            message: 编辑特性开关窗口应可见
+      - action: select
+        target: .edit-feature-flag-dialog select[name="status"]
+        value: 全量开放
+      - action: click
+        target: .edit-feature-flag-dialog .save-btn
+        capture: always
+  - name: 编辑minio_storage_enabled
+    steps:
+      - action: type
+        target: .feature-flag-list .search-input
+        value: minio_storage_enabled
+      - action: click
+        target: .feature-flag-list .flag-item:has-text("minio_storage_enabled") .edit-btn
+      - action: assert
+        assertions:
+          - type: A1
+            target: .edit-feature-flag-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后编辑特性开关窗口打开"
+            message: 编辑特性开关窗口应可见
+      - action: select
+        target: .edit-feature-flag-dialog select[name="status"]
+        value: 全量开放
+      - action: click
+        target: .edit-feature-flag-dialog .save-btn
+        capture: always
+  - name: 编辑hide_mcp_management
+    steps:
+      - action: type
+        target: .feature-flag-list .search-input
+        value: hide_mcp_management
+      - action: click
+        target: .feature-flag-list .flag-item:has-text("hide_mcp_management") .edit-btn
+      - action: assert
+        assertions:
+          - type: A1
+            target: .edit-feature-flag-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "click后编辑特性开关窗口打开"
+            message: 编辑特性开关窗口应可见
+      - action: select
+        target: .edit-feature-flag-dialog select[name="status"]
+        value: 全量开放
+      - action: click
+        target: .edit-feature-flag-dialog .save-btn
+        capture: always
+  - name: 验证特性开关状态
+    steps:
+      - action: assert
+        assertions:
+          - type: A4
+            target: .feature-flag-list .flag-item:has-text("hide_admin_resource_management")
+            expected: 全量开放
+            confidence: high
+            inferredFrom: "预期结果-特性开关状态变为全量开放"
+            message: "hide_admin_resource_management状态应为全量开放"
+          - type: A4
+            target: .feature-flag-list .flag-item:has-text("minio_storage_enabled")
+            expected: 全量开放
+            confidence: high
+            inferredFrom: "预期结果-特性开关状态变为全量开放"
+            message: "minio_storage_enabled状态应为全量开放"
+          - type: A4
+            target: .feature-flag-list .flag-item:has-text("hide_mcp_management")
+            expected: 全量开放
+            confidence: high
+            inferredFrom: "预期结果-特性开关状态变为全量开放"
+            message: "hide_mcp_management状态应为全量开放"
