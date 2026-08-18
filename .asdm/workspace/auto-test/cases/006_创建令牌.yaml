@@ -2,11 +2,11 @@ name: 006_generate-pat-succ
 description: 验证用户进行PAT令牌创建（正向场景）
 framework: playwright
 capture: on-fail
-tags: [pat, token, create, happy-path, P1]
+tags: [token, pat, happy-path, P1]
 source: generate
 params:
   tokenName: asdm-pat
-  tokenValidity: 30天
+  tokenValidity: 30
 metadata:
   targetUrl: https://platform-dt02.asdm.ai/
   timeout: 30
@@ -14,77 +14,70 @@ metadata:
   prerequisites:
     - 用户已完成系统登录
 stages:
-  - name: 进入管理后台
+  - name: 进入用户资料页面
     steps:
       - action: navigate
-        target: https://platform-dt02.asdm.ai/dashboard
-      - action: assert
-        assertions:
-          - type: A1
-            target: .dashboard
-            expected: visible
-            confidence: medium
-            inferredFrom: "navigate后页面结构"
-            message: ASDM管理后台首页面应可见
-  - name: 打开访问令牌页面
-    steps:
+        target: https://platform-dt02.asdm.ai/admin
       - action: click
         target: .header .user-info
-      - action: assert
-        assertions:
-          - type: A1
-            target: .user-panel
-            expected: visible
-            confidence: medium
-            inferredFrom: "click后弹出面板"
-            message: 用户信息面板应弹出
       - action: click
         target: .user-panel .access-token-link
         pageTransition: navigate
       - action: assert
         assertions:
           - type: A1
-            target: .user-profile .access-token-tab
+            target: .user-profile
             expected: visible
             confidence: medium
-            inferredFrom: "click后访问令牌Tab页签"
-            message: 访问令牌Tab页签应可见
+            inferredFrom: "点击访问令牌后进入用户资料页面"
+            message: 用户资料页面应可见
+  - name: 进入访问令牌Tab
+    steps:
+      - action: click
+        target: .user-profile .tab-access-token
+      - action: assert
+        assertions:
+          - type: A1
+            target: .token-list
+            expected: visible
+            confidence: medium
+            inferredFrom: "点击访问令牌Tab后令牌列表可见"
+            message: 访问令牌列表应可见
   - name: 创建令牌
     steps:
       - action: click
-        target: .access-token-tab .create-token-btn
+        target: .token-list .create-token-btn
       - action: assert
         assertions:
           - type: A1
-            target: .create-pat-dialog
+            target: .create-pat-modal
             expected: visible
             confidence: medium
-            inferredFrom: "click后创建个人访问令牌窗口打开"
+            inferredFrom: "点击创建令牌后弹出窗口"
             message: 创建个人访问令牌窗口应可见
       - action: type
-        target: .create-pat-dialog input[name="tokenName"]
+        target: .create-pat-modal input[name="tokenName"]
         value: "{{params.tokenName}}"
       - action: select
-        target: .create-pat-dialog select[name="validity"]
-        value: "{{params.tokenValidity}}"
+        target: .create-pat-modal select[name="validity"]
+        value: "{{params.tokenValidity}}天"
       - action: click
-        target: .create-pat-dialog .create-btn
+        target: .create-pat-modal .btn-create
         capture: always
-  - name: 验证令牌生成
+  - name: 复制令牌并验证
     steps:
-      - action: wait
-        target: .pat-token-display
-        timeout: 3
+      - action: click
+        target: .create-pat-modal .btn-copy-token
       - action: assert
         assertions:
           - type: A1
-            target: .pat-token-display
+            target: .create-pat-modal .token-value
             expected: visible
-            confidence: high
-            inferredFrom: "预期结果-令牌生成成功"
-            message: 令牌应生成成功
+            confidence: medium
+            inferredFrom: "预期结果：令牌生成成功"
+            message: 生成的令牌应可见
           - type: A4
-            target: .pat-token-display
+            target: .create-pat-modal .token-value
             expected: pat_
             confidence: medium
             inferredFrom: "令牌格式以pat_开头"

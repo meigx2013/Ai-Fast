@@ -1,8 +1,8 @@
-name: 002_access-asdm-succ
-description: 验证用户从Portal跳转到ASDM管理后台（正向场景）
+name: 002_access-asdm-admin-succ
+description: 验证用户完成系统登录后，从Portal跳转到ASDM管理后台（正向场景）
 framework: playwright
 capture: on-fail
-tags: [navigation, portal, happy-path, P1]
+tags: [navigation, admin, happy-path, P1]
 source: generate
 metadata:
   targetUrl: https://platform-dt02.asdm.ai/
@@ -21,7 +21,7 @@ stages:
             target: .header
             expected: visible
             confidence: medium
-            inferredFrom: "navigate后页面头部元素"
+            inferredFrom: "navigate后Portal首页结构"
             message: Portal首页应可见
   - name: 点击用户信息
     steps:
@@ -33,29 +33,30 @@ stages:
             target: .user-panel
             expected: visible
             confidence: medium
-            inferredFrom: "click后弹出面板"
-            message: 用户信息面板应弹出
-  - name: 进入管理后台
+            inferredFrom: "点击用户信息后弹出面板"
+            message: 用户信息面板应可见
+  - name: 进入控制台管理
     steps:
       - action: click
-        target: .user-panel .console-btn
+        target: .user-panel .console-admin-btn
         pageTransition: navigate
-      - action: wait
-        target: .dashboard
-        timeout: 5
-  - name: 验证跳转
+        capture: always
+  - name: 验证管理后台
     steps:
+      - action: wait
+        target: .admin-panel
+        timeout: 5
       - action: assert
         assertions:
-          - type: A2
-            target: current-url
-            expected: /dashboard
-            confidence: high
-            inferredFrom: "预期结果-成功跳转到ASDM管理后台首页面"
-            message: 应从Portal成功跳转到ASDM管理后台首页面
           - type: A1
-            target: .dashboard
+            target: .admin-panel
             expected: visible
             confidence: medium
-            inferredFrom: "navigate后页面结构"
+            inferredFrom: "预期结果：成功跳转到ASDM管理后台首页面"
             message: ASDM管理后台首页面应可见
+          - type: A2
+            target: current-url
+            expected: /admin
+            confidence: medium
+            inferredFrom: "预期结果：跳转到管理后台"
+            message: 页面应跳转到ASDM管理后台

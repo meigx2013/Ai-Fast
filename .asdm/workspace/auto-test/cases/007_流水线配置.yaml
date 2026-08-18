@@ -2,13 +2,12 @@ name: 007_pipeline-config-succ
 description: 验证管理员进行流水线配置（正向场景）
 framework: playwright
 capture: on-fail
-tags: [pipeline, config, create, happy-path, P1]
+tags: [pipeline, admin, happy-path, P2]
 source: generate
 params:
   pipelineName: pipeline
-  pipelineType: Jenkins
-  jenkinsCredential: "admin:11f054f0964f8cb86a627b296929b9df59"
-  asdmPatToken: "{{params.patToken}}"
+  jenkinsCredential: admin:11f054f0964f8cb86a627b296929b9df59
+  asdmPat: "{{params.patToken}}"
 metadata:
   targetUrl: https://platform-dt02.asdm.ai/
   timeout: 30
@@ -17,70 +16,62 @@ metadata:
     - 用户已完成系统登录
     - PAT令牌已创建
 stages:
-  - name: 进入管理后台
+  - name: 进入平台级设置-其他
     steps:
       - action: navigate
-        target: https://platform-dt02.asdm.ai/dashboard
+        target: https://platform-dt02.asdm.ai/admin
       - action: click
         target: .sidebar .platform-settings-btn
-      - action: assert
-        assertions:
-          - type: A1
-            target: .workspace .settings-page
-            expected: visible
-            confidence: medium
-            inferredFrom: "click后右侧工作区打开设置页面"
-            message: 平台级设置页面应可见
-  - name: 打开其他设置
-    steps:
       - action: click
-        target: .settings-page .other-tab
+        target: .platform-settings .tab-other
       - action: assert
         assertions:
           - type: A1
             target: .pipeline-config-list
             expected: visible
             confidence: medium
-            inferredFrom: "click后流水线配置列表区域"
-            message: 其他Tab页签应可见
-  - name: 添加流水线配置
+            inferredFrom: "点击其他Tab后流水线配置列表可见"
+            message: 流水线配置列表应可见
+  - name: 新增流水线配置
     steps:
       - action: click
         target: .pipeline-config-list .add-pipeline-btn
       - action: assert
         assertions:
           - type: A1
-            target: .create-pipeline-dialog
+            target: .create-pipeline-modal
             expected: visible
             confidence: medium
-            inferredFrom: "click后新增流水线配置窗口打开"
+            inferredFrom: "点击添加后弹出窗口"
             message: 新增流水线配置窗口应可见
+  - name: 录入流水线信息
+    steps:
       - action: type
-        target: .create-pipeline-dialog input[name="name"]
+        target: .create-pipeline-modal input[name="name"]
         value: "{{params.pipelineName}}"
       - action: select
-        target: .create-pipeline-dialog select[name="pipelineType"]
-        value: "{{params.pipelineType}}"
+        target: .create-pipeline-modal select[name="pipelineType"]
+        value: Jenkins
       - action: type
-        target: .create-pipeline-dialog input[name="jenkinsCredential"]
+        target: .create-pipeline-modal input[name="jenkinsCredential"]
         value: "{{params.jenkinsCredential}}"
       - action: select
-        target: .create-pipeline-dialog select[name="contextSyncJenkinsfile"]
-        value: "context/asdm-context-space-sync.no-docker.Jenkinsfile"
+        target: .create-pipeline-modal select[name="contextSyncJenkinsfile"]
+        value: context/asdm-context-space-sync.no-docker.Jenkinsfile
       - action: select
-        target: .create-pipeline-dialog select[name="workspaceExecJenkinsfile"]
-        value: "workspace/asdm-workspace-exec.no-docker.Jenkinsfile"
+        target: .create-pipeline-modal select[name="workspaceExecJenkinsfile"]
+        value: workspace/asdm-workspace-exec.no-docker.Jenkinsfile
       - action: select
-        target: .create-pipeline-dialog select[name="contextAnalyzeJenkinsfile"]
-        value: "context/asdm-context-analyze.no-docker.Jenkinsfile"
+        target: .create-pipeline-modal select[name="contextAnalyzeJenkinsfile"]
+        value: context/asdm-context-analyze.no-docker.Jenkinsfile
       - action: type
-        target: .create-pipeline-dialog input[name="asdmApiPat"]
-        value: "{{params.asdmPatToken}}"
-      - action: click
-        target: .create-pipeline-dialog .create-btn
-        capture: always
-  - name: 验证流水线配置创建
+        target: .create-pipeline-modal input[name="asdmApiPat"]
+        value: "{{params.asdmPat}}"
+  - name: 创建并验证
     steps:
+      - action: click
+        target: .create-pipeline-modal .btn-create
+        capture: always
       - action: wait
         target: .pipeline-config-list
         timeout: 3
@@ -89,6 +80,6 @@ stages:
           - type: A4
             target: .pipeline-config-list
             expected: "{{params.pipelineName}}"
-            confidence: high
-            inferredFrom: "预期结果-流水线配置创建成功"
-            message: 流水线配置应创建成功
+            confidence: medium
+            inferredFrom: "预期结果：流水线配置创建成功"
+            message: 流水线配置列表中应包含"{{params.pipelineName}}"

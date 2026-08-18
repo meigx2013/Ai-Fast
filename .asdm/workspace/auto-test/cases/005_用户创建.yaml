@@ -2,7 +2,7 @@ name: 005_create-user-succ
 description: 验证管理员进行用户创建（正向场景）
 framework: playwright
 capture: on-fail
-tags: [user, create, happy-path, P1]
+tags: [user, admin, happy-path, P1]
 source: generate
 params:
   userEmail: test01@asdm.ai
@@ -19,68 +19,60 @@ metadata:
     - 用户已完成系统登录
     - 已创建组织"测试组织0101"
 stages:
-  - name: 进入管理后台
+  - name: 进入平台级设置-用户
     steps:
       - action: navigate
-        target: https://platform-dt02.asdm.ai/dashboard
+        target: https://platform-dt02.asdm.ai/admin
       - action: click
         target: .sidebar .platform-settings-btn
-      - action: assert
-        assertions:
-          - type: A1
-            target: .workspace .settings-page
-            expected: visible
-            confidence: medium
-            inferredFrom: "click后右侧工作区打开设置页面"
-            message: 平台级设置页面应可见
-  - name: 打开用户页签
-    steps:
       - action: click
-        target: .settings-page .user-tab
+        target: .platform-settings .tab-user
       - action: assert
         assertions:
           - type: A1
             target: .user-list
             expected: visible
             confidence: medium
-            inferredFrom: "click后用户列表区域"
-            message: 用户Tab页签应可见
-  - name: 创建用户
+            inferredFrom: "点击用户Tab后用户列表可见"
+            message: 用户列表应可见
+  - name: 创建新用户
     steps:
       - action: click
         target: .user-list .create-user-btn
       - action: assert
         assertions:
           - type: A1
-            target: .create-user-dialog
+            target: .create-user-modal
             expected: visible
             confidence: medium
-            inferredFrom: "click后新建用户窗口打开"
+            inferredFrom: "点击创建用户后弹出窗口"
             message: 新建用户窗口应可见
+  - name: 录入用户信息
+    steps:
       - action: type
-        target: .create-user-dialog input[name="email"]
+        target: .create-user-modal input[name="email"]
         value: "{{params.userEmail}}"
       - action: type
-        target: .create-user-dialog input[name="password"]
+        target: .create-user-modal input[name="password"]
         value: "{{params.userPassword}}"
       - action: type
-        target: .create-user-dialog input[name="lastName"]
+        target: .create-user-modal input[name="lastName"]
         value: "{{params.userLastName}}"
       - action: type
-        target: .create-user-dialog input[name="firstName"]
+        target: .create-user-modal input[name="firstName"]
         value: "{{params.userFirstName}}"
   - name: 添加角色映射
     steps:
       - action: click
-        target: .create-user-dialog .add-role-mapping-btn
+        target: .create-user-modal .add-role-mapping-btn
       - action: select
-        target: .create-user-dialog .role-select:first-of-type
+        target: .create-user-modal .role-select
         value: "{{params.roleName}}"
       - action: select
-        target: .create-user-dialog .org-select:nth-of-type(2)
+        target: .create-user-modal .org-select
         value: "{{params.orgName}}"
       - action: click
-        target: .create-user-dialog .create-user-btn
+        target: .create-user-modal .btn-create-user
         capture: always
   - name: 验证用户创建
     steps:
@@ -92,6 +84,6 @@ stages:
           - type: A4
             target: .user-list
             expected: "{{params.userEmail}}"
-            confidence: high
-            inferredFrom: "预期结果-用户列表中增加一条记录"
-            message: 用户列表中应增加一条记录
+            confidence: medium
+            inferredFrom: "预期结果：用户列表中增加一条记录"
+            message: 用户列表中应增加"{{params.userEmail}}"记录

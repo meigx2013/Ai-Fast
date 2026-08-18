@@ -2,11 +2,11 @@ name: 010_create-project-succ
 description: 验证用户进行新项目创建（正向场景）
 framework: playwright
 capture: on-fail
-tags: [project, create, happy-path, P1]
+tags: [project, happy-path, P1]
 source: generate
 params:
-  loginEmail: test01@asdm.ai
-  loginPassword: admin@2026
+  userEmail: test01@asdm.ai
+  userPassword: admin@2026
   orgName: 测试组织0101
   projectName: 测试组织0101-项目01
 metadata:
@@ -27,48 +27,50 @@ stages:
         pageTransition: navigate
       - action: type
         target: .login-form input[name="email"]
-        value: "{{params.loginEmail}}"
+        value: "{{params.userEmail}}"
       - action: type
         target: .login-form input[name="password"]
-        value: "{{params.loginPassword}}"
+        value: "{{params.userPassword}}"
       - action: click
         target: .login-form .btn-primary
       - action: wait
         target: .dashboard
         timeout: 5
-  - name: 打开组织与项目
+  - name: 进入组织与项目导航
     steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/admin
       - action: click
         target: .workspace .org-project-nav
       - action: assert
         assertions:
           - type: A1
-            target: .org-project-dialog
+            target: .org-project-modal
             expected: visible
             confidence: medium
-            inferredFrom: "click后组织与项目导航窗口打开"
+            inferredFrom: "点击组织与项目导航后弹出窗口"
             message: 组织与项目导航窗口应可见
-  - name: 选择组织
+  - name: 选择组织节点
     steps:
       - action: click
-        target: .org-project-dialog .org-tree .org-node:has-text("测试组织0101")
-  - name: 创建项目
+        target: ".org-project-modal .org-tree .org-node:has-text(\"{{params.orgName}}\")"
+  - name: 创建新项目
     steps:
       - action: click
         target: .project-list .create-project-btn
       - action: assert
         assertions:
           - type: A1
-            target: .create-project-dialog
+            target: .create-project-modal
             expected: visible
             confidence: medium
-            inferredFrom: "click后新建项目窗口打开"
+            inferredFrom: "点击新建项目后弹出窗口"
             message: 新建项目窗口应可见
       - action: type
-        target: .create-project-dialog input[name="projectName"]
+        target: .create-project-modal input[name="projectName"]
         value: "{{params.projectName}}"
       - action: click
-        target: .create-project-dialog .create-project-btn
+        target: .create-project-modal .btn-create-project
         capture: always
   - name: 验证项目创建
     steps:
@@ -80,6 +82,6 @@ stages:
           - type: A4
             target: .project-list
             expected: "{{params.projectName}}"
-            confidence: high
-            inferredFrom: "预期结果-项目列表中增加一条记录"
-            message: 项目列表中应增加一条记录"{{params.projectName}}"
+            confidence: medium
+            inferredFrom: "预期结果：项目列表中增加一条记录"
+            message: 项目列表中应包含"{{params.projectName}}"记录

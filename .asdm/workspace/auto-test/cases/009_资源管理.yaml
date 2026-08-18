@@ -2,7 +2,7 @@ name: 009_resource-management-succ
 description: 验证管理员进行平台级资源管理（正向场景）
 framework: playwright
 capture: on-fail
-tags: [resource, upload, management, happy-path, P1]
+tags: [resource, admin, happy-path, P2]
 source: generate
 params:
   uploadScope: 全局
@@ -17,32 +17,22 @@ metadata:
     - 用户已完成系统登录
     - 打开目录中存在一款场景智能体（如：basic-tools-v2.zip）
 stages:
-  - name: 进入管理后台
+  - name: 进入平台级设置-资源管理
     steps:
       - action: navigate
-        target: https://platform-dt02.asdm.ai/dashboard
+        target: https://platform-dt02.asdm.ai/admin
       - action: click
         target: .sidebar .platform-settings-btn
-      - action: assert
-        assertions:
-          - type: A1
-            target: .workspace .settings-page
-            expected: visible
-            confidence: medium
-            inferredFrom: "click后右侧工作区打开设置页面"
-            message: 平台级设置页面应可见
-  - name: 打开资源管理页签
-    steps:
       - action: click
-        target: .settings-page .resource-tab
+        target: .platform-settings .tab-resource
       - action: assert
         assertions:
           - type: A1
             target: .resource-list
             expected: visible
             confidence: medium
-            inferredFrom: "click后资源管理列表区域"
-            message: 资源管理Tab页签应可见
+            inferredFrom: "点击资源管理Tab后列表可见"
+            message: 资源管理列表应可见
   - name: 上传资源
     steps:
       - action: click
@@ -50,28 +40,30 @@ stages:
       - action: assert
         assertions:
           - type: A1
-            target: .upload-resource-dialog
+            target: .upload-resource-modal
             expected: visible
             confidence: medium
-            inferredFrom: "click后上传资源窗口打开"
+            inferredFrom: "点击上传资源后弹出窗口"
             message: 上传资源窗口应可见
+  - name: 录入资源信息
+    steps:
       - action: select
-        target: .upload-resource-dialog select[name="uploadScope"]
+        target: .upload-resource-modal select[name="uploadScope"]
         value: "{{params.uploadScope}}"
       - action: select
-        target: .upload-resource-dialog select[name="resourceType"]
+        target: .upload-resource-modal select[name="resourceType"]
         value: "{{params.resourceType}}"
       - action: upload
-        target: .upload-resource-dialog input[type="file"]
-        value: "D:\\TEST01\\toolset\\{{params.fileName}}"
+        target: .upload-resource-modal input[type="file"]
+        value: D:\\TEST01\\toolset\\basic-tools-v2.zip
       - action: select
-        target: .upload-resource-dialog select[name="category"]
+        target: .upload-resource-modal select[name="category"]
         value: "{{params.category}}"
-      - action: click
-        target: .upload-resource-dialog .upload-btn
-        capture: always
-  - name: 验证资源上传
+  - name: 提交并验证
     steps:
+      - action: click
+        target: .upload-resource-modal .btn-upload
+        capture: always
       - action: wait
         target: .resource-list
         timeout: 5
@@ -80,6 +72,6 @@ stages:
           - type: A4
             target: .resource-list
             expected: "{{params.fileName}}"
-            confidence: high
-            inferredFrom: "预期结果-资源管理列表中增加一条记录"
-            message: 资源管理列表中应增加一条记录
+            confidence: medium
+            inferredFrom: "预期结果：资源管理列表中增加一条记录"
+            message: 资源管理列表中应包含"{{params.fileName}}"记录

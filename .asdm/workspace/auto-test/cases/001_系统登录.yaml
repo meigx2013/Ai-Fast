@@ -24,8 +24,8 @@ stages:
             target: .header
             expected: visible
             confidence: medium
-            inferredFrom: "navigate后页面头部元素"
-            message: ASDM平台页面应可见
+            inferredFrom: "navigate后Portal首页结构"
+            message: ASDM Portal页面应可见
   - name: 点击登录入口
     steps:
       - action: click
@@ -37,7 +37,7 @@ stages:
             target: .login-form
             expected: visible
             confidence: medium
-            inferredFrom: "click后登录表单元素"
+            inferredFrom: "点击【登录】后页面跳转"
             message: ASDM登录页面应可见
   - name: 输入凭证并登录
     steps:
@@ -59,13 +59,13 @@ stages:
         assertions:
           - type: A2
             target: current-url
-            expected: /dashboard
-            confidence: high
-            inferredFrom: "预期结果-页面跳转到ASDM管理后台首页面"
-            message: 页面应跳转到ASDM管理后台首页面
+            expected: /portal
+            confidence: medium
+            inferredFrom: "预期结果：页面跳转到Portal首页"
+            message: 页面应跳转到Portal首页
           - type: A1
             target: .dashboard
             expected: visible
             confidence: medium
-            inferredFrom: "navigate后页面结构"
-            message: ASDM管理后台首页面应可见
+            inferredFrom: "预期结果：Portal首页可见"
+            message: Portal首页应可见

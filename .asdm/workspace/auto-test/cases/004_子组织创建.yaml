@@ -1,8 +1,8 @@
 name: 004_create-sub-org-succ
-description: 验证管理员进行子组织创建（正向场景）
+description: 验证管理员进行子组织的创建（正向场景）
 framework: playwright
 capture: on-fail
-tags: [org, sub-org, create, happy-path, P1]
+tags: [org, admin, happy-path, P1]
 source: generate
 params:
   parentOrgName: 测试组织01
@@ -15,31 +15,31 @@ metadata:
     - 用户已完成系统登录
     - 已创建组织"测试组织01"
 stages:
-  - name: 选择父组织
+  - name: 选择父组织节点
     steps:
       - action: navigate
-        target: https://platform-dt02.asdm.ai/dashboard
+        target: https://platform-dt02.asdm.ai/admin
       - action: click
         target: .sidebar .platform-settings-btn
       - action: click
-        target: .settings-page .org-tab
+        target: .platform-settings .tab-org
       - action: click
-        target: .org-tree .org-node-more-btn
+        target: ".org-tree .org-node:has-text(\"{{params.parentOrgName}}\") .more-actions-btn"
+  - name: 创建子组织
+    steps:
       - action: assert
         assertions:
           - type: A1
-            target: .create-sub-org-dialog
+            target: .create-sub-org-modal
             expected: visible
             confidence: medium
-            inferredFrom: "click后创建子组织窗口打开"
+            inferredFrom: "点击...后打开创建子组织窗口"
             message: 创建子组织窗口应可见
-  - name: 创建子组织
-    steps:
       - action: type
-        target: .create-sub-org-dialog input[name="orgName"]
+        target: .create-sub-org-modal input[name="orgName"]
         value: "{{params.subOrgName}}"
       - action: click
-        target: .create-sub-org-dialog .create-btn
+        target: .create-sub-org-modal .btn-create
         capture: always
   - name: 验证子组织创建
     steps:
@@ -51,6 +51,6 @@ stages:
           - type: A4
             target: .org-tree
             expected: "{{params.subOrgName}}"
-            confidence: high
-            inferredFrom: "预期结果-组织树增加子节点"
-            message: "测试组织01节点应增加一个子节点{{params.subOrgName}}"
+            confidence: medium
+            inferredFrom: "预期结果：父节点增加子节点"
+            message: 组织树"{{params.parentOrgName}}"节点下应增加子节点"{{params.subOrgName}}"
