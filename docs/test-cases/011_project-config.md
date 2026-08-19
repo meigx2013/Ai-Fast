@@ -11,7 +11,7 @@
    仓库类型： 选择 [github]
    鉴权方式： 选择 [Token]
    仓库URL： "https://github.com/meigx2013/Ai-Fast"
-   仓库分支： develop
+   仓库分支： "develop"
    仓库Token： "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 8. 点击 [保存] 按钮
 9. 仓库配置列表中增加一条记录

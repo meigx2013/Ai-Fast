@@ -3,8 +3,8 @@
 ## 操作步骤
 1. 浏览器地址栏输入： https://platform-dt02.asdm.ai/
 2. Portal 首页右上角点击【登录】, 页面跳转到ASDM登录页面
-3. 输入邮箱地址： super-admin@asdm.ai
-4. 输入密码： superadmin@20260214
+3. 输入邮箱地址： "super-admin@asdm.ai"
+4. 输入密码： "superadmin@20260214"
 5. 点击【登录】按钮，完成登录
 ## 预期结果
 1. 页面跳转到 Portal 首页
