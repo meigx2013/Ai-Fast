@@ -1,0 +1,92 @@
+# ============================================================
+# 用例：创建令牌（正向场景）
+# 来源文档：docs/test-cases/006_generate-pat.md（AI 生成，source: generate）
+# 数据保真：输入值（令牌名称/有效期）、操作步骤、预期结果、前置条件均逐字来自用例描述；
+#   原文步骤编号有重复（两个步骤4），按内容顺序解析
+# ============================================================
+name: 006_generate-pat-succ
+description: 验证用户创建PAT令牌（正向场景）。本用例适用于用户进行PAT令牌创建。
+framework: playwright
+capture: on-fail
+tags: [pat, token, user-profile, happy-path, P2]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证来自 001_system-login.md（super-admin 为用例集登录用户，推断适用）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: super-admin@asdm.ai
+    password: superadmin@20260214
+  prerequisites:
+    - 用户已完成系统登录
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+  - name: 打开访问令牌页面
+    steps:
+      # 选择器推断：右上角登录用户信息区域
+      - action: click
+        target: '.header .user-info'
+      # 用户步骤3：弹出窗口中点击 [访问令牌] 链接
+      - action: click
+        target: '.user-dropdown-panel >> text=访问令牌'
+        pageTransition: navigate
+      # 用户步骤4：进入用户资料页面，[访问令牌] Tab页签
+      - action: assert
+        assertions:
+          - type: A4
+            target: .workspace
+            expected: 访问令牌
+            confidence: medium
+            inferredFrom: "用户步骤4'进入用户资料页面，[访问令牌]Tab页签'"
+            message: 用户资料页面的访问令牌Tab应可见
+  - name: 创建个人访问令牌
+    steps:
+      - action: click
+        target: 'button:has-text("创建令牌")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤5'打开创建个人访问令牌窗口'，对话框容器为推断选择器"
+            message: 创建个人访问令牌窗口应可见
+      # 输入值逐字来自用户描述：令牌名称 asdm-pat
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("令牌名称") input'
+        value: asdm-pat
+      # 选择器推断：有效期下拉框，选择 [30天]
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("有效期") .el-select'
+        value: 30天
+      - action: click
+        target: '.el-dialog button:text-is("创建")'
+      # 用户步骤：[复制] 生成的令牌（令牌格式如：pat_TTYseGwXUHU8OE5H3T7s1ye_vyE4eYbQU9nU_wl5cSE）
+      - action: click
+        target: '.el-dialog >> text=复制'
+  - name: 验证令牌生成
+    steps:
+      - action: assert
+        assertions:
+          - type: A4
+            target: .el-dialog
+            expected: pat_
+            confidence: medium
+            inferredFrom: "用户预期结果'令牌生成成功'（按用户描述的令牌格式 pat_ 前缀推断验证方式）"
+            message: 令牌应生成成功（显示 pat_ 前缀的令牌）

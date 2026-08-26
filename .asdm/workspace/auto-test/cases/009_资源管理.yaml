@@ -1,0 +1,101 @@
+# ============================================================
+# 用例：资源管理（正向场景）
+# 来源文档：docs/test-cases/009_resource-management-toolset.md（AI 生成，source: generate）
+# 数据保真：上传范围/资源类型/文件路径/分类、操作步骤、预期结果、前置条件均逐字来自用例描述；
+#   名称/描述/唯一ID/版本为自动获取或默认值（用户原文），无对应操作步骤；
+#   上传文件路径 = 用户提供的目录 D:\TEST01\toolset + 文件 basic-tools-v2.zip 组合
+# ============================================================
+name: 009_resource-management-succ
+description: 验证管理员进行平台级资源管理（正向场景）。本用例适用于管理员进行平台级资源管理。
+framework: playwright
+capture: on-fail
+tags: [resource, platform-settings, upload, happy-path, P2]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证来自 001_system-login.md（super-admin 为用例集登录用户，推断适用）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: super-admin@asdm.ai
+    password: superadmin@20260214
+  prerequisites:
+    - 用户已完成系统登录
+    - 打开目录中存在一款场景智能体（如：basic-tools-v2.zip）
+stages:
+  - name: 进入平台级设置-资源管理Tab
+    steps:
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+      - action: click
+        target: '.sidebar >> text=平台级设置'
+      - action: assert
+        assertions:
+          - type: A4
+            target: .workspace
+            expected: 平台级设置
+            confidence: medium
+            inferredFrom: "用户步骤3'右侧工作区打开平台级设置页面'"
+            message: 右侧工作区应打开平台级设置页面
+      - action: click
+        target: '.el-tabs__item:has-text("资源管理")'
+  - name: 打开上传资源窗口
+    steps:
+      # 选择器推断：[+ 上传资源] 按钮
+      - action: click
+        target: 'button:has-text("上传资源")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤5'打开上传资源窗口'，对话框容器为推断选择器"
+            message: 上传资源窗口应可见
+  - name: 填写上传资源数据
+    steps:
+      # 上传范围：选择[全局]
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("上传范围") .el-select'
+        value: 全局
+      # 资源类型：选择 [场景智能体]
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("资源类型") .el-select'
+        value: 场景智能体
+      # 上传文件：用户原文'目录：D:\TEST01\toolset，选择一款场景智能体（如：basic-tools-v2.zip）'
+      # 自动化方式：直接向文件输入框注入文件路径（省略'点击选择文件打开我的电脑'的人工文件对话框操作）
+      - action: upload
+        target: 'input[type="file"]'
+        value: 'D:\TEST01\toolset\basic-tools-v2.zip'
+      # 分类：选择[研发主流程]
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("分类") .el-select'
+        value: 研发主流程
+      # 说明：名称/描述自动获取上传文件名称，唯一ID/版本为默认值（用户原文），无需操作
+  - name: 上传并验证
+    steps:
+      - action: click
+        target: '.el-dialog button:text-is("上传")'
+      - action: wait
+        target: .el-table
+        timeout: 10
+      - action: assert
+        assertions:
+          - type: A4
+            target: .el-table
+            expected: basic-tools-v2
+            confidence: medium
+            inferredFrom: "用户预期结果'资源管理列表中增加一条记录'（资源名称=上传文件名，为推断验证方式）"
+            message: 资源管理列表中应增加一条记录（basic-tools-v2）

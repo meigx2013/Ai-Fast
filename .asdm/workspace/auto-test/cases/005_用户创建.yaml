@@ -1,0 +1,112 @@
+# ============================================================
+# 用例：用户创建（正向场景）
+# 来源文档：docs/test-cases/005_create-user.md（AI 生成，source: generate）
+# 数据保真：输入值（邮箱/密码/姓/名/角色映射）、操作步骤、预期结果、
+#   前置条件均逐字来自用例描述
+# ============================================================
+name: 005_create-user-succ
+description: 验证管理员创建用户（正向场景）。本用例适用于管理员进行用户创建。
+framework: playwright
+capture: on-fail
+tags: [user, platform-settings, happy-path, P1]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证来自 001_system-login.md（super-admin 为用例集登录用户，推断适用）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: super-admin@asdm.ai
+    password: superadmin@20260214
+  prerequisites:
+    - 用户已完成系统登录
+    - 已创建组织 "测试组织0101"
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+  - name: 打开平台级设置-用户Tab
+    steps:
+      # 选择器推断：左下角 [平台级设置] 按钮
+      - action: click
+        target: '.sidebar >> text=平台级设置'
+      - action: assert
+        assertions:
+          - type: A4
+            target: .workspace
+            expected: 平台级设置
+            confidence: medium
+            inferredFrom: "用户步骤3'右侧工作区打开平台级设置页面'"
+            message: 右侧工作区应打开平台级设置页面
+      - action: click
+        target: '.el-tabs__item:text-is("用户")'
+  - name: 打开新建用户窗口
+    steps:
+      # 选择器推断：[+创建用户] 按钮
+      - action: click
+        target: 'button:has-text("创建用户")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤5-6'点击+创建用户按钮打开新建用户信息录入'，对话框容器为推断选择器"
+            message: 新建用户窗口应可见
+  - name: 填写新建用户信息
+    steps:
+      # 输入值逐字来自用户描述
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("新用户邮箱") input'
+        value: test01@asdm.ai
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("初始密码") input'
+        value: admin@2026
+      # "姓"/"名"为短标签，使用精确文本匹配避免误匹配
+      - action: type
+        target: '.el-dialog .el-form-item:has(.el-form-item__label:text-is("姓")) input'
+        value: 测试
+      - action: type
+        target: '.el-dialog .el-form-item:has(.el-form-item__label:text-is("名")) input'
+        value: 一
+  - name: 新增角色映射
+    steps:
+      # 选择器推断：[新增角色映射] 按钮及角色映射区域的两个下拉框
+      - action: click
+        target: '.el-dialog >> text=新增角色映射'
+      # 第一个下拉框选择 [组织管理员]
+      - action: select
+        target: '.el-dialog .el-select >> nth=0'
+        value: 组织管理员
+      # 第二个下拉框选择 [测试组织0101]
+      - action: select
+        target: '.el-dialog .el-select >> nth=1'
+        value: 测试组织0101
+  - name: 创建用户并验证
+    steps:
+      - action: click
+        target: '.el-dialog button:has-text("创建用户")'
+      - action: wait
+        target: .el-table
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A4
+            target: .el-table
+            expected: test01@asdm.ai
+            confidence: medium
+            inferredFrom: "用户步骤9与预期结果'用户列表中增加一条记录'（新用户邮箱出现在列表为推断验证方式）"
+            message: 用户列表中应增加新用户记录（test01@asdm.ai）

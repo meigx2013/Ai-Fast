@@ -1,0 +1,75 @@
+# ============================================================
+# 用例：进入ASDM管理后台（正向场景）
+# 来源文档：docs/test-cases/002_access-asdm.md（AI 生成，source: generate）
+# 数据保真：操作步骤、预期结果、前置条件逐字来自用例描述；
+#   登录凭证来自 001 用例（super-admin 为用例集登录用户，推断适用）；
+#   选择器、登录页 URL、管理后台 URL 为 AI 推断（已标注）
+# ============================================================
+name: 002_access-asdm-succ
+description: 验证从 Portal 跳转到 ASDM管理后台（正向场景）。本用例适用于用户完成系统登录后，从 Portal 跳转到 ASDM管理后台。
+framework: playwright
+capture: on-fail
+tags: [navigation, admin, happy-path, P1]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证来自 001_system-login.md（super-admin 为用例集登录用户，推断适用）
+  # 注意：loginUrl 为推断值（001 流程中登录页由点击右上角【登录】进入，直接 URL 未在描述中出现）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: super-admin@asdm.ai
+    password: superadmin@20260214
+  prerequisites:
+    - 用户已完成系统登录
+stages:
+  - name: 访问Portal首页
+    steps:
+      - action: navigate
+        target: https://platform-dt02.asdm.ai/
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .header
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户访问Portal首页'，头部容器为推断选择器"
+            message: Portal 首页应可见
+  - name: 点击用户信息
+    steps:
+      # 选择器推断：右上角登录用户信息区域
+      - action: click
+        target: '.header .user-info'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .user-dropdown-panel
+            expected: visible
+            confidence: low
+            inferredFrom: "用户步骤2'点击右上角用户信息'后弹出面板（面板容器为推断选择器）"
+            message: 用户信息弹出面板应可见
+  - name: 进入控制台管理
+    steps:
+      - action: click
+        target: '.user-dropdown-panel >> text=控制台管理'
+        pageTransition: navigate
+      - action: wait
+        target: .admin-dashboard
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A2
+            target: current-url
+            expected: /admin
+            confidence: low
+            inferredFrom: "用户步骤4及预期结果'从Portal成功跳转到ASDM管理后台首页面'，管理后台URL路径为推断值，请按实际平台修正"
+            message: 页面应跳转到 ASDM管理后台 首页面
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户预期结果'从Portal成功跳转到ASDM管理后台首页面'，页面容器为推断选择器"
+            message: ASDM管理后台 首页面应可见

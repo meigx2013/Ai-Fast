@@ -1,0 +1,155 @@
+# ============================================================
+# 用例：特性开关管理（正向场景）
+# 来源文档：docs/test-cases/008_feature-flag.md（AI 生成，source: generate）
+# 数据保真：开关名称、状态值、操作步骤、预期结果、前置条件均逐字来自用例描述；
+#   原文步骤编号乱序（4、6、5），按内容顺序解析：
+#   先设置 hide_admin_resource_management，再重复操作设置 minio_storage_enabled 和 hide_mcp_management
+# ============================================================
+name: 008_feature-flag-succ
+description: 验证管理员进行特性开关配置（正向场景）。本用例适用于管理员进行特性开关配置。
+framework: playwright
+capture: on-fail
+tags: [feature-flag, platform-settings, happy-path, P2]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证来自 001_system-login.md（super-admin 为用例集登录用户，推断适用）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: super-admin@asdm.ai
+    password: superadmin@20260214
+  prerequisites:
+    - 用户已完成系统登录
+    - 特性开关项 "hide_admin_resource_management"、"minio_storage_enabled"、"hide_mcp_management" 存在
+stages:
+  - name: 进入平台级设置-特性开关Tab
+    steps:
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+      - action: click
+        target: '.sidebar >> text=平台级设置'
+      - action: assert
+        assertions:
+          - type: A4
+            target: .workspace
+            expected: 平台级设置
+            confidence: medium
+            inferredFrom: "用户步骤3'右侧工作区打开平台级设置页面'"
+            message: 右侧工作区应打开平台级设置页面
+      - action: click
+        target: '.el-tabs__item:has-text("特性开关")'
+  - name: 设置hide_admin_resource_management为全量开放
+    steps:
+      # 选择器推断：特性开关列表搜索框
+      - action: type
+        target: 'input[placeholder*="搜索"]'
+        value: hide_admin_resource_management
+      - action: click
+        target: 'tr:has-text("hide_admin_resource_management")'
+      - action: click
+        target: 'tr:has-text("hide_admin_resource_management") button:has-text("编辑")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤'打开编辑特性开关窗口'，对话框容器为推断选择器"
+            message: 编辑特性开关窗口应可见
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("状态") .el-select'
+        value: 全量开放
+      - action: click
+        target: '.el-dialog button:has-text("保存")'
+      - action: wait
+        target: 'tr:has-text("hide_admin_resource_management")'
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: 'tr:has-text("hide_admin_resource_management")'
+            expected: 全量开放
+            confidence: medium
+            inferredFrom: "用户预期结果'特性开关项状态变为全量开放'"
+            message: 特性开关 hide_admin_resource_management 状态应变为全量开放
+  - name: 设置minio_storage_enabled为全量开放
+    steps:
+      # 用户原文步骤5'重复步骤6操作'：搜索 → 编辑 → 设置全量开放 → 保存
+      - action: type
+        target: 'input[placeholder*="搜索"]'
+        value: minio_storage_enabled
+      - action: click
+        target: 'tr:has-text("minio_storage_enabled")'
+      - action: click
+        target: 'tr:has-text("minio_storage_enabled") button:has-text("编辑")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "重复编辑操作打开编辑特性开关窗口"
+            message: 编辑特性开关窗口应可见
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("状态") .el-select'
+        value: 全量开放
+      - action: click
+        target: '.el-dialog button:has-text("保存")'
+      - action: wait
+        target: 'tr:has-text("minio_storage_enabled")'
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: 'tr:has-text("minio_storage_enabled")'
+            expected: 全量开放
+            confidence: medium
+            inferredFrom: "用户预期结果'特性开关项状态变为全量开放'"
+            message: 特性开关 minio_storage_enabled 状态应变为全量开放
+  - name: 设置hide_mcp_management为全量开放
+    steps:
+      # 用户原文步骤5'重复步骤6操作'：搜索 → 编辑 → 设置全量开放 → 保存
+      - action: type
+        target: 'input[placeholder*="搜索"]'
+        value: hide_mcp_management
+      - action: click
+        target: 'tr:has-text("hide_mcp_management")'
+      - action: click
+        target: 'tr:has-text("hide_mcp_management") button:has-text("编辑")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "重复编辑操作打开编辑特性开关窗口"
+            message: 编辑特性开关窗口应可见
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("状态") .el-select'
+        value: 全量开放
+      - action: click
+        target: '.el-dialog button:has-text("保存")'
+      - action: wait
+        target: 'tr:has-text("hide_mcp_management")'
+        timeout: 3
+      - action: assert
+        assertions:
+          - type: A4
+            target: 'tr:has-text("hide_mcp_management")'
+            expected: 全量开放
+            confidence: medium
+            inferredFrom: "用户预期结果'特性开关项状态变为全量开放'"
+            message: 特性开关 hide_mcp_management 状态应变为全量开放

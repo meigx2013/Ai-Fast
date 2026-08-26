@@ -1,0 +1,122 @@
+# ============================================================
+# 用例：项目设置（正向场景）
+# 来源文档：docs/test-cases/011_project-config.md（AI 生成，source: generate）
+# 数据保真：仓库类型/鉴权方式/仓库URL/分支/Token、操作步骤、预期结果、
+#   前置条件均逐字来自用例描述；
+#   登录用户 test01@asdm.ai 逐字来自用户原文，密码来自 010 用例（同用户凭证，推断）
+#   仓库Token 值 "ghp_xxxx..." 为用户原文提供的占位格式值，逐字照搬
+# ============================================================
+name: 011_project-config-succ
+description: 验证用户在项目中进行项目设置（正向场景）。本用例适用于用户在项目中进行项目设置。
+framework: playwright
+capture: on-fail
+tags: [project, repo-config, happy-path, P2]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：用户 test01@asdm.ai 来自用户原文'用户：test01@asdm.ai, 已完成系统登录'，
+  # 密码来自 010 用例同用户凭证（admin@2026，推断），loginUrl 为推断值
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: test01@asdm.ai
+    password: admin@2026
+  prerequisites:
+    - 用户：test01@asdm.ai, 已完成系统登录
+    - 项目 "测试组织0101-项目01" 已创建
+    - 进入 "测试组织0101-项目01" 项目页面
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+  - name: 进入项目设置页面
+    steps:
+      # 执行说明：若管理后台首页无项目列表（项目列表可能位于[组织与项目]导航窗口内），
+      # 需先打开导航窗口——原文未描述此步骤，未擅自添加，请审核确认
+      # 选择器推断：项目列表中"测试组织0101-项目01"项目名称所在行
+      - action: click
+        target: 'tr:has-text("测试组织0101-项目01")'
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A4
+            target: .workspace
+            expected: 项目设置
+            confidence: medium
+            inferredFrom: "用户步骤3'右侧工作区打开项目设置页面'"
+            message: 右侧工作区应打开项目设置页面
+  - name: 打开添加仓库配置窗口
+    steps:
+      - action: click
+        target: '.el-tabs__item:text-is("其他")'
+      # 选择器推断：[+添加仓库配置] 按钮
+      - action: click
+        target: 'button:has-text("添加仓库配置")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤6'打开 [添加仓库配置] 窗口'，对话框容器为推断选择器"
+            message: 添加仓库配置窗口应可见
+  - name: 填写仓库配置信息
+    steps:
+      # 输入值逐字来自用户描述
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("仓库类型") .el-select'
+        value: github
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("鉴权方式") .el-select'
+        value: Token
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("仓库URL") input'
+        value: https://github.com/meigx2013/Ai-Fast
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("仓库分支") input'
+        value: develop
+      # 仓库Token 为用户原文提供的占位格式值，逐字照搬
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("仓库Token") input'
+        value: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  - name: 保存并验证仓库配置
+    steps:
+      - action: click
+        target: '.el-dialog button:has-text("保存")'
+      - action: wait
+        target: .el-table
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A4
+            target: .el-table
+            expected: github.com/meigx2013/Ai-Fast
+            confidence: medium
+            inferredFrom: "用户步骤9与预期结果'仓库配置列表中增加一条记录'（按仓库URL出现在列表为推断验证方式）"
+            message: 仓库配置列表中应增加一条记录
+  - name: 检测仓库可用性
+    steps:
+      # 选择器推断：新增仓库配置记录右侧的 [检测可用性] 按钮
+      - action: click
+        target: 'tr:has-text("Ai-Fast") button:has-text("检测可用性")'
+      - action: assert
+        assertions:
+          - type: A4
+            target: 'tr:has-text("Ai-Fast")'
+            expected: 成功
+            confidence: low
+            inferredFrom: "用户步骤11与预期结果'返回检测成功/检测可用性成功'（检测结果文本为推断验证方式）"
+            message: 仓库可用性检测应返回成功

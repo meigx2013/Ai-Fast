@@ -1,0 +1,94 @@
+# ============================================================
+# 用例：创建新项目（正向场景）
+# 来源文档：docs/test-cases/010_create-project.md（AI 生成，source: generate）
+# 数据保真：登录凭证（test01@asdm.ai / admin@2026）、项目名称、操作步骤、
+#   预期结果、前置条件均逐字来自用例描述；
+#   用户步骤1'完成系统登录'由 metadata.auth 前置登录处理
+# ============================================================
+name: 010_create-project-succ
+description: 验证用户创建新项目（正向场景）。本用例适用于用户进行新项目创建。
+framework: playwright
+capture: on-fail
+tags: [project, org, happy-path, P1]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证逐字来自用户步骤1'用户邮箱: test01@asdm.ai 密码: admin@2026 完成系统登录'
+  # 注意：loginUrl 为推断值（登录入口流程见 001 用例）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: test01@asdm.ai
+    password: admin@2026
+  prerequisites:
+    - 用户已完成系统登录
+    - 已创建组织 "测试组织0101"
+    - 已创建用户 "test01@asdm.ai"
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      # 用户步骤1'完成系统登录'由 metadata.auth 处理
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤2'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+  - name: 打开组织与项目导航
+    steps:
+      # 选择器推断：右侧工作区顶部 [组织与项目] 导航
+      - action: click
+        target: 'button:has-text("组织与项目")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤3'打开 [组织与项目] 导航窗口'，导航窗口容器为推断选择器"
+            message: 组织与项目导航窗口应可见
+  - name: 选择组织节点
+    steps:
+      # 选择器推断：组织层级树中"测试组织0101"节点
+      - action: click
+        target: '.el-tree-node:has-text("测试组织0101")'
+  - name: 新建项目
+    steps:
+      # 选择器推断：项目列表上方的 [+新建项目] 按钮
+      - action: click
+        target: 'button:has-text("新建项目")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤6'打开 [新建项目] 窗口'，对话框容器为推断选择器"
+            message: 新建项目窗口应可见
+      # 输入值逐字来自用户描述：项目名称 测试组织0101-项目01
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("项目名称") input'
+        value: 测试组织0101-项目01
+      - action: click
+        target: '.el-dialog button:has-text("创建项目")'
+  - name: 验证项目创建
+    steps:
+      - action: wait
+        target: .el-table
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A4
+            target: .el-table
+            expected: 测试组织0101-项目01
+            confidence: high
+            inferredFrom: "用户预期结果'项目列表中增加一条记录 测试组织0101-项目01'"
+            message: 项目列表中应增加记录"测试组织0101-项目01"

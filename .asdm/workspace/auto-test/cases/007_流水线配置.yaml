@@ -1,0 +1,113 @@
+# ============================================================
+# 用例：流水线配置（正向场景）
+# 来源文档：docs/test-cases/007_pipeline-config.md（AI 生成，source: generate）
+# 数据保真：输入值（名称/类型/凭证/Jenkinsfile路径）、操作步骤、预期结果、
+#   前置条件均逐字来自用例描述；
+#   ASDM API PAT 为动态值（来自 006 用例创建的 PAT 令牌），以 params.asdm_pat 参数表达，
+#   执行前需填写实际令牌值（未编造具体令牌）
+# ============================================================
+name: 007_pipeline-config-succ
+description: 验证管理员进行流水线配置（正向场景）。本用例适用于管理员进行流水线配置。
+framework: playwright
+capture: on-fail
+tags: [pipeline, platform-settings, happy-path, P2]
+source: generate
+params:
+  # 执行时填写 006_generate-pat.md 用例创建的 PAT 令牌（用户原文：'ASDM API PAT：复制 [006_generate-pat.md]用例 创建的PAT令牌'）
+  asdm_pat: ""
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证来自 001_system-login.md（super-admin 为用例集登录用户，推断适用）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: super-admin@asdm.ai
+    password: superadmin@20260214
+  prerequisites:
+    - 用户已完成系统登录
+    - PAT令牌已创建
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+  - name: 打开平台级设置-其他Tab
+    steps:
+      - action: click
+        target: '.sidebar >> text=平台级设置'
+      - action: assert
+        assertions:
+          - type: A4
+            target: .workspace
+            expected: 平台级设置
+            confidence: medium
+            inferredFrom: "用户步骤3'右侧工作区打开平台级设置页面'"
+            message: 右侧工作区应打开平台级设置页面
+      - action: click
+        target: '.el-tabs__item:text-is("其他")'
+  - name: 打开新增流水线配置窗口
+    steps:
+      # 选择器推断：[+ 添加流水线配置] 按钮
+      - action: click
+        target: 'button:has-text("添加流水线配置")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤5'打开新增流水线配置窗口'，对话框容器为推断选择器"
+            message: 新增流水线配置窗口应可见
+  - name: 填写流水线配置信息
+    steps:
+      # 输入值逐字来自用户描述
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("名称") input'
+        value: pipeline
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("流水线类型") .el-select'
+        value: Jenkins
+      # 用户原文"Jinkins凭证"（Jenkins凭证输入框），值逐字照搬
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("凭证") input'
+        value: "admin:11f054f0964f8cb86a627b296929b9df59"
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("知识空间同步") .el-select'
+        value: context/asdm-context-space-sync.no-docker.Jenkinsfile
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("智能体空间执行") .el-select'
+        value: workspace/asdm-workspace-exec.no-docker.Jenkinsfile
+      - action: select
+        target: '.el-dialog .el-form-item:has-text("知识空间分析") .el-select'
+        value: context/asdm-context-analyze.no-docker.Jenkinsfile
+      # ASDM API PAT：动态值，来自 006 用例创建的 PAT 令牌，执行前填写 params.asdm_pat
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("ASDM API PAT") input'
+        value: "{{params.asdm_pat}}"
+  - name: 创建并验证流水线配置
+    steps:
+      - action: click
+        target: '.el-dialog button:text-is("创建")'
+      - action: wait
+        target: .el-table
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A4
+            target: .el-table
+            expected: pipeline
+            confidence: medium
+            inferredFrom: "用户预期结果'流水线配置创建成功'（按配置名称出现在列表为推断验证方式）"
+            message: 流水线配置应创建成功（列表包含"pipeline"记录）

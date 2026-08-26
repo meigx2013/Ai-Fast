@@ -1,0 +1,87 @@
+# ============================================================
+# 用例：组织创建（正向场景）
+# 来源文档：docs/test-cases/003_create-org.md（AI 生成，source: generate）
+# 数据保真：URL、输入值、操作步骤、预期结果、前置条件均逐字来自用例描述；
+#   ASDM管理后台首页 URL（/admin）为推断值，请按实际平台修正
+# ============================================================
+name: 003_create-org-succ
+description: 验证管理员创建顶层组织（正向场景）。本用例适用于管理员进行组织架构的创建。
+framework: playwright
+capture: on-fail
+tags: [org, platform-settings, happy-path, P1]
+source: generate
+metadata:
+  targetUrl: https://platform-dt02.asdm.ai/
+  timeout: 30
+  browser: chromium
+  # 前置登录：凭证来自 001_system-login.md（super-admin 为用例集登录用户，推断适用）
+  auth:
+    type: login
+    loginUrl: https://platform-dt02.asdm.ai/login
+    username: super-admin@asdm.ai
+    password: superadmin@20260214
+  prerequisites:
+    - 用户已完成系统登录
+stages:
+  - name: 进入ASDM管理后台
+    steps:
+      # 注意：/admin 为 ASDM管理后台首页的推断 URL，请按实际平台修正
+      - action: navigate
+        target: /admin
+        pageTransition: navigate
+      - action: assert
+        assertions:
+          - type: A1
+            target: .admin-dashboard
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤1'用户进入ASDM管理后台首页'，页面容器为推断选择器"
+            message: ASDM管理后台首页应可见
+  - name: 打开平台级设置
+    steps:
+      # 选择器推断：左下角 [平台级设置] 按钮
+      - action: click
+        target: '.sidebar >> text=平台级设置'
+      - action: assert
+        assertions:
+          - type: A4
+            target: .workspace
+            expected: 平台级设置
+            confidence: medium
+            inferredFrom: "用户步骤3'右侧工作区打开平台级设置页面'，工作区容器为推断选择器"
+            message: 右侧工作区应打开平台级设置页面
+  - name: 打开创建顶层组织窗口
+    steps:
+      - action: click
+        target: '.el-tabs__item:text-is("组织")'
+      - action: click
+        target: 'button:has-text("创建顶层组织")'
+      - action: assert
+        assertions:
+          - type: A1
+            target: .el-dialog
+            expected: visible
+            confidence: medium
+            inferredFrom: "用户步骤5'打开创建顶层组织窗口'，对话框容器为推断选择器（假定Element Plus风格）"
+            message: 创建顶层组织窗口应可见
+  - name: 填写组织信息并创建
+    steps:
+      # 输入值逐字来自用户描述：组织名称 测试组织01
+      - action: type
+        target: '.el-dialog .el-form-item:has-text("组织名称") input'
+        value: 测试组织01
+      - action: click
+        target: '.el-dialog button:text-is("创建")'
+  - name: 验证组织创建
+    steps:
+      - action: wait
+        target: .el-tree
+        timeout: 5
+      - action: assert
+        assertions:
+          - type: A4
+            target: .el-tree
+            expected: 测试组织01
+            confidence: high
+            inferredFrom: "用户步骤8与预期结果'组织树增加一个节点 测试组织01'，组织树容器为推断选择器"
+            message: 组织树应增加节点"测试组织01"
