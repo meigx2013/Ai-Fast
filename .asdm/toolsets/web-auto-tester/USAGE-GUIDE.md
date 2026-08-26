@@ -1,8 +1,8 @@
 # Web Auto Tester 工具集 — 详细使用指南
 
 **Toolset ID**: `web-auto-tester`
-**Version**: v0.0.2
-**Updated**: 2026-07-21
+**Version**: v0.0.3
+**Updated**: 2026-08-26
 
 ---
 
@@ -11,8 +11,8 @@
 | 项目 | 值 |
 |------|-----|
 | **ID** | `web-auto-tester` |
-| **版本** | v0.0.2 |
-| **定位** | Web 系统自动化测试工具集，支持 AI 生成、浏览器录制、执行、列表、报告、清理 |
+| **版本** | v0.0.3 |
+| **定位** | Web 系统自动化测试工具集，支持 AI 生成、浏览器录制、流水线编排执行、列表、报告、清理 |
 | **框架支持** | Playwright（主框架）/ Selenium（辅框架） |
 | **核心特色** | YAML DSL 用例驱动、8 种断言类型（A1~A8）、3 种截图策略、HTML 报告 + Allure 导出 |
 | **工作目录** | `.asdm/workspace/auto-test/` |
@@ -276,27 +276,58 @@ stages:
 
 ### 3.3 `/auto-test-run` — 执行自动化测试
 
-**用途**：执行 YAML DSL 测试用例，7 阶段规范流程，生成执行结果 JSON 和失败截图。
+**用途**：读取全部 YAML DSL 测试用例后自动编排执行流水线（用例先后依赖 DAG + 参数依赖传递），生成 sh 执行脚本，按依赖分层顺序执行；case 指向单个文件时为单用例模式（跳过编排，向后兼容）。
 
 **参数说明**：
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|:----:|------|
-| `case` | string | ✅ | 用例文件路径、目录路径，或留空使用默认 `cases/` 目录 |
+| `case` | string | ✅ | 用例文件路径（单用例模式）、目录路径（流水线模式），或留空使用默认 `cases/` 目录（流水线模式） |
 | `framework` | string | ❌ | 框架偏好，覆盖用例设置（`playwright` / `selenium`） |
 | `capture` | string | ❌ | 截图策略，覆盖用例设置（`on-fail` / `full`） |
+| `mode` | string | ❌ | 编排执行模式：`sequence`（默认，按拓扑序全串行）/ `parallel`（同层无依赖用例并行） |
+| `dryRun` | boolean | ❌ | `true` 时仅加载用例 + 编排 + 生成 sh 脚本与编排图，不实际执行；默认 `false` |
 
-**7 阶段执行 Pipeline**：
+**流水线编排 DSL 扩展**（在用例 `metadata` 中声明）：
+
+| 扩展字段 | 说明 | 示例 |
+|----------|------|------|
+| `metadata.dependsOn` | 用例级硬依赖声明（数组，值为被依赖用例名） | `dependsOn: [user-login-test]` |
+| `metadata.outputs` | 本用例输出声明（供下游引用，从步骤结果提取） | `auth_token: {from: step, stepIndex: 5, field: actual}` |
+| `params` 值中的 `{{outputs.X.y}}` | 跨用例参数引用（隐式建立硬依赖，运行时从参数上下文注入） | `token: "{{outputs.user-login-test.auth_token}}"` |
+
+**依赖推断规则（无显式声明时自动编排）**：
+
+| 优先级 | 信号 | 强度 |
+|:------:|------|------|
+| D1 | `metadata.dependsOn` 显式声明 | 硬依赖 |
+| D2 | params 含 `{{outputs.X.y}}` 引用 | 硬依赖 |
+| D3 | 文件名数字前缀（`01-login.yaml` → `02-order.yaml`） | 软依赖（推断） |
+| D4 | tags 语义（auth/login → 根节点；create 先于 query/delete） | 软依赖（推断） |
+| D5 | 同 targetUrl 系统分组（跨系统可并行） | 软依赖（分组） |
+
+硬依赖上游 fail/error → 下游用例自动 BLOCKED（skip）；软依赖不阻塞执行。硬依赖成环 → 报错终止；软依赖成环 → 降级同层并行。
+
+**编排执行 Pipeline**：
 
 | Phase | 名称 | 说明 |
 |:-----:|------|------|
-| 1 | 用例加载 | YAML 解析 → Schema 校验 → 生成 `ATC-{YYYYMMDD}-{NNN}` ID |
-| 2 | 上下文准备 | 读取 metadata → 初始化浏览器选项 → 确定执行框架 → 处理认证 |
-| 3 | 执行引擎 | Playwright/Selenium 操作映射 → 逐步骤执行 → 异常捕获 |
+| 1 | 用例全量加载 | YAML 解析 → Schema 校验 → 数据提取摘要 |
+| 1.5 | 流水线编排 | 依赖图构建 → 参数依赖构建 → 环检测 → 拓扑分层 → 编排图 → **生成 sh 执行脚本** |
+| 2 | 上下文准备 | 读取 metadata → 参数解析（本地 + 跨用例）→ 6 项数据自检 |
+| 3 | 执行引擎 | 按编排顺序逐用例：依赖检查（BLOCKED 判定）→ 逐步骤执行 |
 | 4 | 断言判定 | 8 种断言类型（A1~A8）→ 结果映射 pass/fail/error/skip |
 | 5 | 截图采集 | on-fail/full/always 三策略 → 文件命名 → 存储到 screenshots/ |
-| 6 | 结果记录 | 生成 AutoTestResult JSON → `ATR-{YYYYMMDD}-{NNN}` ID → 持久化 |
-| 7 | 报告输出 | 简要摘要表格（详细 HTML 报告由 `/auto-test-report` 生成） |
+| 6 | 结果记录 | AutoTestResult JSON → outputs 提取 → ctx 写入 → 状态回写 |
+| 7 | 报告输出 | 流水线级汇总表格 + 结构化 JSON |
+
+**编排产物**（保存到 `.asdm/workspace/auto-test/pipelines/`）：
+
+| 产物 | 说明 |
+|------|------|
+| `pipeline-{YYYYMMDD}-{NNN}.sh` | sh 执行脚本（支持 `--dry-run` / `--only {case}` 参数） |
+| `PIPE-{YYYYMMDD}-{NNN}.ctx.env` | 参数上下文（上游用例输出注入，下游 `{{outputs.X.y}}` 解析来源） |
+| `PIPE-{YYYYMMDD}-{NNN}.status` | 流水线状态（`{case}={pass\|fail\|error\|skip:BLOCKED_BY:{dep}}`） |
 
 **框架选择与降级策略**：
 
@@ -322,26 +353,34 @@ stages:
 **命令示例**：
 
 ```
-/auto-test-run case=user-login-test.yaml
-/auto-test-run case=.asdm/workspace/auto-test/cases/
+# 流水线模式：加载全部用例 → 自动编排 → 生成 sh → 顺序执行
 /auto-test-run
+/auto-test-run case=.asdm/workspace/auto-test/cases/
+
+# 流水线模式：同层并行执行
+/auto-test-run case=cases/ mode=parallel
+
+# 编排预演：只生成编排图与 sh 脚本，不执行
+/auto-test-run dryRun=true
+
+# 单用例模式：跳过编排，直接 7 阶段执行（向后兼容）
+/auto-test-run case=user-login-test.yaml
 /auto-test-run case=admin-login-test.yaml framework=playwright capture=full
 ```
 
 **输出示例**：
 
 ```markdown
-### 🧪 自动化测试结果：user-login-test
+### 🧪 自动化测试流水线执行结果：PIPE-20260826-001
 
-| 步骤 | 操作 | 目标 | 预期结果 | 实际结果 | 状态 |
-|:----:|------|------|---------|---------|:----:|
-| 1 | navigate | /login | 登录页面正常加载 | 登录页面正常加载 | ✅ |
-| 2 | assert | .auth-form | visible | visible | ✅ |
-| 3 | type | .auth-form [name="username"] | — | — | ✅ |
-| ... | ... | ... | ... | ... | ... |
+| 用例 | 层级 | 硬依赖 | 状态 | 步骤 | 耗时 | 结果文件 |
+|------|:----:|--------|:----:|------|:----:|---------|
+| user-login-test | L1 | — | ✅ pass | 7/7 | 8.5s | ATR-20260826-001.json |
+| order-create-test | L2 | user-login-test | ❌ fail | 3/6 | 5.2s | ATR-20260826-003.json |
+| order-query-test | L3 | order-create-test | ⏭️ skip | 0/5 | — | —（BLOCKED_BY: order-create-test） |
 
-**用例状态**：✅ 通过 | **步骤**：7/7 通过 | **耗时**：8.5s
-**执行框架**：playwright | **结果文件**：ATR-20260714-001.json
+**流水线状态**：❌ 失败 | **用例**：1 通过 / 1 失败 / 1 跳过 | **总耗时**：13.7s
+**执行脚本**：pipelines/pipeline-20260826-001.sh
 ```
 
 ---
@@ -695,6 +734,8 @@ steps:
 |------|---------|------|
 | 用例 (AutoTestCase) | `ATC-{YYYYMMDD}-{NNN}` | `ATC-20260714-001` |
 | 结果 (AutoTestResult) | `ATR-{YYYYMMDD}-{NNN}` | `ATR-20260714-001` |
+| 流水线 (Pipeline) | `PIPE-{YYYYMMDD}-{NNN}` | `PIPE-20260826-001` |
+| 执行脚本 | `pipeline-{YYYYMMDD}-{NNN}.sh` | `pipeline-20260826-001.sh` |
 | 截图 | `ATR-{resultId}-S{stepIndex}-{strategy}.png` | `ATR-20260714-001-S03-fail.png` |
 | 报告 | `report-{YYYYMMDD}-{NNN}.html` | `report-20260714-001.html` |
 
@@ -708,6 +749,11 @@ steps:
 │   ├── .gitkeep
 │   ├── user-login-test.yaml
 │   └── admin-login-test.yaml
+├── pipelines/                # 流水线编排产物
+│   ├── .gitkeep
+│   ├── pipeline-20260826-001.sh    # sh 执行脚本（自动编排生成）
+│   ├── PIPE-20260826-001.ctx.env   # 参数上下文（上游输出注入）
+│   └── PIPE-20260826-001.status    # 流水线状态
 ├── results/                  # 执行结果 JSON
 │   ├── .gitkeep
 │   ├── ATR-20260714-001.json

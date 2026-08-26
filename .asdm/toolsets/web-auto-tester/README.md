@@ -2,9 +2,9 @@
 
 toolset-id: web-auto-tester
 toolset-name: Web Auto Tester Toolset
-version: 0.0.2
-updated-date: 2026-07-20
-toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、测试用例描述 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，本地执行，HTML 报告 + 可选 Allure 导出
+version: 0.0.3
+updated-date: 2026-08-26
+toolset-description: Web 系统自动化测试工具集，支持 YAML DSL 用例驱动、测试用例描述 AI 生成、Playwright Codegen 录制三种用例生成方式，Playwright 主框架 + Selenium 辅框架双框架兼容，自动编排执行流水线（用例依赖 DAG + 参数依赖传递 + sh 执行脚本生成），本地执行，HTML 报告 + 可选 Allure 导出
 
 ## Overview
 
@@ -57,18 +57,23 @@ Web Auto Tester（工具集 ID：web-auto-tester）是一个面向 Web 系统全
 
 ### Feature 3: 执行自动化测试（auto-test-run）
 
-执行 YAML DSL 测试用例，7 阶段规范流程。
+读取全部用例后自动编排执行流水线，生成 sh 执行脚本，按依赖顺序执行。
 
-- Phase 1：用例加载（YAML 解析 → Schema 校验 → 结构化）
-- Phase 2：上下文准备（读取 metadata → 初始化浏览器选项）
-- Phase 3：执行引擎（Playwright/Selenium 操作映射 → 逐步骤执行）
+- **流水线编排（核心）**：全量加载用例 → 构建用例先后依赖关系 DAG（显式 `dependsOn` + `{{outputs.X.y}}` 引用 + 5 级自动推断）→ 拓扑分层 → 生成 sh 执行脚本
+- **参数依赖传递**：上游用例声明 `metadata.outputs` 输出（从步骤结果提取），下游用例通过 `{{outputs.X.y}}` 引用，运行时经参数上下文文件（ctx.env）注入
+- **失败传播**：硬依赖上游 fail/error → 下游用例自动 BLOCKED（skip）；软依赖不阻塞
+- **单用例模式**：case 指向单个文件时跳过编排，直接 7 阶段执行（向后兼容）
+- Phase 1：用例全量加载（YAML 解析 → Schema 校验 → 数据提取摘要）
+- Phase 1.5：流水线编排（依赖图构建 → 环检测 → 拓扑分层 → 编排图 → sh 脚本生成）
+- Phase 2：上下文准备（读取 metadata → 参数解析（本地+跨用例）→ 6 项数据自检）
+- Phase 3：执行引擎（按编排顺序逐用例：依赖检查 → Playwright/Selenium 操作映射 → 逐步骤执行）
 - Phase 4：断言判定（8 种断言类型 → 结果映射）
 - Phase 5：截图采集（on-fail/full/always 三策略）
-- Phase 6：结果记录（AutoTestResult JSON → ATR-{YYYYMMDD}-{NNN} ID）
-- Phase 7：报告输出（摘要输出 + HTML 报告可选）
+- Phase 6：结果记录（AutoTestResult JSON → ATR-{YYYYMMDD}-{NNN} ID → outputs 提取 → ctx 写入 → 状态回写）
+- Phase 7：报告输出（流水线级汇总 + 结构化 JSON）
 
-**输入**：用例文件路径或目录、框架偏好、截图策略、环境配置
-**输出**：AutoTestResult JSON 文件
+**输入**：用例文件路径或目录、框架偏好、截图策略、编排执行模式（sequence/parallel）、dryRun
+**输出**：sh 执行脚本、编排图、参数上下文文件、流水线状态文件、AutoTestResult JSON
 
 ### Feature 4: 列出用例与结果（auto-test-list）
 
@@ -113,7 +118,7 @@ Once Web Auto Tester is installed, user can use the following commands:
 
 1. `/auto-test-generate`：根据测试用例描述自动生成 YAML DSL 测试用例
 2. `/auto-test-record`：通过 Playwright Codegen 录制操作生成 YAML DSL 测试用例
-3. `/auto-test-run`：执行 YAML DSL 测试用例，生成执行结果 JSON
+3. `/auto-test-run`：读取全部用例自动编排执行流水线（依赖 DAG + 参数依赖 + sh 脚本），生成执行结果 JSON
 4. `/auto-test-list`：列出测试用例和执行结果
 5. `/auto-test-report`：生成 HTML 测试报告（可选 Allure 导出）
 6. `/auto-test-clean`：清理测试工作区资源
@@ -138,10 +143,18 @@ Once Web Auto Tester is installed, user can use the following commands:
 /auto-test-record url=http://localhost:3000 browser=chromium
 ```
 
-#### 执行测试
+#### 执行测试（单用例）
 
 ```shell
 /auto-test-run case=cases/user-login-test.yaml
+```
+
+#### 执行测试（流水线模式：自动编排 + 生成 sh）
+
+```shell
+/auto-test-run case=.asdm/workspace/auto-test/cases/
+/auto-test-run case=cases/ mode=parallel
+/auto-test-run dryRun=true
 ```
 
 #### 列出结果
@@ -201,6 +214,11 @@ The Web Auto Tester toolset has the following workspace structure:
 ├── cases/                          # 测试用例存储（YAML DSL 文件）
 │   ├── user-login-test.yaml
 │   ├── admin-login-selenium.yaml
+│   └── ...
+├── pipelines/                      # 流水线编排产物
+│   ├── pipeline-20260826-001.sh    # sh 执行脚本（自动编排生成）
+│   ├── PIPE-20260826-001.ctx.env   # 参数上下文（上游输出注入，运行时生成）
+│   ├── PIPE-20260826-001.status    # 流水线状态（KEY=VALUE，运行时生成）
 │   └── ...
 ├── results/                        # 执行结果存储（AutoTestResult JSON）
 │   ├── ATR-20260714-001.json
