@@ -1,0 +1,542 @@
+{
+    "code": 0,
+    "message": "success",
+    "data": {
+        "items": [
+            {
+                "id": "e4c327a0-9ee0-4f2c-9ddd-15fb8c8664dd",
+                "revision": 0,
+                "runId": "8ad85303-3e21-4150-883c-c3f7f0b557fb",
+                "ownership": {
+                    "orgId": "26",
+                    "projectId": "27",
+                    "contextId": "42e8cb65-453c-4ec5-8485-617d4a5fbb53"
+                },
+                "researchSnapshotId": "ac9805ef-69b1-4ca1-9988-1d81769b4eb8",
+                "asdmStatus": "available",
+                "technicalStatus": "complete",
+                "isDefault": true,
+                "createdBy": "52",
+                "createdByName": "测试 一",
+                "createdAt": "2026-10-29T07:21:45.321Z",
+                "completedAt": "2026-10-29T07:21:45.122Z",
+                "suite": {
+                    "id": "f1513000-0000-4000-8000-000000000002",
+                    "revision": 1,
+                    "connectionId": "f1513000-0000-4000-8000-000000000001",
+                    "domain": "softwareEng",
+                    "blueprint": {
+                        "name": "code-repo",
+                        "version": "0.1.2",
+                        "artifactRef": "artifact:ft1513:code-repo",
+                        "artifactDigest": "9287d5363a9cb55552298fca03042d85d364d49c5ef59221a07ae4b33da3b166"
+                    },
+                    "analyzers": [
+                        {
+                            "name": "java-tree-sitter",
+                            "version": "0.1.0",
+                            "artifactRef": "artifact:ft1513:java-tree-sitter",
+                            "artifactDigest": "8194daa71fc5e8b793cf284f1929d0217267039bcbe4c440fc9e4bd132fce4a0"
+                        },
+                        {
+                            "name": "sql-ddl-mybatis",
+                            "version": "0.1.2",
+                            "artifactRef": "artifact:ft1513:sql-ddl-mybatis",
+                            "artifactDigest": "545dbbb025cd6f08726a5bea451d1f009abc7e3c93f68ce7e65a079550d018c7"
+                        },
+                        {
+                            "name": "frontend-vue-react",
+                            "version": "0.1.0",
+                            "artifactRef": "artifact:ft1513:frontend-vue-react",
+                            "artifactDigest": "3dfe4086d06dc1a95383a65849b509489e55b59b9ef00c75d387ee4b42f32358"
+                        }
+                    ],
+                    "cli": {
+                        "name": "aos",
+                        "version": "0.1.1",
+                        "artifactRef": "artifact:ft1513:cli",
+                        "artifactDigest": "a2ab3d75dca454b9353bb15c8aa6851a25a82061d79ba80efcac07e199e762a5"
+                    },
+                    "serverImageDigest": "sha256:b15d6588cfb2633e1caf1ccafcf231f0eef054f8c5e5468ca2e65227ad5f0fbd",
+                    "registryDigest": "eaa056b41eb16a5be864373a736e166109f2f9ec1a3202d040992890ae61f33a"
+                },
+                "inputs": {
+                    "runId": "8ad85303-3e21-4150-883c-c3f7f0b557fb",
+                    "attemptId": "6b45f9ae-a870-422d-8b98-244b4e87f186",
+                    "contextVersion": "e0ab4b0bfdc9cbabb0856aff7543e1afdb423b6d3db1901d94c693cc87c644ed",
+                    "generation": 5,
+                    "inputSetDigest": "bb24add1671b9f734a5d5524a1ed361f0be6aed989b599b4ed07c102c1229503",
+                    "inputs": [
+                        {
+                            "contextItemId": "22",
+                            "sourceGuid": "0558ab86-34c4-41e5-bd2d-19ab0ec6727e",
+                            "materializedDir": "RuoYi-Springboot-code",
+                            "contentDigest": "075bfb0aae0e48ac7c67e9c3e2d571173ec32ed36e5dbb03dfc1d10a4767bebe",
+                            "kind": "git-repo",
+                            "commitSha": "3aba22394fb80c939e2b3032abde1f7c36cca8c4"
+                        },
+                        {
+                            "contextItemId": "27",
+                            "sourceGuid": "4d4f8879-426e-48c5-a0e4-eba4a4e13f4e",
+                            "materializedDir": "RuoYi-db",
+                            "contentDigest": "74a28005efdfe1cf1a6253ceaaf57e071d7a72e4472fc8cf7e90b2cf25370244",
+                            "kind": "ddl",
+                            "ddlDigest": "74a28005efdfe1cf1a6253ceaaf57e071d7a72e4472fc8cf7e90b2cf25370244"
+                        }
+                    ],
+                    "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                    "sourceVersion": "ad62a3efc1aea26913c955be10598d4fdafcf79f65515a22f093be552bbce622",
+                    "domain": "softwareEng",
+                    "parentId": null,
+                    "suiteId": "f1513000-0000-4000-8000-000000000002",
+                    "suiteRevision": 1
+                },
+                "counters": {
+                    "objectCount": 4944,
+                    "linkCount": 31860,
+                    "pendingCount": null,
+                    "completedBatches": 0,
+                    "totalBatches": null
+                },
+                "stats": {
+                    "upload": true,
+                    "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                    "linkCount": 31860,
+                    "durationMs": 149,
+                    "typeCounts": {
+                        "Class": 314,
+                        "Route": 21,
+                        "Table": 72,
+                        "Mapper": 23,
+                        "Method": 2470,
+                        "Module": 215,
+                        "Package": 135,
+                        "Function": 1306,
+                        "Component": 57,
+                        "Interface": 80,
+                        "Dependency": 73,
+                        "Repository": 2,
+                        "ApiEndpoint": 176
+                    },
+                    "incremental": false,
+                    "objectCount": 4944,
+                    "progressive": true,
+                    "changedFiles": [],
+                    "pendingCount": 0,
+                    "fixpointRounds": 2,
+                    "violationCount": 0
+                },
+                "permissions": {
+                    "read": true,
+                    "write": true,
+                    "admin": true,
+                    "resourceRead": true,
+                    "resourceManage": true,
+                    "platformAdmin": true
+                },
+                "bindingRevision": 1,
+                "deletion": null
+            },
+            {
+                "id": "ed85599d-aae2-47df-a965-1a14da4bdbd3",
+                "revision": 0,
+                "runId": "5b3f9c18-2e6f-483d-af15-0ff91aa7b07a",
+                "ownership": {
+                    "orgId": "26",
+                    "projectId": "27",
+                    "contextId": "42e8cb65-453c-4ec5-8485-617d4a5fbb53"
+                },
+                "researchSnapshotId": "8f3b46d0-0d82-42ce-941c-ae92a0afb19e",
+                "asdmStatus": "available",
+                "technicalStatus": "complete",
+                "isDefault": false,
+                "createdBy": "52",
+                "createdByName": "测试 一",
+                "createdAt": "2026-10-19T09:07:18.151Z",
+                "completedAt": "2026-10-19T17:07:17.975Z",
+                "suite": {
+                    "id": "f1513000-0000-4000-8000-000000000002",
+                    "revision": 1,
+                    "connectionId": "f1513000-0000-4000-8000-000000000001",
+                    "domain": "softwareEng",
+                    "blueprint": {
+                        "name": "code-repo",
+                        "version": "0.1.2",
+                        "artifactRef": "artifact:ft1513:code-repo",
+                        "artifactDigest": "9287d5363a9cb55552298fca03042d85d364d49c5ef59221a07ae4b33da3b166"
+                    },
+                    "analyzers": [
+                        {
+                            "name": "java-tree-sitter",
+                            "version": "0.1.0",
+                            "artifactRef": "artifact:ft1513:java-tree-sitter",
+                            "artifactDigest": "8194daa71fc5e8b793cf284f1929d0217267039bcbe4c440fc9e4bd132fce4a0"
+                        },
+                        {
+                            "name": "sql-ddl-mybatis",
+                            "version": "0.1.2",
+                            "artifactRef": "artifact:ft1513:sql-ddl-mybatis",
+                            "artifactDigest": "545dbbb025cd6f08726a5bea451d1f009abc7e3c93f68ce7e65a079550d018c7"
+                        },
+                        {
+                            "name": "frontend-vue-react",
+                            "version": "0.1.0",
+                            "artifactRef": "artifact:ft1513:frontend-vue-react",
+                            "artifactDigest": "3dfe4086d06dc1a95383a65849b509489e55b59b9ef00c75d387ee4b42f32358"
+                        }
+                    ],
+                    "cli": {
+                        "name": "aos",
+                        "version": "0.1.1",
+                        "artifactRef": "artifact:ft1513:cli",
+                        "artifactDigest": "a2ab3d75dca454b9353bb15c8aa6851a25a82061d79ba80efcac07e199e762a5"
+                    },
+                    "serverImageDigest": "sha256:b15d6588cfb2633e1caf1ccafcf231f0eef054f8c5e5468ca2e65227ad5f0fbd",
+                    "registryDigest": "eaa056b41eb16a5be864373a736e166109f2f9ec1a3202d040992890ae61f33a"
+                },
+                "inputs": {
+                    "runId": "5b3f9c18-2e6f-483d-af15-0ff91aa7b07a",
+                    "attemptId": "7371da8e-8264-405e-98fa-9032212ad6dd",
+                    "contextVersion": "4b6ee71998f4276d76b7ac61d2b5c7a1b82bb08ce887dd1adcdc01b92aa540e5",
+                    "generation": 2,
+                    "inputSetDigest": "0e12ee134cb0922b5c97abff1d180f68b9393e7667e3a94ad07a81a6066bf215",
+                    "inputs": [
+                        {
+                            "contextItemId": "22",
+                            "sourceGuid": "0558ab86-34c4-41e5-bd2d-19ab0ec6727e",
+                            "materializedDir": "RuoYi-Springboot源码",
+                            "contentDigest": "075bfb0aae0e48ac7c67e9c3e2d571173ec32ed36e5dbb03dfc1d10a4767bebe",
+                            "kind": "git-repo",
+                            "commitSha": "3aba22394fb80c939e2b3032abde1f7c36cca8c4"
+                        }
+                    ],
+                    "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                    "sourceVersion": "350545abd5b3c662b306feb9ffa347edffb7a617fadfcc9b3eae9f0527949959",
+                    "domain": "softwareEng",
+                    "parentId": null,
+                    "suiteId": "f1513000-0000-4000-8000-000000000002",
+                    "suiteRevision": 0
+                },
+                "counters": {
+                    "objectCount": 4624,
+                    "linkCount": 26165,
+                    "pendingCount": null,
+                    "completedBatches": 0,
+                    "totalBatches": null
+                },
+                "stats": {
+                    "upload": true,
+                    "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                    "linkCount": 26165,
+                    "durationMs": 127,
+                    "typeCounts": {
+                        "Class": 314,
+                        "Route": 21,
+                        "Table": 53,
+                        "Mapper": 23,
+                        "Method": 2470,
+                        "Module": 217,
+                        "Package": 135,
+                        "Function": 1002,
+                        "Component": 57,
+                        "Interface": 80,
+                        "Dependency": 73,
+                        "Repository": 1,
+                        "ApiEndpoint": 178
+                    },
+                    "incremental": false,
+                    "objectCount": 4624,
+                    "progressive": true,
+                    "changedFiles": [],
+                    "pendingCount": 0,
+                    "fixpointRounds": 2,
+                    "violationCount": 0
+                },
+                "permissions": {
+                    "read": true,
+                    "write": true,
+                    "admin": true,
+                    "resourceRead": true,
+                    "resourceManage": true,
+                    "platformAdmin": true
+                },
+                "bindingRevision": 1,
+                "deletion": null
+            }
+        ],
+        "page": 1,
+        "pageSize": 20,
+        "total": 2,
+        "latestSnapshot": {
+            "id": "e4c327a0-9ee0-4f2c-9ddd-15fb8c8664dd",
+            "revision": 0,
+            "runId": "8ad85303-3e21-4150-883c-c3f7f0b557fb",
+            "ownership": {
+                "orgId": "26",
+                "projectId": "27",
+                "contextId": "42e8cb65-453c-4ec5-8485-617d4a5fbb53"
+            },
+            "researchSnapshotId": "ac9805ef-69b1-4ca1-9988-1d81769b4eb8",
+            "asdmStatus": "available",
+            "technicalStatus": "complete",
+            "isDefault": true,
+            "createdBy": "52",
+            "createdByName": "测试 一",
+            "createdAt": "2026-10-29T07:21:45.321Z",
+            "completedAt": "2026-10-29T07:21:45.122Z",
+            "suite": {
+                "id": "f1513000-0000-4000-8000-000000000002",
+                "revision": 1,
+                "connectionId": "f1513000-0000-4000-8000-000000000001",
+                "domain": "softwareEng",
+                "blueprint": {
+                    "name": "code-repo",
+                    "version": "0.1.2",
+                    "artifactRef": "artifact:ft1513:code-repo",
+                    "artifactDigest": "9287d5363a9cb55552298fca03042d85d364d49c5ef59221a07ae4b33da3b166"
+                },
+                "analyzers": [
+                    {
+                        "name": "java-tree-sitter",
+                        "version": "0.1.0",
+                        "artifactRef": "artifact:ft1513:java-tree-sitter",
+                        "artifactDigest": "8194daa71fc5e8b793cf284f1929d0217267039bcbe4c440fc9e4bd132fce4a0"
+                    },
+                    {
+                        "name": "sql-ddl-mybatis",
+                        "version": "0.1.2",
+                        "artifactRef": "artifact:ft1513:sql-ddl-mybatis",
+                        "artifactDigest": "545dbbb025cd6f08726a5bea451d1f009abc7e3c93f68ce7e65a079550d018c7"
+                    },
+                    {
+                        "name": "frontend-vue-react",
+                        "version": "0.1.0",
+                        "artifactRef": "artifact:ft1513:frontend-vue-react",
+                        "artifactDigest": "3dfe4086d06dc1a95383a65849b509489e55b59b9ef00c75d387ee4b42f32358"
+                    }
+                ],
+                "cli": {
+                    "name": "aos",
+                    "version": "0.1.1",
+                    "artifactRef": "artifact:ft1513:cli",
+                    "artifactDigest": "a2ab3d75dca454b9353bb15c8aa6851a25a82061d79ba80efcac07e199e762a5"
+                },
+                "serverImageDigest": "sha256:b15d6588cfb2633e1caf1ccafcf231f0eef054f8c5e5468ca2e65227ad5f0fbd",
+                "registryDigest": "eaa056b41eb16a5be864373a736e166109f2f9ec1a3202d040992890ae61f33a"
+            },
+            "inputs": {
+                "runId": "8ad85303-3e21-4150-883c-c3f7f0b557fb",
+                "attemptId": "6b45f9ae-a870-422d-8b98-244b4e87f186",
+                "contextVersion": "e0ab4b0bfdc9cbabb0856aff7543e1afdb423b6d3db1901d94c693cc87c644ed",
+                "generation": 5,
+                "inputSetDigest": "bb24add1671b9f734a5d5524a1ed361f0be6aed989b599b4ed07c102c1229503",
+                "inputs": [
+                    {
+                        "contextItemId": "22",
+                        "sourceGuid": "0558ab86-34c4-41e5-bd2d-19ab0ec6727e",
+                        "materializedDir": "RuoYi-Springboot-code",
+                        "contentDigest": "075bfb0aae0e48ac7c67e9c3e2d571173ec32ed36e5dbb03dfc1d10a4767bebe",
+                        "kind": "git-repo",
+                        "commitSha": "3aba22394fb80c939e2b3032abde1f7c36cca8c4"
+                    },
+                    {
+                        "contextItemId": "27",
+                        "sourceGuid": "4d4f8879-426e-48c5-a0e4-eba4a4e13f4e",
+                        "materializedDir": "RuoYi-db",
+                        "contentDigest": "74a28005efdfe1cf1a6253ceaaf57e071d7a72e4472fc8cf7e90b2cf25370244",
+                        "kind": "ddl",
+                        "ddlDigest": "74a28005efdfe1cf1a6253ceaaf57e071d7a72e4472fc8cf7e90b2cf25370244"
+                    }
+                ],
+                "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                "sourceVersion": "ad62a3efc1aea26913c955be10598d4fdafcf79f65515a22f093be552bbce622",
+                "domain": "softwareEng",
+                "parentId": null,
+                "suiteId": "f1513000-0000-4000-8000-000000000002",
+                "suiteRevision": 1
+            },
+            "counters": {
+                "objectCount": 4944,
+                "linkCount": 31860,
+                "pendingCount": null,
+                "completedBatches": 0,
+                "totalBatches": null
+            },
+            "stats": {
+                "upload": true,
+                "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                "linkCount": 31860,
+                "durationMs": 149,
+                "typeCounts": {
+                    "Class": 314,
+                    "Route": 21,
+                    "Table": 72,
+                    "Mapper": 23,
+                    "Method": 2470,
+                    "Module": 215,
+                    "Package": 135,
+                    "Function": 1306,
+                    "Component": 57,
+                    "Interface": 80,
+                    "Dependency": 73,
+                    "Repository": 2,
+                    "ApiEndpoint": 176
+                },
+                "incremental": false,
+                "objectCount": 4944,
+                "progressive": true,
+                "changedFiles": [],
+                "pendingCount": 0,
+                "fixpointRounds": 2,
+                "violationCount": 0
+            },
+            "permissions": {
+                "read": true,
+                "write": true,
+                "admin": true,
+                "resourceRead": true,
+                "resourceManage": true,
+                "platformAdmin": true
+            },
+            "bindingRevision": 1,
+            "deletion": null
+        },
+        "defaultSnapshot": {
+            "id": "e4c327a0-9ee0-4f2c-9ddd-15fb8c8664dd",
+            "revision": 0,
+            "runId": "8ad85303-3e21-4150-883c-c3f7f0b557fb",
+            "ownership": {
+                "orgId": "26",
+                "projectId": "27",
+                "contextId": "42e8cb65-453c-4ec5-8485-617d4a5fbb53"
+            },
+            "researchSnapshotId": "ac9805ef-69b1-4ca1-9988-1d81769b4eb8",
+            "asdmStatus": "available",
+            "technicalStatus": "complete",
+            "isDefault": true,
+            "createdBy": "52",
+            "createdByName": "测试 一",
+            "createdAt": "2026-10-29T07:21:45.321Z",
+            "completedAt": "2026-10-29T07:21:45.122Z",
+            "suite": {
+                "id": "f1513000-0000-4000-8000-000000000002",
+                "revision": 1,
+                "connectionId": "f1513000-0000-4000-8000-000000000001",
+                "domain": "softwareEng",
+                "blueprint": {
+                    "name": "code-repo",
+                    "version": "0.1.2",
+                    "artifactRef": "artifact:ft1513:code-repo",
+                    "artifactDigest": "9287d5363a9cb55552298fca03042d85d364d49c5ef59221a07ae4b33da3b166"
+                },
+                "analyzers": [
+                    {
+                        "name": "java-tree-sitter",
+                        "version": "0.1.0",
+                        "artifactRef": "artifact:ft1513:java-tree-sitter",
+                        "artifactDigest": "8194daa71fc5e8b793cf284f1929d0217267039bcbe4c440fc9e4bd132fce4a0"
+                    },
+                    {
+                        "name": "sql-ddl-mybatis",
+                        "version": "0.1.2",
+                        "artifactRef": "artifact:ft1513:sql-ddl-mybatis",
+                        "artifactDigest": "545dbbb025cd6f08726a5bea451d1f009abc7e3c93f68ce7e65a079550d018c7"
+                    },
+                    {
+                        "name": "frontend-vue-react",
+                        "version": "0.1.0",
+                        "artifactRef": "artifact:ft1513:frontend-vue-react",
+                        "artifactDigest": "3dfe4086d06dc1a95383a65849b509489e55b59b9ef00c75d387ee4b42f32358"
+                    }
+                ],
+                "cli": {
+                    "name": "aos",
+                    "version": "0.1.1",
+                    "artifactRef": "artifact:ft1513:cli",
+                    "artifactDigest": "a2ab3d75dca454b9353bb15c8aa6851a25a82061d79ba80efcac07e199e762a5"
+                },
+                "serverImageDigest": "sha256:b15d6588cfb2633e1caf1ccafcf231f0eef054f8c5e5468ca2e65227ad5f0fbd",
+                "registryDigest": "eaa056b41eb16a5be864373a736e166109f2f9ec1a3202d040992890ae61f33a"
+            },
+            "inputs": {
+                "runId": "8ad85303-3e21-4150-883c-c3f7f0b557fb",
+                "attemptId": "6b45f9ae-a870-422d-8b98-244b4e87f186",
+                "contextVersion": "e0ab4b0bfdc9cbabb0856aff7543e1afdb423b6d3db1901d94c693cc87c644ed",
+                "generation": 5,
+                "inputSetDigest": "bb24add1671b9f734a5d5524a1ed361f0be6aed989b599b4ed07c102c1229503",
+                "inputs": [
+                    {
+                        "contextItemId": "22",
+                        "sourceGuid": "0558ab86-34c4-41e5-bd2d-19ab0ec6727e",
+                        "materializedDir": "RuoYi-Springboot-code",
+                        "contentDigest": "075bfb0aae0e48ac7c67e9c3e2d571173ec32ed36e5dbb03dfc1d10a4767bebe",
+                        "kind": "git-repo",
+                        "commitSha": "3aba22394fb80c939e2b3032abde1f7c36cca8c4"
+                    },
+                    {
+                        "contextItemId": "27",
+                        "sourceGuid": "4d4f8879-426e-48c5-a0e4-eba4a4e13f4e",
+                        "materializedDir": "RuoYi-db",
+                        "contentDigest": "74a28005efdfe1cf1a6253ceaaf57e071d7a72e4472fc8cf7e90b2cf25370244",
+                        "kind": "ddl",
+                        "ddlDigest": "74a28005efdfe1cf1a6253ceaaf57e071d7a72e4472fc8cf7e90b2cf25370244"
+                    }
+                ],
+                "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                "sourceVersion": "ad62a3efc1aea26913c955be10598d4fdafcf79f65515a22f093be552bbce622",
+                "domain": "softwareEng",
+                "parentId": null,
+                "suiteId": "f1513000-0000-4000-8000-000000000002",
+                "suiteRevision": 1
+            },
+            "counters": {
+                "objectCount": 4944,
+                "linkCount": 31860,
+                "pendingCount": null,
+                "completedBatches": 0,
+                "totalBatches": null
+            },
+            "stats": {
+                "upload": true,
+                "sourceId": "asdm-aaf627a9900fb0e084b66afaa3cccdb207d194e25f5fb42e",
+                "linkCount": 31860,
+                "durationMs": 149,
+                "typeCounts": {
+                    "Class": 314,
+                    "Route": 21,
+                    "Table": 72,
+                    "Mapper": 23,
+                    "Method": 2470,
+                    "Module": 215,
+                    "Package": 135,
+                    "Function": 1306,
+                    "Component": 57,
+                    "Interface": 80,
+                    "Dependency": 73,
+                    "Repository": 2,
+                    "ApiEndpoint": 176
+                },
+                "incremental": false,
+                "objectCount": 4944,
+                "progressive": true,
+                "changedFiles": [],
+                "pendingCount": 0,
+                "fixpointRounds": 2,
+                "violationCount": 0
+            },
+            "permissions": {
+                "read": true,
+                "write": true,
+                "admin": true,
+                "resourceRead": true,
+                "resourceManage": true,
+                "platformAdmin": true
+            },
+            "bindingRevision": 1,
+            "deletion": null
+        }
+    },
+    "requestId": "3832c5e6-5094-4832-afde-66ef6ea6c7a1",
+    "timestamp": 1793262071399
+}
+

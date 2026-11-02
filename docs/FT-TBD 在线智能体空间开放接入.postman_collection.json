@@ -1,0 +1,1459 @@
+{
+  "info": {
+    "_postman_id": "080c4bc4-c8ce-4e8a-ae30-df1c814f2cbd",
+    "name": "FT-TBD 在线智能体空间开放接入",
+    "description": "FT-TBD 在线智能体空间开放接入全量 HTTP 接口（不含 WebSocket）。\n\n导入：Postman → Import → 选择本文件。\n先填 baseUrl（默认 https://asdm-dt01.leansoftx.com）、email/password 或 pat，再执行 0.1/0.2 获取 token。\n实例、会话、制品等路径参数在对应请求的 Path Variables 里填写。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55935961"
+  },
+  "item": [
+    {
+      "name": "0. 鉴权",
+      "item": [
+        {
+          "name": "0.1 账号密码登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.token) {",
+                  "  pm.collectionVariables.set('token', body.data.token);",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "账号密码登录，返回 JWT。成功后脚本把 data.token 写入集合变量 token。"
+          },
+          "response": []
+        },
+        {
+          "name": "0.2 PAT 兑换 JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.accessToken) {",
+                  "  pm.collectionVariables.set('token', body.data.accessToken);",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pat}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/personal-access-tokens/exchange",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "personal-access-tokens",
+                "exchange"
+              ]
+            },
+            "description": "用 PAT 兑换 JWT。成功后脚本把 data.accessToken 写入集合变量 token。"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1. 实例管理",
+      "item": [
+        {
+          "name": "1.1 创建实例",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const data = body && body.data;",
+                  "const id = data && (data.instanceId || (data.instance && data.instance.instanceId));",
+                  "if (id) {",
+                  "  pm.collectionVariables.set('instanceId', id);",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": {{workspaceId}},\n  \"imageConfigId\": \"{{imageConfigId}}\",\n  \"cpu\": \"2\",\n  \"memory\": \"4Gi\",\n  \"idleTimeoutMinutes\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces"
+              ]
+            },
+            "description": "创建（或复用）该 workspace 的在线智能体空间实例。\n\n必填：workspaceId、imageConfigId；可选：cpu、memory、idleTimeoutMinutes（0 表示永不自动暂停）。\n成功后脚本把 data.instanceId 写入集合变量 instanceId。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 实例列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces"
+              ]
+            },
+            "description": "查询当前账号名下的在线智能体空间实例列表。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 实例详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "查询实例详情，创建后可用它轮询 status 到 running。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 暂停实例",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/stop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "stop"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "暂停实例，释放计算资源、保留存储与工作目录。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 重启实例",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/restart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "restart"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "重启实例；重启期间 ACP 连接会断开，需要重新 connect + initialize。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 删除实例",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "删除实例。属于破坏性操作，确认后再执行。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 可用镜像列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{workspaceId}}/images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{workspaceId}}",
+                "images"
+              ],
+              "variable": [
+                {
+                  "key": "workspaceId",
+                  "value": "",
+                  "description": "workspace ID"
+                }
+              ]
+            },
+            "description": "查询该 workspace 可用的镜像配置，用于创建实例时选择 imageConfigId。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.8 项目列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "projects"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "实例内成员项目；projectId 是 sidecar 项目 ID，不是 ASDM 平台项目 ID。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.9 项目详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "projects",
+                "{{projectId}}"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "实例内成员项目；projectId 是 sidecar 项目 ID，不是 ASDM 平台项目 ID。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.10 创建项目",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.projectId) {",
+                  "  pm.collectionVariables.set('projectId', body.data.projectId);",
+                  "}",
+                  "pm.test('HTTP 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My App\",\n  \"description\": \"示例项目\",\n  \"slug\": \"my-app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "projects"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "实例内成员项目；projectId 是 sidecar 项目 ID，不是 ASDM 平台项目 ID。"
+          },
+          "response": []
+        },
+        {
+          "name": "1.11 删除项目",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"force\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "projects",
+                "{{projectId}}"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "实例内成员项目；projectId 是 sidecar 项目 ID，不是 ASDM 平台项目 ID。\n\nforce=false 时只有存在活跃 WS 才返回 409；session 不阻断删除，会随项目级联删除。\nforce=true 会先关闭项目 WS 再级联删除。"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. 连接与进入",
+      "item": [
+        {
+          "name": "2.1 进入实例",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/enter",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "enter"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "进入实例并确保成员环境；projectId 可选，不传默认 _default。"
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 获取连接信息",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/connect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "connect"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "获取指定项目的 ACP 连接信息。projectId 留空时默认 _default；返回 wsUrl 已包含 projectSlug，外部直接用于 WS。"
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 查询用户连接状态",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/connection-status?asdmUserId={{asdmUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "connection-status"
+              ],
+              "query": [
+                {
+                  "key": "asdmUserId",
+                  "value": "{{asdmUserId}}",
+                  "description": "要查询的用户 ID"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "查询指定用户在该实例上是否有活跃 ACP 连接。\n\n只判断连接是否存在，不要求 initialize；返回 connected、connectionCount、connections。\n该接口允许查询任意 asdmUserId；生产环境请按需加管理员权限。"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. 会话",
+      "item": [
+        {
+          "name": "3.1 会话列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/sessions?projectId={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "projectId",
+                  "value": "{{projectId}}",
+                  "description": "项目 ID；留空返回全部项目"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "查询会话列表；projectId 可选，留空返回全部项目。"
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 创建会话",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.sessionId) {",
+                  "  pm.collectionVariables.set('sessionId', body.data.sessionId);",
+                  "}",
+                  "pm.test('HTTP 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "sessions"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "在指定项目的活跃 ACP 连接上创建会话。projectId 留空时默认 _default；成功后脚本写入 sessionId。"
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 切换会话",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"projectId\": \"{{projectId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/sessions/switch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "sessions",
+                "switch"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "把会话标记为活跃；跨项目切换会返回 409，需要重新 connect 该项目。"
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 删除会话",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/sessions/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "sessions",
+                "{{sessionId}}"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                },
+                {
+                  "key": "sessionId",
+                  "value": "",
+                  "description": "会话 ID"
+                }
+              ]
+            },
+            "description": "删除指定会话。"
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 获取会话可用模型",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.currentModel) {",
+                  "  pm.collectionVariables.set('modelId', body.data.currentModel);",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/sessions/{{sessionId}}/models",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "sessions",
+                "{{sessionId}}",
+                "models"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                },
+                {
+                  "key": "sessionId",
+                  "value": "",
+                  "description": "会话 ID"
+                }
+              ]
+            },
+            "description": "获取指定会话的可用模型（会话维度）。\n\n需要该会话在调用方活跃连接上创建/恢复；返回 currentModel + models。\n成功后脚本把 currentModel 写入集合变量 modelId。"
+          },
+          "response": []
+        },
+        {
+          "name": "3.6 切换会话模型",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.currentModel) {",
+                  "  pm.collectionVariables.set('modelId', body.data.currentModel);",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"model\": \"{{modelId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/sessions/{{sessionId}}/model",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "sessions",
+                "{{sessionId}}",
+                "model"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                },
+                {
+                  "key": "sessionId",
+                  "value": "",
+                  "description": "会话 ID"
+                }
+              ]
+            },
+            "description": "切换指定会话所用模型。\n\n内部调用 ACP session/set_config_option（configId=model）；无活跃连接 409，未知模型 400。"
+          },
+          "response": []
+        },
+        {
+          "name": "3.7 停止生成",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/generation/stop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "generation",
+                "stop"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "中断当前对话轮次（session/cancel）。"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. 制品与文件",
+      "item": [
+        {
+          "name": "4.1 上传文件",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const fullPath = body && body.data && body.data.path;",
+                  "if (fullPath) {",
+                  "  const marker = '/projects/_default/';",
+                  "  const index = fullPath.indexOf(marker);",
+                  "  if (index >= 0) {",
+                  "    pm.collectionVariables.set('filePath', fullPath.slice(index + marker.length));",
+                  "  }",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "value": null
+                },
+                {
+                  "key": "projectId",
+                  "type": "text",
+                  "value": "{{projectId}}",
+                  "description": "项目 ID；留空默认 _default"
+                },
+                {
+                  "key": "path",
+                  "type": "text",
+                  "value": "",
+                  "description": "目标目录；留空 = 所选项目根目录；相对路径拼在项目根目录后面。"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/artifacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "artifacts"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "上传文件到指定项目目录。projectId 留空默认 _default；path 相对项目根目录。"
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 下载文件",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/artifacts?path={{filePath}}&projectId={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "artifacts"
+              ],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{filePath}}",
+                  "description": "相对于所选项目根目录的文件路径"
+                },
+                {
+                  "key": "projectId",
+                  "value": "{{projectId}}",
+                  "description": "项目 ID；留空默认 _default"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "下载指定项目目录下的文件。projectId 留空默认 _default；path 相对项目根目录。"
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 上传制品到智能体空间",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.artifactId) {",
+                  "  pm.collectionVariables.set('artifactId', body.data.artifactId);",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"path\": \"{{artifactPath}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{instanceId}}/workspace-artifacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{instanceId}}",
+                "workspace-artifacts"
+              ],
+              "variable": [
+                {
+                  "key": "instanceId",
+                  "value": "",
+                  "description": "实例 ID"
+                }
+              ]
+            },
+            "description": "从指定项目目录上传制品。projectId 留空默认 _default；path 相对项目根目录。"
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 获取智能体空间制品列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && Array.isArray(body.data) && body.data.length > 0 && body.data[0].artifactId) {",
+                  "  pm.collectionVariables.set('artifactId', body.data[0].artifactId);",
+                  "}",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspaces/{{workspaceId}}/workspace-artifacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspaces",
+                "{{workspaceId}}",
+                "workspace-artifacts"
+              ],
+              "variable": [
+                {
+                  "key": "workspaceId",
+                  "value": "",
+                  "description": "智能体空间 ID"
+                }
+              ]
+            },
+            "description": "对应项目 _artifacts/artifacts 页面列表，按智能体空间 ID 查询，只返回 sourceType=2 的 Active 制品。"
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 下载制品",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agentorbit/workspace-artifacts/{{artifactId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agentorbit",
+                "workspace-artifacts",
+                "{{artifactId}}"
+              ],
+              "variable": [
+                {
+                  "key": "artifactId",
+                  "value": "",
+                  "description": "制品数据库 ID"
+                }
+              ]
+            },
+            "description": "对应项目 _artifacts/artifacts 页面“下载制品”。\n\n只需要 artifactId（制品数据库 ID），不需要 instanceId；artifactId 来自 4.3 上传响应或 4.4 列表。"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5173"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "pat",
+      "value": "pat_YVewHpc9JiOwyZw9BXsonSSw6k1XjoiJmzN67917Qv4"
+    },
+    {
+      "key": "email",
+      "value": "super-admin@asdm.ai"
+    },
+    {
+      "key": "password",
+      "value": "superadmin@20260214"
+    },
+    {
+      "key": "workspaceId",
+      "value": "85"
+    },
+    {
+      "key": "imageConfigId",
+      "value": ""
+    },
+    {
+      "key": "instanceId",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "modelId",
+      "value": "deepseek-v4-flash"
+    },
+    {
+      "key": "uploadPath",
+      "value": ""
+    },
+    {
+      "key": "filePath",
+      "value": ""
+    },
+    {
+      "key": "artifactPath",
+      "value": ""
+    },
+    {
+      "key": "artifactId",
+      "value": ""
+    },
+    {
+      "key": "asdmUserId",
+      "value": "1"
+    },
+    {
+      "key": "projectId",
+      "value": ""
+    }
+  ]
+}

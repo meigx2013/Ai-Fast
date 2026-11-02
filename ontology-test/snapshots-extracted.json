@@ -1,0 +1,62 @@
+{
+  "httpStatus": 200,
+  "code": 0,
+  "total": 2,
+  "count": 2,
+  "snapshots": [
+    {
+      "id": "ed85599d-aae2-47df-a965-1a14da4bdbd3",
+      "runId": "5b3f9c18-2e6f-483d-af15-0ff91aa7b07a",
+      "isDefault": false,
+      "createdAt": "2026-10-19T09:07:18.151Z",
+      "completedAt": "2026-10-19T17:07:17.975Z",
+      "objectCount": 4624,
+      "linkCount": 26165,
+      "inputs": "RuoYi-Springboot源码(git-repo)",
+      "inputCount": 1,
+      "generation": 2,
+      "typeCounts": {
+        "Class": 314,
+        "Route": 21,
+        "Table": 53,
+        "Mapper": 23,
+        "Method": 2470,
+        "Module": 217,
+        "Package": 135,
+        "Function": 1002,
+        "Component": 57,
+        "Interface": 80,
+        "Dependency": 73,
+        "Repository": 1,
+        "ApiEndpoint": 178
+      }
+    },
+    {
+      "id": "e4c327a0-9ee0-4f2c-9ddd-15fb8c8664dd",
+      "runId": "8ad85303-3e21-4150-883c-c3f7f0b557fb",
+      "isDefault": true,
+      "createdAt": "2026-10-29T07:21:45.321Z",
+      "completedAt": "2026-10-29T07:21:45.122Z",
+      "objectCount": 4944,
+      "linkCount": 31860,
+      "inputs": "RuoYi-Springboot-code(git-repo), RuoYi-db(ddl)",
+      "inputCount": 2,
+      "generation": 5,
+      "typeCounts": {
+        "Class": 314,
+        "Route": 21,
+        "Table": 72,
+        "Mapper": 23,
+        "Method": 2470,
+        "Module": 215,
+        "Package": 135,
+        "Function": 1306,
+        "Component": 57,
+        "Interface": 80,
+        "Dependency": 73,
+        "Repository": 2,
+        "ApiEndpoint": 176
+      }
+    }
+  ]
+}

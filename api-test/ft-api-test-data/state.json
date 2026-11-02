@@ -1,0 +1,13 @@
+{
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1MiIsInVzZXJuYW1lIjoidGVzdDAxQGFzZG0uYWkiLCJpYXQiOjE3OTMwODA2OTIsImV4cCI6MTc5NTY3MjY5Mn0.bT0GZ4HPYMOoo0_zWJukhbdaP_ACEubRZzqPZ48Q3MLAGLkCyjU7GZ8_LJwJFe_Bu5gPlfBrQ-OnILqOm8CePQ",
+  "asdmUserId": "52",
+  "imageConfigId": "img-1789610526870vjn3h1",
+  "instanceId": "acp-mvq9y5fo1i4nxa",
+  "projectId": "9b5613fb-013f-481a-9d19-195a5012a1b3",
+  "wsUrl": "/_instance/k8s/acp-mvq9y5fo1i4nxa/ws?asdmUserId=52&username=test01&projectSlug=api-test-1793080690858",
+  "sessionId": "01a17bf0-9204-7397-8876-003daa7975fa",
+  "modelId": "hy3",
+  "filePath": "api-test-1793080690858.txt",
+  "artifactPath": "api-test-1793080690858.txt",
+  "artifactId": "5"
+}

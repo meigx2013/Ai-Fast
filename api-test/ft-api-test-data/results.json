@@ -1,0 +1,198 @@
+{
+  "0.1": {
+    "id": "0.1",
+    "name": "账号密码登录",
+    "ok": true,
+    "note": "获取 token 成功, asdmUserId=52",
+    "durationMs": 704
+  },
+  "0.2": {
+    "id": "0.2",
+    "name": "PAT 兑换 JWT",
+    "ok": false,
+    "note": "HTTP 401 | code=401 | invalid PAT；PAT 已失效且无有效 PAT 凭据，无法完成兑换",
+    "durationMs": 1276
+  },
+  "1.7": {
+    "id": "1.7",
+    "name": "可用镜像列表",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；镜像数=1，选中 imageConfigId=img-1789610526870vjn3h1",
+    "durationMs": 176
+  },
+  "1.1": {
+    "id": "1.1",
+    "name": "创建实例",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；instanceId=acp-mvq9y5fo1i4nxa",
+    "durationMs": 223
+  },
+  "1.2": {
+    "id": "1.2",
+    "name": "实例列表",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；实例数=1",
+    "durationMs": 100
+  },
+  "1.3": {
+    "id": "1.3",
+    "name": "实例详情",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；初始 status=creating，最终 status=running（running）",
+    "durationMs": 25261
+  },
+  "1.8": {
+    "id": "1.8",
+    "name": "项目列表",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；项目数=1",
+    "durationMs": 1677
+  },
+  "1.10": {
+    "id": "1.10",
+    "name": "创建项目",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；projectId=9b5613fb-013f-481a-9d19-195a5012a1b3",
+    "durationMs": 588
+  },
+  "1.9": {
+    "id": "1.9",
+    "name": "项目详情",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 369
+  },
+  "2.1": {
+    "id": "2.1",
+    "name": "进入实例",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 817
+  },
+  "2.2": {
+    "id": "2.2",
+    "name": "获取连接信息",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；wsUrl=/_instance/k8s/acp-mvq9y5fo1i4nxa/ws?asdmUserId=52&username=test01&projectSlug=api-test-17",
+    "durationMs": 384
+  },
+  "2.3": {
+    "id": "2.3",
+    "name": "查询用户连接状态",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；connected=false, connectionCount=0",
+    "durationMs": 99
+  },
+  "3.1": {
+    "id": "3.1",
+    "name": "会话列表",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；会话数=0",
+    "durationMs": 136
+  },
+  "3.2": {
+    "id": "3.2",
+    "name": "创建会话",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；sessionId=01a17bf0-9204-7397-8876-003daa7975fa，自愈①: 建立 ACP WS 连接",
+    "durationMs": 3679
+  },
+  "3.3": {
+    "id": "3.3",
+    "name": "切换会话",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 80
+  },
+  "3.5": {
+    "id": "3.5",
+    "name": "获取会话可用模型",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；currentModel=hy3, models=16",
+    "durationMs": 77
+  },
+  "3.6": {
+    "id": "3.6",
+    "name": "切换会话模型",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；model=hy3",
+    "durationMs": 99
+  },
+  "3.7": {
+    "id": "3.7",
+    "name": "停止生成",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 84
+  },
+  "4.1": {
+    "id": "4.1",
+    "name": "上传文件",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；filePath=api-test-1793080690858.txt",
+    "durationMs": 501
+  },
+  "4.2": {
+    "id": "4.2",
+    "name": "下载文件",
+    "ok": true,
+    "note": "HTTP 200 | FT-TBD 接口测试上传文件 2026-10-27T05:58:45.818Z；contentType=application/octet-stream, bytes=56（文件内容）",
+    "durationMs": 591
+  },
+  "4.3": {
+    "id": "4.3",
+    "name": "上传制品到智能体空间",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；artifactId=5",
+    "durationMs": 735
+  },
+  "4.4": {
+    "id": "4.4",
+    "name": "获取智能体空间制品列表",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；制品数=5",
+    "durationMs": 73
+  },
+  "4.5": {
+    "id": "4.5",
+    "name": "下载制品",
+    "ok": true,
+    "note": "HTTP 200 | PK\u0003\u0004\u0014\u0000\b\u0000\b\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u001a\u0000\u0000\u0000api-test-1793080690858.txtr\u000b�\rqrQxַ�i��g[�_���dGד=\u000b�Mk�{�����������y������������E\u0014 \u0000\u0000��PK；contentType=application/zip, bytes=302",
+    "durationMs": 312
+  },
+  "3.4": {
+    "id": "3.4",
+    "name": "删除会话",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 101
+  },
+  "1.11": {
+    "id": "1.11",
+    "name": "删除项目",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 2786
+  },
+  "1.5": {
+    "id": "1.5",
+    "name": "重启实例",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；重启后 status=running",
+    "durationMs": 27108
+  },
+  "1.4": {
+    "id": "1.4",
+    "name": "暂停实例",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 241
+  },
+  "1.6": {
+    "id": "1.6",
+    "name": "删除实例",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success",
+    "durationMs": 71
+  }
+}
