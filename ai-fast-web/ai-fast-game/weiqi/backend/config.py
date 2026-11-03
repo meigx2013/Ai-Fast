@@ -9,7 +9,9 @@ from dataclasses import dataclass
 
 APP_VERSION = "1.0.0"
 
-DEFAULT_MODEL = "deepseek-v4.1-flash"
+# 注意：DeepSeek 服务端实际支持的模型名为 deepseek-flash / deepseek-v4-pro；
+# 总纲原始稿的 "deepseek-v4.1-flash" 并不存在，会导致所有调用返回 HTTP 400。
+DEFAULT_MODEL = "deepseek-flash"
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 DEFAULT_TIMEOUT_SECONDS = 12.0
 DEFAULT_MAX_RETRIES = 1

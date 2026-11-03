@@ -181,6 +181,12 @@ async def request_llm_move(request, profile, settings, candidates, last_move):
                 )
             if response.status_code != 200:
                 # 不回显响应体，避免把模型侧敏感信息写进日志或异常。
+                if response.status_code == 400:
+                    # 400 通常是模型名不被服务端支持（而非瞬时故障），给出可操作提示。
+                    raise LlmError(
+                        "模型 HTTP 状态码 400（请检查 DEEPSEEK_MODEL 是否为"
+                        "服务端支持的模型名，如 deepseek-flash）"
+                    )
                 raise LlmError(f"模型 HTTP 状态码 {response.status_code}")
             content = _extract_content(response.json())
             move, reason = parse_llm_reply(content, size)

@@ -30,7 +30,7 @@ def place(board, points, color):
 def make_settings(**overrides) -> Settings:
     values = dict(
         api_key=TEST_KEY,
-        model="deepseek-v4.1-flash",
+        model="deepseek-flash",
         base_url="https://unit.test",
         timeout_seconds=12.0,
         max_retries=1,
@@ -119,7 +119,7 @@ class LlmUnitTests(unittest.IsolatedAsyncioTestCase):
         # 请求头携带 Bearer 密钥（仅注入，不打印）。
         self.assertEqual(kwargs["headers"]["Authorization"], f"Bearer {TEST_KEY}")
         payload = kwargs["json"]
-        self.assertEqual(payload["model"], "deepseek-v4.1-flash")
+        self.assertEqual(payload["model"], "deepseek-flash")
         self.assertEqual(payload["temperature"], levels.get_level_profile(5).temperature)
         self.assertEqual(payload["max_tokens"], 512)
         self.assertLessEqual(payload["max_tokens"], 2048, "max_tokens 必须有界")

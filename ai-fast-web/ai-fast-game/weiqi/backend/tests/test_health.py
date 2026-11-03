@@ -33,7 +33,7 @@ class HealthContractTests(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["status"], "ok")
         self.assertFalse(data["llm"])
-        self.assertEqual(data["model"], "deepseek-v4.1-flash")
+        self.assertEqual(data["model"], "deepseek-flash")
         self.assertEqual(data["version"], "1.0.0")
 
     def test_health_fields_exact(self):

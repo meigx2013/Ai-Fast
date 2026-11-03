@@ -80,7 +80,7 @@ export DEEPSEEK_API_KEY="<your-key-here>"
 | 环境变量 | 默认值 | 说明 |
 |---|---|---|
 | `DEEPSEEK_API_KEY` | 空 | 为空时 `llm=false`，使用本地启发式 AI（可完整对弈） |
-| `DEEPSEEK_MODEL` | `deepseek-v4.1-flash` | 模型标识 |
+| `DEEPSEEK_MODEL` | `deepseek-flash` | 模型标识（服务端支持 `deepseek-flash` / `deepseek-v4-pro`） |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | 模型服务地址 |
 | `DEEPSEEK_TIMEOUT_SECONDS` | `12` | 单次模型调用超时（秒） |
 | `DEEPSEEK_MAX_RETRIES` | `1` | 模型调用失败后最大重试次数 |
@@ -116,7 +116,7 @@ export DEEPSEEK_API_KEY="<your-key-here>"
 {
   "status": "ok",
   "llm": false,
-  "model": "deepseek-v4.1-flash",
+  "model": "deepseek-flash",
   "version": "1.0.0"
 }
 ```
@@ -214,7 +214,7 @@ export DEEPSEEK_API_KEY="<your-key-here>"
 
 ### 真实模型联调状态
 
-已在真实密钥环境做过冒烟联调：总纲默认模型名 `deepseek-v4.1-flash` 在真实服务返回 400（服务端实际支持 `deepseek-flash` / `deepseek-v4-pro`），非法模型名约 2 秒内完成降级 `engine=heuristic`，对局不中断；设置 `DEEPSEEK_MODEL=deepseek-flash` 后 1 级/5 级均 `engine=llm` 成功应手。**交付验证在无密钥环境完成，本地降级闭环为验收通过标准**；如需启用模型，请配置有效密钥并将 `DEEPSEEK_MODEL` 设为服务端实际支持的标识。
+真实密钥环境联调结论：总纲原始默认模型名 `deepseek-v4.1-flash` 在真实服务返回 400（服务端实际支持 `deepseek-flash` / `deepseek-v4-pro`），**默认值已修正为 `deepseek-flash`**，配置有效密钥后无需额外设置即可 `engine=llm` 正常应手。非法模型名约 2 秒内完成降级 `engine=heuristic`，对局不中断；如需改用其他模型，请将 `DEEPSEEK_MODEL` 设为服务端实际支持的标识。
 
 ## 已知限制
 

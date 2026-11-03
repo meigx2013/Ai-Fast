@@ -16,7 +16,7 @@ class HealthResponse(BaseModel):
 
     status: str = Field(default="ok", description="服务状态，正常为 ok")
     llm: bool = Field(description="模型是否启用（是否配置了有效密钥）")
-    model: str = Field(description="模型标识，如 deepseek-v4.1-flash")
+    model: str = Field(description="模型标识，如 deepseek-flash")
     version: str = Field(description="后端版本号")
 
 
