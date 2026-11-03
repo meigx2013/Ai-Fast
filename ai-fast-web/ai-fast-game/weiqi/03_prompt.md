@@ -13,7 +13,9 @@
 
 ---
 
-## 任务 1：现状审计与实施契约确认
+## 任务 1：现状审计与实施契约确认（已完成）
+
+> 现状审计结论：前端棋盘为 `size*size` 一维数组（0空/1黑/2白），索引 `row*size+col`；`GoGame.state` 含 `board/currentPlayer/captures/consecutivePasses/gameOver/lastMove/previousBoard/moveNumber`，`previousBoard` 为**字符串**（`board.join('')`，Pass 后置 null），劫判定为"拟落子后盘面 === previousBoard"。历史为 `{action,state快照}` 数组，undo/rollback 通过快照整体恢复。接口契约：请求 `previousBoard` 需按行切分还原为二维数组（null 传 null），服务端模拟白方落子后与 `previousBoard` 逐点比较判劫；自杀判定顺序为先提对方无气块再查己方气。`front/`、`backend/`、`requirements.txt`、`.env.example`、`README.md` 均不存在，从零新建。
 
 ### 提示词
 
@@ -50,7 +52,9 @@
 
 ---
 
-## 任务 2：后端骨架、配置与健康检查
+## 任务 2：后端骨架、配置与健康检查（已完成）
+
+> 实施摘要：已创建 `backend/`（`main.py` 应用工厂 + 健康检查 + 全局异常兜底 + 条件静态托管预留、`config.py` 集中环境变量配置、`models.py` HealthResponse、`tests/` 15 个自动化测试）、`requirements.txt`（fastapi/uvicorn/httpx/pydantic，Python 3.11.8 + `.venv` 虚拟环境实测安装成功）、`.env.example`（密钥留空）。`load_settings()` 每次调用重新装配环境，测试通过 `mock.patch.dict` 覆盖整个请求周期。已实测：无密钥启动 Uvicorn 正常、`GET /api/health` HTTP 200 且 `llm=false`；本机真实环境存在 `DEEPSEEK_API_KEY` 时 `llm=true`。供任务 3 使用的配置入口：`backend.config.load_settings()/get_settings()`，模型默认 `deepseek-v4.1-flash`，服务地址 `DEEPSEEK_BASE_URL`，超时 12s，重试 1 次，Top-K 默认 30，允许棋盘尺寸默认 `(9,13,19)`。
 
 ### 提示词
 
@@ -86,7 +90,9 @@
 
 ---
 
-## 任务 3：服务端规则与本地启发式 AI 闭环
+## 任务 3：服务端规则与本地启发式 AI 闭环（已完成）
+
+> 实施摘要：`backend/go_rules.py` 二维规则内核（邻点/连通块/气/提子/自杀/简单劫/`simulate_move`，判定顺序与前端一致，不修改调用方棋盘）；`backend/ai/heuristic.py` 全盘候选生成+七维评分（提子/气数/叫吃/救援/贴近上一手/位置价值/联络）；`backend/ai/engine.py` 统一入口（规则双保险校验+异常兜底+无合法点 pass）；`backend/models.py` 完整请求/响应模型（StrictInt 严格拒绝字符串/浮点值，校验尺寸/级位/维度/值域/坐标界内/previousBoard 一致性）；`main.py` 挂载 `POST /api/ai-move`。测试 64/64 通过（新增 49 个：规则 17、启发式 11、API 21），覆盖提子、多块提子、自杀、简单劫（previousBoard 有/无）、满盘 Pass、越界/字符串/非整数坐标、非法请求体 422、9/13/19 路、level 1~10、重复请求无状态污染。已真实启动 Uvicorn 实测合法请求（engine=heuristic、落点合法）与非法请求（422 中文友好错误）。关键结论供任务 4：heuristic `choose_move` 已预留 rng 注入（固定种子可重复）与评分 tag（reason），级位调度可在其上叠加温度/Top-K/权重；引擎入口 `engine.generate_move` 为模型接入点，`heuristic` 为永久兜底。
 
 ### 提示词
 
@@ -119,7 +125,9 @@
 
 ---
 
-## 任务 4：DeepSeek 接入与级位强度策略
+## 任务 4：DeepSeek 接入与级位强度策略（已完成）
+
+> 实施摘要：`backend/ai/llm.py` 异步 httpx Chat Completions 客户端（`_build_client` 独立可注入、Bearer 密钥仅入请求头、提示词含尺寸/0 基坐标/棋盘值/白方回合/Top-K 候选与级位策略、防御性解析处理空响应/Markdown 包裹/非 JSON/缺字段/类型错误/bool 伪整数/越界坐标、12s 超时+最多 1 次重试+可配置退避、规则预校验、有候选时拒绝模型 pass）；`backend/ai/levels.py` 10 档级位档案（temperature 1.3→0.2、noise 12→0.5、weak_choice_rate 0.40→0、top_k 20→40 且 4~5 级受限/2~3 级扩大/1 级最大、7 维评分权重体现棋风、1 级 tactical_bonus 死活联络加强读）；`heuristic.py` 新增 ScoreWeights/rank_candidates/级位感知 choose_move（非关键局面随性一手、CRITICAL_MOVE_SCORE=45 保证任何级位不放弃提子/叫吃/救棋，不传 profile 时与任务 3 行为完全一致）；`engine.py` 模型优先+启发式级位降级+双保险规则校验；`config.py` 新增 DEEPSEEK_MAX_TOKENS(512)/DEEPSEEK_RETRY_BACKOFF_SECONDS(0.5)。测试 107/107 通过（新增 43：级位 16 + 模型 Mock 27），覆盖成功/超时/网络/HTTP/非 JSON/非法 JSON/非法坐标/占用/模型 pass/重试一次后降级/无密钥禁用/密钥不泄露/固定 ScriptedRandom 下 10 级随性而 1 级最优/关键提子不放弃/级位参数严格单调且互不相同。真实联调：密钥有效但总纲默认模型名 `deepseek-v4.1-flash` 在真实服务返回 400（支持 deepseek-flash/deepseek-v4-pro），非法模型名 ~2s 内完成降级 engine=heuristic；设 `DEEPSEEK_MODEL=deepseek-flash` 后 level 5→(3,4)、level 1→(2,4) 均 engine=llm 成功应手。关键结论供任务 5：`engine` 字段如实区分 llm/heuristic，reason 带 `[N级]` 前缀（模型成功时为模型理由原文），无密钥/失败路径均可正常对弈。
 
 ### 提示词
 
@@ -154,7 +162,9 @@
 
 ---
 
-## 任务 5：前端迁移与基础人机对弈闭环
+## 任务 5：前端迁移与基础人机对弈闭环（已完成）
+
+> 实施摘要：已创建 `front/index.html`（以原始 `index.html` 为基线增量迁移，`GoGame`/规则函数/Canvas 渲染/CSS 视觉体系原样保留）。新增：①开局设置弹窗（10～1 级默认 10 级、"1 级最强 10 级最弱"说明、9/13/19 路选择，确认后锁级重置并由玩家执黑；"AI 信息"面板显示当前级位/引擎状态/"调整开局设置"入口）；②`AiClient` 网络模块（`API_BASE` 默认同源、15 秒 AbortController 超时、一维棋盘/previousBoard 字符串→二维数组转换、局序号+手数守卫忽略迟到响应、新局/重开/切尺寸时 abort 在途请求）；③人机回合闭环（玩家落子/Pass 后自动请求白方 AI，思考中等待光标+加载态+禁落子/Pass/悔棋，AI 结果仍经本地 `game.play()/pass()` 提交，非法坐标同局面重试一次后 AI 虚手，网络失败进入"点击棋盘重试或虚手跳过"的可恢复态，健康检查 `llm=false` 时提示"未配置模型密钥，当前为本地 AI"但不阻止开局）；④人机悔棋基础版为成对撤销（撤销至玩家回合）。后端无需改动（任务 2 预留的条件静态托管自动生效）；`test_health.py` 中过时的 `GET /` 404 断言更新为验证返回人机页面。测试 107/107 通过；agent-browser 实测通过：开局面板、5 级+9 路与默认 10 级+13/19 路开局、玩家落子→AI 应手、玩家 Pass→AI 应手、成对悔棋、非法坐标重试一次后 AI 虚手（fetch mock 2 次调用）、网络失败可恢复（状态提示+点击重试成功）、连续两次虚手终局数子（黑胜 2 子）、终局后输入忽略、重开保留级位/尺寸、控制台无 JS 错误、页面无 CDN 且含"人机对弈"文案。任务 6 需关注的交互点：AI 思考中悔棋/历史回退当前被禁用（需改为取消请求+单手撤销）；迟到响应目前依赖守卫忽略+abort，需按局身份核对局面；终局结算与悔棋继续的组合路径需回归。
 
 ### 提示词
 
@@ -191,7 +201,9 @@
 
 ---
 
-## 任务 6：悔棋、历史回退与异步一致性加固
+## 任务 6：悔棋、历史回退与异步一致性加固（已完成）
+
+> 实施摘要：仅修改 `front/index.html`，后端无改动（107/107 测试重跑通过）。核心改动：①请求身份双守卫——新增 `requestId` 请求序号，`makeGuard()` 同时核对局序号+请求序号+手数+回合+未终局，杜绝"悔棋后玩家再落子使手数复原导致旧响应被误提交"的竞态；②统一请求清理流程 `cancelAiRequest()`（abort 在途请求 + 递增请求序号 + 复位加载态），新局/重开/切尺寸/悔棋/历史回退/终局 6 类入口全部接入，`finishAiTurn`/`commitAiPass`/玩家 Pass 终局分支亦统一清理；③人机悔棋语义落地——AI 思考中悔棋按钮可用（取消请求并只撤销玩家一手，toast"已取消 AI 思考并撤销你刚下的一手"），AI 已应手时撤销"玩家+AI"两手，`game.undo()` 快照整体恢复保证历史不足时不破坏状态；④历史回退支持 AI 思考中操作——先取消旧请求，恢复后轮白则基于恢复后的完整状态只发一次新请求，轮黑则等待输入。浏览器实测 9 项全通过：成对悔棋（手数/提子/劫状态随快照恢复）、思考中悔棋后旧响应到达不落子、回退玩家回合/AI 回合两类历史（后者调用序列 [3,1] 证明旧请求取消+新局面单次请求）、思考中重开与切 13 路（级位 10 级保留、旧响应不污染新局）、连续快速操作（落子→悔棋×2→落子→应手→悔棋→落子，最终 spinner/光标/按钮全恢复、历史无重复）、网络失败→点击棋盘重试成功、失败→代白虚手继续、非法坐标重试一次后虚手、简单劫形（立即回提被禁→悔棋恢复→同点可再下→回退到劫形后回提仍被禁，证明 previousBoard 随快照正确恢复）、双 Pass 终局后落子/虚手/新请求全忽略且数子/查看棋盘/悔棋继续可用、终局悔棋恢复对局后真实后端（模型 400→heuristic 降级）正常应手、无 CDN、控制台无 JS 错误。风险提示：真实模型延迟接近前端 15 秒超时上限时的体验未在真实网络下压测（Mock 已覆盖超时同路径），留待任务 7 全量联调。
 
 ### 提示词
 
