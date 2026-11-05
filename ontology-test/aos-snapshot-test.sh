@@ -245,9 +245,9 @@ async function main() {
   });
   push('');
 
-  // ---------- 三、linkCount 明细对比（全部快照） ----------
+  // ---------- 三、objectCount 明细对比（全部快照） ----------
   push('---', '');
-  push(`## 三、linkCount 明细对比（全部 ${snapshots.length} 个快照，按完成时间升序）`, '');
+  push(`## 三、objectCount 明细对比（全部 ${snapshots.length} 个快照，按完成时间升序）`, '');
   push(`| 类型 | ${snapshots.map((s, i) => `快照${i + 1}（${(s.completedAt || '').slice(0, 10)}，${s.shortId}）`).join(' | ')} |`);
   push(`|---|${snapshots.map(() => '---:').join('|')}|`);
   for (const t of TYPES) {
