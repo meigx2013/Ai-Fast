@@ -103,6 +103,10 @@ const pick = (obj, ...keys) => {
 let TOKEN = state.token || '';
 let reloginTried = false;
 
+// 当前步骤的 HTTP 累计耗时（毫秒）与请求次数（rawRequest 层统计，不含轮询间隔等待）
+let httpTime = { ms: 0, count: 0 };
+const resetHttpTime = () => { httpTime = { ms: 0, count: 0 }; };
+
 async function rawRequest(method, path, opts = {}) {
   const { json, form, query, token = TOKEN, timeoutMs = 60000 } = opts;
   const url = new URL(BASE + path);
@@ -116,11 +120,17 @@ async function rawRequest(method, path, opts = {}) {
   else if (form) { body = form; }
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), timeoutMs);
+  const _t0 = Date.now();
   try {
     const res = await fetch(url, { method, headers, body, signal: ac.signal });
-    const text = await res.text();
+    const buf = Buffer.from(await res.arrayBuffer());
+    const text = buf.toString('utf8');
+    httpTime.ms += Date.now() - _t0;
+    httpTime.count++;
     let parsed = null; try { parsed = JSON.parse(text); } catch {}
-    return { status: res.status, statusText: res.statusText, headers: res.headers, text, body: parsed };
+    // 二进制响应检测：非 JSON 且含 NUL 字节或 UTF-8 解码失败(U+FFFD)，避免原始字节污染日志/报告
+    const binary = !parsed && buf.length > 0 && (buf.includes(0) || /\uFFFD/.test(text));
+    return { status: res.status, statusText: res.statusText, headers: res.headers, text, body: parsed, byteLength: buf.length, binary };
   } finally { clearTimeout(t); }
 }
 
@@ -138,7 +148,8 @@ function bizNote(r) {
   if (b && typeof b === 'object') {
     if ('code' in b) parts.push('code=' + b.code);
     if (b.message) parts.push(String(b.message).slice(0, 120));
-  } else if (r.text) parts.push(r.text.slice(0, 120));
+  } else if (r.binary) parts.push('<二进制内容 ' + r.byteLength + ' 字节>');
+  else if (r.text) parts.push(r.text.slice(0, 120));
   return parts.join(' | ');
 }
 
@@ -543,8 +554,9 @@ const steps = [
       query: { path: state.filePath, projectId: state.projectId },
     });
     const ct = r.headers?.get?.('content-type') || '';
-    const isFile = /octet-stream|text\/|application\/download/.test(ct) || (r.text && !r.text.trim().startsWith('{'));
-    return { ok: bizOk(r) && !!r.text, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + (r.text ? Buffer.byteLength(r.text) : 0) + (isFile ? '（文件内容）' : '') };
+    const bytes = r.byteLength ?? (r.text ? Buffer.byteLength(r.text) : 0);
+    const isFile = !r.body && bytes > 0;
+    return { ok: bizOk(r) && bytes > 0, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + bytes + (isFile ? '（文件内容' + (r.binary ? '，二进制已省略' : '') + '）' : '') };
   } },
   { id: '4.3', name: '上传制品到智能体空间', run: async () => {
     const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/workspace-artifacts', {
@@ -564,7 +576,8 @@ const steps = [
   { id: '4.5', name: '下载制品', run: async () => {
     const r = await healRequest('GET', '/api/v1/agentorbit/workspace-artifacts/' + encodeURIComponent(state.artifactId));
     const ct = r.headers?.get?.('content-type') || '';
-    return { ok: bizOk(r) && !!r.text, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + (r.text ? Buffer.byteLength(r.text) : 0) };
+    const bytes = r.byteLength ?? (r.text ? Buffer.byteLength(r.text) : 0);
+    return { ok: bizOk(r) && bytes > 0, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + bytes };
   } },
   { id: '3.4', name: '删除会话', run: async () => {
     const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/sessions/' + encodeURIComponent(state.sessionId));
@@ -632,14 +645,29 @@ function writeReport(okCount, failIds, missingIds) {
   L.push('- **汇总**: ' + okCount + '/' + displayOrder.length + ' 通过'
     + (failIds.length ? '；失败: ' + failIds.join(', ') : '')
     + (missingIds.length ? '；未执行: ' + missingIds.join(', ') : ''));
+  const fmtSec = (ms) => (ms === undefined || ms === null) ? '-' : (ms / 1000).toFixed(2);
   L.push('');
-  L.push('| 接口编号 | 接口名称 | 执行结果 | 说明 |');
-  L.push('|---|---|---|---|');
+  L.push('| 接口编号 | 接口名称 | 执行结果 | 响应时间(秒) | 说明 |');
+  L.push('|:--------|:--------------------|:---------|------------:|:----------------------------------------|');
   for (const id of displayOrder) {
     const r = results[id];
-    if (!r) { L.push('| ' + id + ' | - | ⏸ 未执行 | 执行中断 |'); continue; }
+    if (!r) { L.push('| ' + id + ' | - | ⏸ 未执行 | - | 执行中断 |'); continue; }
     L.push('| ' + id + ' | ' + r.name + ' | ' + (r.ok ? '✅ 成功' : '❌ 失败') + ' | '
+      + fmtSec(r.respMs !== undefined ? r.respMs : r.durationMs) + ' | '
       + String(r.note || '').replace(/\|/g, '/').slice(0, 200) + ' |');
+  }
+  const respTimes = displayOrder
+    .map((id) => results[id] && results[id].respMs)
+    .filter((ms) => ms !== undefined && ms !== null);
+  if (respTimes.length) {
+    const total = respTimes.reduce((a, b) => a + b, 0);
+    const avg = total / respTimes.length;
+    const max = Math.max(...respTimes);
+    const maxId = displayOrder.find((id) => results[id] && results[id].respMs === max);
+    L.push('');
+    L.push('**响应时间统计**（rawRequest 层 HTTP 纯请求耗时，不含轮询等待）: 平均 '
+      + (avg / 1000).toFixed(2) + ' 秒，最长 ' + (max / 1000).toFixed(2) + ' 秒（' + maxId + '），'
+      + '合计 ' + (total / 1000).toFixed(2) + ' 秒，共 ' + respTimes.length + ' 个接口。');
   }
   const file = DIR + 'report-' + stamp + '.md';
   fs.writeFileSync(file, L.join('\n'));
@@ -662,6 +690,7 @@ async function main() {
       continue;
     }
     const start = Date.now();
+    resetHttpTime();
     log('[RUN ] ' + step.id + ' ' + step.name);
     let out = { ok: false, note: '未执行' };
     try {
@@ -669,9 +698,9 @@ async function main() {
     } catch (e) {
       out = { ok: false, note: '异常: ' + e.message };
     }
-    results[step.id] = { id: step.id, name: step.name, ok: !!out.ok, note: out.note || '', durationMs: Date.now() - start };
+    results[step.id] = { id: step.id, name: step.name, ok: !!out.ok, note: out.note || '', durationMs: Date.now() - start, respMs: httpTime.ms, reqCount: httpTime.count };
     saveFiles();
-    log('[DONE] ' + step.id + ' ' + step.name + ' → ' + (out.ok ? '✅ 成功' : '❌ 失败') + ' (' + results[step.id].durationMs + 'ms) ' + (out.note || ''));
+    log('[DONE] ' + step.id + ' ' + step.name + ' → ' + (out.ok ? '✅ 成功' : '❌ 失败') + ' (耗时 ' + results[step.id].durationMs + 'ms, HTTP 响应 ' + httpTime.ms + 'ms/' + httpTime.count + '次) ' + (out.note || ''));
     if (!out.ok && ['0.1', '1.1', '1.10'].includes(step.id)) {
       log('!!! 依赖步骤 ' + step.id + ' 失败，中止执行');
       break;

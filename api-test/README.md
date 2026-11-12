@@ -98,7 +98,7 @@ FT_BASE_URL=https://asdm-dt01.leansoftx.com FT_WORKSPACE_ID=17 ./ft-tbd-api-test
 |------|------|
 | `engine.mjs` | 内嵌 Node.js 测试引擎（每次运行由脚本释放覆盖） |
 | `run-<时间戳>.log` | 执行日志（含每步 HTTP 状态、业务码、耗时、自愈轨迹） |
-| `report-<时间戳>.md` | Markdown 测试报告（环境、汇总、逐接口结果表） |
+| `report-<时间戳>.md` | Markdown 测试报告（环境、汇总、逐接口结果表含响应时间(秒)列及响应时间统计） |
 | `results.json` / `state.json` | 断点续跑状态（`--resume` 门控依据） |
 
 运行结束后自动校验 `results.json` 28 条记录的完整性。
