@@ -1,4 +1,4 @@
-"""/api/ai-move 接口测试：契约结构、规则守护、重复请求无状态污染与输入校验。"""
+"""/api/system-move 接口测试（v2）：契约结构、规则守护、重复请求无状态污染与输入校验。"""
 
 import copy
 import unittest
@@ -35,16 +35,18 @@ class ApiContractTests(unittest.TestCase):
     def test_normal_move_response_contract(self):
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
-        response = self.client.post("/api/ai-move", json=make_request(board, last_move={"row": 4, "col": 4}))
+        response = self.client.post("/api/system-move", json=make_request(board, last_move={"row": 4, "col": 4}))
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(set(data.keys()), {"move", "reason", "elapsedMs", "engine"})
-        self.assertEqual(data["engine"], "heuristic")
+        self.assertEqual(data["engine"], "kyu-engine")
         self.assertIsInstance(data["reason"], str)
         self.assertTrue(data["reason"], "reason 不应为空")
+        # reason 必须带 [N级] 前缀（级位化可解释性契约）。
+        self.assertTrue(data["reason"].startswith("["), f"reason 缺少 [N级] 前缀：{data['reason']!r}")
         self.assertIsInstance(data["elapsedMs"], int)
         self.assertGreaterEqual(data["elapsedMs"], 0)
-        # 开局附近必有大量合法点，AI 应返回 dict 落点而不是 pass。
+        # 开局附近必有大量合法点，系统应返回 dict 落点而不是 pass。
         self.assertIsInstance(data["move"], dict)
         self.assertEqual(set(data["move"].keys()), {"row", "col"})
         # 返回点必须通过服务端规则校验。
@@ -59,7 +61,7 @@ class ApiContractTests(unittest.TestCase):
         payload = make_request(board, move_number=7, last_move={"row": 4, "col": 5})
         snapshot = copy.deepcopy(payload)
         for _ in range(3):
-            response = self.client.post("/api/ai-move", json=payload)
+            response = self.client.post("/api/system-move", json=payload)
             self.assertEqual(response.status_code, 200)
             move = response.json()["move"]
             self.assertEqual((move["row"], move["col"]), (4, 3))
@@ -70,7 +72,7 @@ class ApiContractTests(unittest.TestCase):
         place(board, [(4, 4)], gr.BLACK)
         for last_move in ({"row": 4, "col": 4}, "pass", None):
             payload = make_request(board, last_move=last_move)
-            response = self.client.post("/api/ai-move", json=payload)
+            response = self.client.post("/api/system-move", json=payload)
             self.assertEqual(response.status_code, 200, f"lastMove={last_move!r} 应被接受")
 
     def test_all_levels_return_legal_moves(self):
@@ -78,7 +80,7 @@ class ApiContractTests(unittest.TestCase):
         place(board, [(4, 4)], gr.BLACK)
         for level in range(1, 11):
             payload = make_request(board, level=level, last_move={"row": 4, "col": 4})
-            response = self.client.post("/api/ai-move", json=payload)
+            response = self.client.post("/api/system-move", json=payload)
             self.assertEqual(response.status_code, 200)
             move = response.json()["move"]
             if isinstance(move, dict):
@@ -94,41 +96,41 @@ class ApiContractTests(unittest.TestCase):
             payload = make_request(
                 board, size=size, last_move={"row": size // 2, "col": size // 2}
             )
-            response = self.client.post("/api/ai-move", json=payload)
+            response = self.client.post("/api/system-move", json=payload)
             self.assertEqual(response.status_code, 200, f"size={size}")
             move = response.json()["move"]
             self.assertIsInstance(move, dict, f"size={size} 空盘附近必有点可选")
             self.assertTrue(gr.simulate_move(board, size, move["row"], move["col"], gr.WHITE).ok)
 
     def test_pass_context_still_plays(self):
-        # 玩家刚虚手（lastMove="pass", consecutivePasses=1）时 AI 正常应手。
+        # 玩家刚虚手（lastMove="pass", consecutivePasses=1）时系统正常应手。
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
         place(board, [(5, 5)], gr.WHITE)
         payload = make_request(board, move_number=2, last_move="pass", passes=1)
-        response = self.client.post("/api/ai-move", json=payload)
+        response = self.client.post("/api/system-move", json=payload)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["engine"], "heuristic")
+        self.assertEqual(response.json()["engine"], "kyu-engine")
 
 
 class RulesGuardThroughApiTests(unittest.TestCase):
-    """AI 结果必须遵守规则：提子、避劫、无合法点虚手。"""
+    """系统结果必须遵守规则：提子、避劫、无合法点虚手。"""
 
     def setUp(self):
         self.client = build_client(self)
 
-    def test_ai_takes_capture(self):
+    def test_system_takes_capture(self):
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
         place(board, [(3, 4), (5, 4), (4, 5)], gr.WHITE)
         response = self.client.post(
-            "/api/ai-move",
+            "/api/system-move",
             json=make_request(board, move_number=7, last_move={"row": 4, "col": 5}),
         )
         move = response.json()["move"]
         self.assertEqual((move["row"], move["col"]), (4, 3))
 
-    def test_ai_avoids_simple_ko(self):
+    def test_system_avoids_simple_ko(self):
         before = empty_board()
         place(before, [(2, 1), (1, 2), (3, 2)], gr.BLACK)
         place(before, [(2, 2), (1, 3), (3, 3), (2, 4)], gr.WHITE)
@@ -136,25 +138,25 @@ class RulesGuardThroughApiTests(unittest.TestCase):
         place(after, [(2, 1), (1, 2), (3, 2), (2, 3)], gr.BLACK)
         place(after, [(1, 3), (3, 3), (2, 4)], gr.WHITE)
         response = self.client.post(
-            "/api/ai-move",
+            "/api/system-move",
             json=make_request(
                 after, move_number=9, last_move={"row": 2, "col": 3}, previous_board=before
             ),
         )
         move = response.json()["move"]
         if isinstance(move, dict):
-            self.assertNotEqual((move["row"], move["col"]), (2, 2), "AI 不得立即回提劫")
+            self.assertNotEqual((move["row"], move["col"]), (2, 2), "系统不得立即回提劫")
 
     def test_full_board_returns_pass(self):
         board = [[gr.BLACK] * 9 for _ in range(9)]
         response = self.client.post(
-            "/api/ai-move",
+            "/api/system-move",
             json=make_request(board, move_number=81, last_move={"row": 8, "col": 8}),
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["move"], "pass")
-        self.assertEqual(data["engine"], "heuristic")
+        self.assertEqual(data["engine"], "kyu-engine")
 
 
 class RequestValidationTests(unittest.TestCase):
@@ -164,7 +166,7 @@ class RequestValidationTests(unittest.TestCase):
         self.client = build_client(self)
 
     def _assert_422(self, payload):
-        response = self.client.post("/api/ai-move", json=payload)
+        response = self.client.post("/api/system-move", json=payload)
         self.assertEqual(response.status_code, 422)
         self.assertNotIn("Traceback", response.text)
 

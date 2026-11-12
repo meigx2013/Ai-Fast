@@ -1,26 +1,16 @@
-"""任务 7 边界加固测试：总纲契约样例、输入加固、限流降级、引擎异常兜底与级位强度趋势。
+"""任务 7 边界加固测试（v2 平移）：总纲契约样例、输入加固、引擎异常兜底与级位强度趋势。
 
-全部使用 Mock/Fake 客户端与受控环境，不访问真实网络、不依赖真实密钥。
+全部使用受控环境与 Mock，不访问网络（本地级位引擎无外部调用）。
 """
 
-import os
 import random
 import unittest
 from unittest import mock
 
 from backend import go_rules as gr
-from backend.ai import heuristic, levels
-from backend.tests.test_ai_move_api import empty_board, place
+from backend.ai import decision, levels
 from backend.tests.test_health import build_client
-from backend.tests.test_llm import (
-    FakeAsyncClient,
-    FakeResponse,
-    chat_content,
-    ok_text,
-    patch_client,
-)
-
-TEST_KEY = "unit-test-placeholder-secret"
+from backend.tests.test_system_move_api import empty_board, place
 
 
 def make_request(board, size=9, level=10, move_number=1, last_move=None, previous_board=None, passes=0):
@@ -36,7 +26,7 @@ def make_request(board, size=9, level=10, move_number=1, last_move=None, previou
 
 
 class SpecContractTests(unittest.TestCase):
-    """总纲 6.3 示例请求必须原样可被接口接受（前后端契约回归基线）。"""
+    """04_prompt.md 接口契约样例必须原样可被接口接受（前后端契约回归基线）。"""
 
     def setUp(self):
         self.client = build_client(self)
@@ -52,11 +42,11 @@ class SpecContractTests(unittest.TestCase):
             "consecutivePasses": 0,
         }
         payload["board"][2][2] = 1
-        response = self.client.post("/api/ai-move", json=payload)
+        response = self.client.post("/api/system-move", json=payload)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(set(data.keys()), {"move", "reason", "elapsedMs", "engine"})
-        self.assertIn(data["engine"], ("llm", "heuristic"))
+        self.assertEqual(data["engine"], "kyu-engine")
         if isinstance(data["move"], dict):
             self.assertTrue(
                 gr.simulate_move(payload["board"], 9, data["move"]["row"], data["move"]["col"], gr.WHITE).ok
@@ -72,7 +62,7 @@ class InputHardeningTests(unittest.TestCase):
         self.client = build_client(self)
 
     def _assert_422(self, payload, label):
-        response = self.client.post("/api/ai-move", json=payload)
+        response = self.client.post("/api/system-move", json=payload)
         self.assertEqual(response.status_code, 422, f"{label} 应返回 422")
         detail = response.json().get("detail")
         self.assertTrue(detail, f"{label} 错误响应应带用户可读 detail")
@@ -164,7 +154,7 @@ class SizeLevelMatrixTests(unittest.TestCase):
                     board, size=size, level=level,
                     last_move={"row": size // 2, "col": size // 2},
                 )
-                response = client.post("/api/ai-move", json=payload)
+                response = client.post("/api/system-move", json=payload)
                 self.assertEqual(
                     response.status_code, 200, f"size={size} level={level}"
                 )
@@ -181,7 +171,7 @@ class SizeLevelMatrixTests(unittest.TestCase):
 
 
 class CornerEdgeScenarioTests(unittest.TestCase):
-    """边角对杀局面：AI 应手必须合法且不违反劫。"""
+    """边角对杀局面：系统应手必须合法且不违反劫。"""
 
     def setUp(self):
         self.client = build_client(self)
@@ -193,7 +183,7 @@ class CornerEdgeScenarioTests(unittest.TestCase):
         place(board, [(0, 1)], gr.WHITE)
         for level in (1, 5, 10):
             payload = make_request(board, level=level, move_number=2, last_move={"row": 0, "col": 1})
-            response = self.client.post("/api/ai-move", json=payload)
+            response = self.client.post("/api/system-move", json=payload)
             self.assertEqual(response.status_code, 200)
             move = response.json()["move"]
             self.assertIsInstance(move, dict)
@@ -202,12 +192,12 @@ class CornerEdgeScenarioTests(unittest.TestCase):
             self.assertGreaterEqual(result.captured, 1, "角部提子必须被执行")
 
     def test_edge_atari_escape_legal(self):
-        # 边线白子被叫吃：AI 应手合法（逃、提或弃均可，但不能非法）。
+        # 边线白子被叫吃：系统应手合法（逃、提或弃均可，但不能非法）。
         board = empty_board()
         place(board, [(4, 0), (5, 0)], gr.BLACK)
         place(board, [(3, 0)], gr.WHITE)
         payload = make_request(board, level=3, move_number=3, last_move={"row": 5, "col": 0})
-        response = self.client.post("/api/ai-move", json=payload)
+        response = self.client.post("/api/system-move", json=payload)
         self.assertEqual(response.status_code, 200)
         move = response.json()["move"]
         if isinstance(move, dict):
@@ -216,88 +206,38 @@ class CornerEdgeScenarioTests(unittest.TestCase):
             )
 
 
-class RateLimitFallbackTests(unittest.TestCase):
-    """模型限流（HTTP 429）：重试一次后成功用模型；连续 429 降级启发式。"""
-
-    def test_429_then_success_uses_llm(self):
-        client = build_client(
-            self,
-            DEEPSEEK_API_KEY=TEST_KEY,
-            DEEPSEEK_RETRY_BACKOFF_SECONDS="0",
-            DEEPSEEK_MAX_RETRIES="1",
-        )
-        fake = FakeAsyncClient(
-            responses=[
-                FakeResponse(status_code=429),
-                FakeResponse(payload=chat_content(ok_text(4, 5))),
-            ]
-        )
-        board = empty_board()
-        place(board, [(4, 4)], gr.BLACK)
-        with patch_client(fake):
-            response = client.post(
-                "/api/ai-move", json=make_request(board, level=5, last_move={"row": 4, "col": 4})
-            )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["engine"], "llm")
-        self.assertEqual((data["move"]["row"], data["move"]["col"]), (4, 5))
-        self.assertEqual(len(fake.calls), 2, "429 后应恰好重试一次")
-
-    def test_persistent_429_falls_back_to_heuristic(self):
-        client = build_client(
-            self,
-            DEEPSEEK_API_KEY=TEST_KEY,
-            DEEPSEEK_RETRY_BACKOFF_SECONDS="0",
-        )
-        fake = FakeAsyncClient(
-            responses=[FakeResponse(status_code=429), FakeResponse(status_code=429)]
-        )
-        board = empty_board()
-        place(board, [(4, 4)], gr.BLACK)
-        with patch_client(fake):
-            response = client.post(
-                "/api/ai-move", json=make_request(board, level=5, last_move={"row": 4, "col": 4})
-            )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["engine"], "heuristic")
-        self.assertEqual(len(fake.calls), 2, "重试耗尽后不再请求模型")
-        move = data["move"]
-        self.assertTrue(gr.simulate_move(board, 9, move["row"], move["col"], gr.WHITE).ok)
-
-
 class EngineFallbackHardeningTests(unittest.TestCase):
     """引擎内部异常兜底：任何缺陷都不得外泄 500，必须得到合法结果或 pass。"""
 
     def setUp(self):
         self.client = build_client(self)
 
-    def test_heuristic_crash_falls_back_to_first_legal(self):
+    def test_decision_crash_falls_back_to_first_legal(self):
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
         with mock.patch(
-            "backend.ai.heuristic.choose_move", side_effect=RuntimeError("引擎内部错误")
+            "backend.ai.decision.decide", side_effect=RuntimeError("引擎内部错误")
         ):
             response = self.client.post(
-                "/api/ai-move", json=make_request(board, last_move={"row": 4, "col": 4})
+                "/api/system-move", json=make_request(board, last_move={"row": 4, "col": 4})
             )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["engine"], "heuristic")
+        self.assertEqual(data["engine"], "kyu-engine")
         move = data["move"]
         self.assertIsInstance(move, dict)
         self.assertTrue(gr.simulate_move(board, 9, move["row"], move["col"], gr.WHITE).ok)
+        # 兜底路径 reason 仍带 [N级] 前缀。
+        self.assertTrue(data["reason"].startswith("["))
 
-    def test_heuristic_returns_illegal_point_falls_back(self):
-        # 启发式返回占用点：双保险规则校验拦截后回退首个合法点。
+    def test_decision_returns_illegal_point_falls_back(self):
+        # 决策管道返回占用点：双保险规则校验拦截后回退首个合法点。
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
-        with mock.patch(
-            "backend.ai.heuristic.choose_move", return_value=(4, 4, "坏点")
-        ):
+        bad = decision.Decision(move=(4, 4), reason="坏点")
+        with mock.patch("backend.ai.decision.decide", return_value=bad):
             response = self.client.post(
-                "/api/ai-move", json=make_request(board, last_move={"row": 4, "col": 4})
+                "/api/system-move", json=make_request(board, last_move={"row": 4, "col": 4})
             )
         self.assertEqual(response.status_code, 200)
         move = response.json()["move"]
@@ -309,54 +249,58 @@ class EngineFallbackHardeningTests(unittest.TestCase):
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
         with mock.patch(
-            "backend.ai.heuristic.choose_move", side_effect=RuntimeError("崩溃A")
+            "backend.ai.decision.decide", side_effect=RuntimeError("崩溃A")
         ), mock.patch(
-            "backend.ai.heuristic.first_legal_or_pass", side_effect=RuntimeError("崩溃B")
+            "backend.ai.engine.first_legal_or_pass", side_effect=RuntimeError("崩溃B")
         ):
             response = self.client.post(
-                "/api/ai-move", json=make_request(board, last_move={"row": 4, "col": 4})
+                "/api/system-move", json=make_request(board, last_move={"row": 4, "col": 4})
             )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["move"], "pass")
-        self.assertEqual(data["engine"], "heuristic")
-
-    def test_model_success_but_double_check_fails_falls_back(self):
-        # 理论不可达路径：模型坐标在二次校验失败时必须降级启发式而非 500。
-        client = build_client(self, DEEPSEEK_API_KEY=TEST_KEY)
-        board = empty_board()
-        place(board, [(4, 4)], gr.BLACK)
-        fake = FakeAsyncClient(
-            responses=[FakeResponse(payload=chat_content(ok_text(4, 5)))]
-        )
-        with patch_client(fake), mock.patch(
-            "backend.ai.engine.go_rules.simulate_move",
-            side_effect=gr.MoveResult(False, "occupied"),
-        ):
-            response = client.post(
-                "/api/ai-move", json=make_request(board, level=5, last_move={"row": 4, "col": 4})
-            )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["engine"], "heuristic")
-        move = data["move"]
-        if isinstance(move, dict):
-            self.assertTrue(gr.simulate_move(board, 9, move["row"], move["col"], gr.WHITE).ok)
+        self.assertEqual(data["engine"], "kyu-engine")
 
 
 class LevelStrengthTrendTests(unittest.TestCase):
-    """固定随机种子下的级位强度趋势：1 级所选点干净排名优于 5 级，5 级优于 10 级。"""
+    """固定随机种子下的级位强度趋势：1 级所选点干净排名优于 5 级，5 级优于 10 级。
+
+    任务 4 起 6~4 级解锁布局成形/死活/手筋/征子/定式模块，中级位的合理
+    选点（挂角/点杀等）会偏离 v1 基线偏好，因此强度参考基准升级为
+    "完整能力参考档案"（全模块 + 精确计算 + 全 1.0 权重 + 零噪声），
+    各级位仍按同一基准单调比较（断言不变，不是放宽）。
+    """
+
+    def _reference_profile(self) -> levels.LevelProfile:
+        return levels.LevelProfile(
+            level=0, label="参考", strategy="",
+            vision=levels.Vision(mode="global"),
+            modules=frozenset(
+                {"capture", "opening", "life_death", "tesuji", "ladder"}
+            ),
+            accuracy=levels.Accuracy(liberty=1.0, ladder_steps=8, territory=0.0),
+            mistake_rates=levels.MistakeRates(ignore_atari=0.0, blunder_rate=0.0),
+            habit_weights=levels.HabitWeights(attachment=1.0),
+            pass_threshold=-1e9,
+            noise_amplitude=0.0,
+            weak_choice_rate=0.0,
+            weights=levels.ScoreWeights(),
+        )
 
     def _average_clean_rank(self, level: int, seeds: int = 120) -> float:
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
-        ranked = heuristic.rank_candidates(board, 9, gr.WHITE, None, (4, 4))
+        ranked = decision.rank_candidates(
+            board, 9, gr.WHITE, None, (4, 4), profile=self._reference_profile()
+        )
         rank_index = {(row, col): index for index, (_s, row, col, _t) in enumerate(ranked)}
         profile = levels.get_level_profile(level)
         total = 0
         for seed in range(seeds):
             rng = random.Random(seed)
-            choice = heuristic.choose_move(board, 9, gr.WHITE, None, (4, 4), rng, profile=profile)
+            choice = decision.choose_move(
+                board, 9, gr.WHITE, None, (4, 4), rng, profile=profile
+            )
             self.assertIsNotNone(choice)
             row, col, _reason = choice
             # 所有点都必须合法（强度差异绝不允许以非法落子为代价）。
@@ -375,9 +319,12 @@ class LevelStrengthTrendTests(unittest.TestCase):
     def test_level1_noise_stays_within_amplitude(self):
         # 1 级随机性最低：所选点干净评分与最优解的偏差不得超过其噪声幅度 0.5，
         # 且平均偏差显著小于 10 级（噪声 12.0 + 随性一手）。
+        # 干净评分基准与强度趋势测试一致（完整能力参考档案，任务 4 升级）。
         board = empty_board()
         place(board, [(4, 4)], gr.BLACK)
-        ranked = heuristic.rank_candidates(board, 9, gr.WHITE, None, (4, 4))
+        ranked = decision.rank_candidates(
+            board, 9, gr.WHITE, None, (4, 4), profile=self._reference_profile()
+        )
         score_of = {(row, col): score for score, row, col, _t in ranked}
         best_score = ranked[0][0]
 
@@ -387,7 +334,7 @@ class LevelStrengthTrendTests(unittest.TestCase):
             seeds = 120
             total = 0.0
             for seed in range(seeds):
-                choice = heuristic.choose_move(
+                choice = decision.choose_move(
                     board, 9, gr.WHITE, None, (4, 4), random.Random(seed), profile=profile
                 )
                 deviation = best_score - score_of[(choice[0], choice[1])]
@@ -406,26 +353,6 @@ class LevelStrengthTrendTests(unittest.TestCase):
             avg_level1, avg_level10,
             "1 级平均评分偏差必须小于 10 级（强度趋势的另一可验证面）",
         )
-
-
-class SecretHygieneTests(unittest.TestCase):
-    """密钥卫生：任何响应（含降级路径）都不得回显密钥。"""
-
-    def test_fallback_response_never_contains_key(self):
-        client = build_client(
-            self,
-            DEEPSEEK_API_KEY=TEST_KEY,
-            DEEPSEEK_RETRY_BACKOFF_SECONDS="0",
-        )
-        fake = FakeAsyncClient(responses=[FakeResponse(status_code=401)])
-        board = empty_board()
-        place(board, [(4, 4)], gr.BLACK)
-        with patch_client(fake):
-            response = client.post(
-                "/api/ai-move", json=make_request(board, level=5, last_move={"row": 4, "col": 4})
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn(TEST_KEY, response.text)
 
 
 if __name__ == "__main__":

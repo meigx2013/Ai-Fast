@@ -1,13 +1,13 @@
 {
-  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1MiIsInVzZXJuYW1lIjoidGVzdDAxQGFzZG0uYWkiLCJpYXQiOjE3OTMwODA2OTIsImV4cCI6MTc5NTY3MjY5Mn0.bT0GZ4HPYMOoo0_zWJukhbdaP_ACEubRZzqPZ48Q3MLAGLkCyjU7GZ8_LJwJFe_Bu5gPlfBrQ-OnILqOm8CePQ",
-  "asdmUserId": "52",
-  "imageConfigId": "img-1789610526870vjn3h1",
-  "instanceId": "acp-mvq9y5fo1i4nxa",
-  "projectId": "9b5613fb-013f-481a-9d19-195a5012a1b3",
-  "wsUrl": "/_instance/k8s/acp-mvq9y5fo1i4nxa/ws?asdmUserId=52&username=test01&projectSlug=api-test-1793080690858",
-  "sessionId": "01a17bf0-9204-7397-8876-003daa7975fa",
-  "modelId": "hy3",
-  "filePath": "api-test-1793080690858.txt",
-  "artifactPath": "api-test-1793080690858.txt",
-  "artifactId": "5"
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyIiwidXNlcm5hbWUiOiJ0ZXN0MDFAYXNkbS5haSIsImlhdCI6MTc5NDM5MDY0MywiZXhwIjoxNzk2OTgyNjQzfQ.9_quO84J4SXgrs72SG2AdfFymcPaE-S5U4Dn-Q2o58Kn8SszVxnlY-VBqlmZZVC10RYZXvuoJzhxRwR4fKl5qw",
+  "asdmUserId": "2",
+  "imageConfigId": "img-1789723693241cintts",
+  "instanceId": "acp-mwbxuy9e1qms5m",
+  "projectId": "a229dcf3-dd57-42be-a489-f9154fbe5126",
+  "wsUrl": "/_instance/k8s/acp-mwbxuy9e1qms5m/ws?asdmUserId=2&username=test01&projectSlug=api-test-1794390641720",
+  "sessionId": "01a1ca04-e081-702b-9fe7-f7845883fe24",
+  "modelId": "deepseek-v4.1-flash",
+  "filePath": "api-test-1794390641720.txt",
+  "artifactPath": "api-test-1794390641720.txt",
+  "artifactId": "13"
 }

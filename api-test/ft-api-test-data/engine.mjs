@@ -3,18 +3,18 @@
  * 独立运行: FT_BASE_URL=... FT_EMAIL=... node engine.mjs [--fresh|--resume]
  * 依赖编排: 0.1登录→token; 1.7镜像→imageConfigId; 1.1实例→instanceId;
  *           1.10项目→projectId; 2.2→wsUrl; [ACP WS连接]→3.2会话→sessionId; 4.1→filePath; 4.3→artifactId
- * 自愈: 网络错误/5xx重试、401重新登录、3.2建立裸ACP WS连接、1.11删除前关闭WS、0.2 JWT兜底
+ * 自愈: 网络错误/5xx重试、401重新登录、3.2建立裸ACP WS连接、1.11删除前关闭WS、0.2 JWT兜底、1.1/1.3 error实例删除重建
  */
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 
-const BASE = process.env.FT_BASE_URL || 'https://asdm-dt01.leansoftx.com';
+const BASE = process.env.FT_BASE_URL || 'https://asdm-dt02.leansoftx.com';
 const EMAIL = process.env.FT_EMAIL || 'test01@asdm.ai';
 const PASSWORD = process.env.FT_PASSWORD || 'admin@2026';
-const WSID = process.env.FT_WORKSPACE_ID || '17';
+const WSID = process.env.FT_WORKSPACE_ID || '2';
 const WORKSPACE_ID = /^\d+$/.test(String(WSID)) ? Number(WSID) : WSID;
-const PAT = process.env.FT_PAT || 'pat_YVewHpc9JiOwyZw9BXsonSSw6k1XjoiJmzN67917Qv4';
+const PAT = process.env.FT_PAT || 'pat_2X0gaO1iISIHf-S1yFl48Jr5aIn8uB5a1IAXK3G8NdM';
 const FRESH = process.argv.includes('--fresh');
 
 const DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -234,9 +234,24 @@ async function waitInstanceRunning(maxMs = 300000) {
     lastStatus = r.body?.data?.status ?? r.body?.data?.instance?.status;
     if (lastStatus === 'running') return { running: true, status: lastStatus };
     log('  实例状态: ' + lastStatus + '（等待中...）');
+    if (lastStatus === 'error') return { running: false, status: 'error' };
     await sleep(6000);
   }
   return { running: false, status: lastStatus };
+}
+
+/** 自愈: 删除异常(error)实例并重建，成功返回新 instanceId（幂等创建会复用 error 实例，必须先删） */
+async function recreateInstance() {
+  const del = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId), { timeoutMs: 120000 });
+  if (!bizOk(del)) return null;
+  await sleep(5000);
+  const r = await healRequest('POST', '/api/v1/agentorbit/workspaces', {
+    json: { workspaceId: WORKSPACE_ID, imageConfigId: state.imageConfigId, cpu: '2', memory: '4Gi', idleTimeoutMinutes: 30 },
+    timeoutMs: 120000,
+  });
+  const d = r.body?.data || {};
+  const id = pick(d, 'instanceId') || pick(d.instance, 'instanceId') || pick(d, 'id');
+  return id ? (state.instanceId = String(id)) : null;
 }
 
 const TS = Date.now();
@@ -277,8 +292,20 @@ const steps = [
     });
     const d = r.body?.data || {};
     const id = pick(d, 'instanceId') || pick(d.instance, 'instanceId') || pick(d, 'id');
-    if (id) state.instanceId = String(id);
-    return { ok: bizOk(r) && !!id, note: bizNote(r) + '；instanceId=' + (id || '-') };
+    let healed = false;
+    if (id) {
+      state.instanceId = String(id);
+      // 幂等创建可能返回已存在的 error 实例（服务端提示"请重新创建"）→ 自愈: 删除后重建
+      const det = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId));
+      const st0 = det.body?.data?.status ?? det.body?.data?.instance?.status;
+      if (st0 === 'error') {
+        log('  实例 status=error → 自愈: 删除异常实例并重建');
+        const nid = await recreateInstance();
+        if (nid) { healed = true; }
+        else { log('  自愈重建失败，保留原实例'); }
+      }
+    }
+    return { ok: bizOk(r) && !!state.instanceId, note: bizNote(r) + '；instanceId=' + (state.instanceId || '-') + (healed ? '；@healed 删除error实例后重建' : '') };
   } },
   { id: '1.2', name: '实例列表', run: async () => {
     const r = await healRequest('GET', '/api/v1/agentorbit/workspaces');
@@ -293,8 +320,18 @@ const steps = [
       const st = first.body?.data?.status ?? first.body?.data?.instance?.status;
       if (st !== 'running') {
         log('  实例未运行，轮询等待就绪...');
-        const w = await waitInstanceRunning(300000);
-        note += '；初始 status=' + st + '，最终 status=' + w.status + (w.running ? '（running）' : '（等待超时）');
+        let w = await waitInstanceRunning(300000);
+        let healed = false;
+        if (w.status === 'error') {
+          // error 为终态，继续等待无意义 → 自愈: 删除后重建（1 次阈值）
+          log('  实例 status=error → 自愈: 删除异常实例并重建');
+          const nid = await recreateInstance();
+          if (nid) {
+            healed = true;
+            w = await waitInstanceRunning(240000);
+          } else log('  自愈重建失败');
+        }
+        note += '；初始 status=' + st + '，最终 status=' + w.status + (w.running ? '（running）' : '（等待超时）') + (healed ? '；@healed 重建后 instanceId=' + state.instanceId : '');
       } else note += '；status=running';
     }
     return { ok, note };

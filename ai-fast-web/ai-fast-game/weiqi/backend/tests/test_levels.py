@@ -1,4 +1,4 @@
-"""级位策略测试：参数映射、强度趋势、固定随机源下的行为差异。
+"""级位能力档案 v2 测试：参数映射、视野/模块/误判率与固定随机源下的行为差异。
 
 不依赖随机运气：通过 ScriptedRandom 注入固定的 rng.random() 返回值，
 使"随性一手"分支的触发与否完全可控、可重复。
@@ -8,7 +8,7 @@ import random
 import unittest
 
 from backend import go_rules as gr
-from backend.ai import heuristic, levels
+from backend.ai import decision, levels
 
 
 def empty_board(size: int = 9) -> list[list[int]]:
@@ -45,15 +45,22 @@ class LevelProfileTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 levels.get_level_profile(level)
 
+    def test_v2_fields_present(self):
+        for profile in levels.all_level_profiles().values():
+            self.assertIn(profile.vision.mode, ("local", "half", "global"))
+            self.assertIsInstance(profile.modules, frozenset)
+            self.assertIn("capture", profile.modules, "任何级位都启用吃子模块")
+            for rate in (profile.mistake_rates.ignore_atari, profile.mistake_rates.blunder_rate):
+                self.assertGreaterEqual(rate, 0.0)
+                self.assertLessEqual(rate, 1.0)
+            self.assertGreater(profile.habit_weights.attachment, 0.0)
+            self.assertIsInstance(profile.pass_threshold, float)
+
     def test_randomness_monotonic_with_strength(self):
-        # 级位数字越大越弱：温度、噪声、随性概率应随级位数字增大而严格增大。
+        # 级位数字越大越弱：噪声与随性概率应随级位数字增大而严格增大。
         profiles = levels.all_level_profiles()
         for weaker in range(2, 11):
             stronger = weaker - 1
-            self.assertGreater(
-                profiles[weaker].temperature, profiles[stronger].temperature,
-                f"温度：{weaker}级应高于{stronger}级",
-            )
             self.assertGreater(
                 profiles[weaker].noise_amplitude, profiles[stronger].noise_amplitude,
                 f"噪声：{weaker}级应高于{stronger}级",
@@ -63,24 +70,56 @@ class LevelProfileTests(unittest.TestCase):
                 f"随性概率：{weaker}级应高于{stronger}级",
             )
 
+    def test_vision_expands_with_strength(self):
+        # 视野随级位扩大：10 级 ±2、9 级 ±3、8 级半盘、7 级以上全盘。
+        profiles = levels.all_level_profiles()
+        self.assertEqual(profiles[10].vision.mode, "local")
+        self.assertEqual(profiles[10].vision.radius, 2)
+        self.assertEqual(profiles[9].vision.mode, "local")
+        self.assertEqual(profiles[9].vision.radius, 3)
+        self.assertEqual(profiles[8].vision.mode, "half")
+        self.assertEqual(profiles[7].vision.mode, "global")
+        self.assertEqual(profiles[1].vision.mode, "global")
+
+    def test_low_level_module_gates(self):
+        # 10~7 级仅启用吃子与布局雏形（无死活/手筋/定式/中盘/官子/形势思维）。
+        for level in range(7, 11):
+            profile = levels.get_level_profile(level)
+            self.assertLessEqual(
+                set(profile.modules), {"capture", "opening"},
+                f"{level}级模块开关越界",
+            )
+
+    def test_mistake_rates_shrink_with_strength(self):
+        profiles = levels.all_level_profiles()
+        self.assertAlmostEqual(profiles[10].mistake_rates.ignore_atari, 0.40, places=2)
+        for weaker in range(2, 11):
+            stronger = weaker - 1
+            self.assertGreaterEqual(
+                profiles[weaker].mistake_rates.ignore_atari,
+                profiles[stronger].mistake_rates.ignore_atari,
+                f"忽略叫吃率：{weaker}级应不低于{stronger}级",
+            )
+
+    def test_attachment_shrinks_with_strength(self):
+        # 弱级位贴身缠斗（贴身度高），强级位更看全局。
+        profiles = levels.all_level_profiles()
+        self.assertGreater(
+            profiles[10].habit_weights.attachment, profiles[1].habit_weights.attachment
+        )
+
+    def test_pass_threshold_conservative_in_task2(self):
+        # 任务 2 阈值取保守不可达值（不触发主动 Pass），任务 5 校准。
+        for profile in levels.all_level_profiles().values():
+            self.assertLess(profile.pass_threshold, -1e8, "任务 2 阈值必须保守不可达")
+
     def test_level10_weak_rate_about_40_percent(self):
         self.assertAlmostEqual(levels.get_level_profile(10).weak_choice_rate, 0.40, places=2)
 
     def test_level1_has_lowest_randomness(self):
         profile = levels.get_level_profile(1)
         self.assertEqual(profile.weak_choice_rate, 0.0)
-        self.assertLessEqual(profile.temperature, 0.3)
         self.assertLessEqual(profile.noise_amplitude, 1.0)
-
-    def test_top_k_within_bounds_and_level_trend(self):
-        profiles = levels.all_level_profiles()
-        for profile in profiles.values():
-            self.assertGreaterEqual(profile.top_k, 20)
-            self.assertLessEqual(profile.top_k, 40)
-        # 4~5 级受限 Top-K，2~3 级扩大候选，1 级最大。
-        self.assertLess(profiles[5].top_k, profiles[3].top_k)
-        self.assertLess(profiles[4].top_k, profiles[2].top_k)
-        self.assertEqual(profiles[1].top_k, max(p.top_k for p in profiles.values()))
 
     def test_critical_weights_never_below_one(self):
         # 关键手段（提子/叫吃/救棋）不被任何级位削弱，保证最弱级位的基本功。
@@ -109,7 +148,7 @@ class LevelProfileTests(unittest.TestCase):
     def test_level_parameters_are_distinct(self):
         profiles = levels.all_level_profiles()
         tuples = {
-            (p.temperature, p.noise_amplitude, p.weak_choice_rate, p.top_k)
+            (p.noise_amplitude, p.weak_choice_rate, p.habit_weights.attachment)
             for p in profiles.values()
         }
         self.assertEqual(len(tuples), 10, "10 个级位的核心参数不得共用同一组值")
@@ -126,10 +165,10 @@ class LevelBehaviorTests(unittest.TestCase):
         # rng.random()=0.39 < 0.40：10 级触发随性一手，应放弃最优解；
         # 1 级 weak_rate=0 永远选最优。两者选择应不同且均合法。
         board = self._quiet_board()
-        weak = heuristic.choose_move(
+        weak = decision.choose_move(
             board, 9, gr.WHITE, rng=ScriptedRandom(0.39), profile=levels.get_level_profile(10)
         )
-        strong = heuristic.choose_move(
+        strong = decision.choose_move(
             board, 9, gr.WHITE, rng=ScriptedRandom(0.39), profile=levels.get_level_profile(1)
         )
         self.assertIsNotNone(weak)
@@ -144,10 +183,10 @@ class LevelBehaviorTests(unittest.TestCase):
         # 干净最优解（级位权重不同，各档"最优"本就可能不同——这正是级位差异）。
         board = self._quiet_board()
         profile10 = levels.get_level_profile(10)
-        choice = heuristic.choose_move(
+        choice = decision.choose_move(
             board, 9, gr.WHITE, rng=ScriptedRandom(0.95), profile=profile10
         )
-        best = heuristic.rank_candidates(board, 9, gr.WHITE, profile=profile10)[0]
+        best = decision.rank_candidates(board, 9, gr.WHITE, profile=profile10)[0]
         self.assertEqual((choice[0], choice[1]), (best[1], best[2]))
         self.assertNotIn("随性一手", choice[2])
 
@@ -158,7 +197,7 @@ class LevelBehaviorTests(unittest.TestCase):
         place(board, [(4, 4)], gr.BLACK)
         place(board, [(3, 4), (5, 4), (4, 5)], gr.WHITE)
         for level in (10, 5, 1):
-            choice = heuristic.choose_move(
+            choice = decision.choose_move(
                 board, 9, gr.WHITE, rng=ScriptedRandom(0.39),
                 profile=levels.get_level_profile(level),
             )
@@ -167,10 +206,10 @@ class LevelBehaviorTests(unittest.TestCase):
     def test_fixed_seed_reproducible_per_level(self):
         board = self._quiet_board()
         for level in (10, 5, 1):
-            first = heuristic.choose_move(
+            first = decision.choose_move(
                 board, 9, gr.WHITE, rng=random.Random(42), profile=levels.get_level_profile(level)
             )
-            second = heuristic.choose_move(
+            second = decision.choose_move(
                 board, 9, gr.WHITE, rng=random.Random(42), profile=levels.get_level_profile(level)
             )
             self.assertEqual(first, second, f"{level}级固定种子应可重复")
@@ -178,7 +217,7 @@ class LevelBehaviorTests(unittest.TestCase):
     def test_all_levels_choose_legal_moves(self):
         board = self._quiet_board()
         for level in range(1, 11):
-            choice = heuristic.choose_move(
+            choice = decision.choose_move(
                 board, 9, gr.WHITE, rng=random.Random(2024),
                 profile=levels.get_level_profile(level),
             )
@@ -189,16 +228,26 @@ class LevelBehaviorTests(unittest.TestCase):
                 f"{level}级返回了非法落点",
             )
 
+    def test_decide_active_pass_not_triggered_in_task2(self):
+        # 任务 2 阈值保守：安静盘面与低价值盘面都不应触发主动 Pass。
+        board = self._quiet_board()
+        for level in (1, 5, 10):
+            result = decision.decide(
+                board, 9, gr.WHITE, levels.get_level_profile(level),
+                last_move=(4, 4), rng=random.Random(7),
+            )
+            self.assertIsNotNone(result.move, f"{level}级不应主动 Pass")
+
     def test_rank_candidates_sorted_without_noise(self):
         board = self._quiet_board()
-        ranked = heuristic.rank_candidates(
+        ranked = decision.rank_candidates(
             board, 9, gr.WHITE, profile=levels.get_level_profile(1)
         )
         self.assertEqual(len(ranked), 78)
         scores = [item[0] for item in ranked]
         self.assertEqual(scores, sorted(scores, reverse=True))
         # 两次调用结果完全一致（无随机成分）。
-        again = heuristic.rank_candidates(board, 9, gr.WHITE, profile=levels.get_level_profile(1))
+        again = decision.rank_candidates(board, 9, gr.WHITE, profile=levels.get_level_profile(1))
         self.assertEqual(ranked, again)
 
 

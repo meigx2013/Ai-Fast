@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ============================================================
-# 弈境 · 人机对弈后端一键启动脚本（Linux / macOS / Git Bash）
+# 弈境 · 系统对弈后端一键启动脚本（Linux / macOS / Git Bash）
 # 用法：
 #   ./run.sh                以默认 127.0.0.1:8000 启动
 #   ./run.sh --reload       透传额外 uvicorn 参数（开发模式）
 # 可用环境变量：
 #   WEIQI_HOST / WEIQI_PORT  覆盖监听地址与端口
-#   DEEPSEEK_API_KEY 等     见 .env.example（若存在 .env 会自动加载）
+#   SCORING_KOMI / ALLOWED_BOARD_SIZES 等 见 .env.example
 # ============================================================
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -37,8 +37,8 @@ if [ ! -x "$PY" ]; then
     "$PY" -m pip install --upgrade pip
 fi
 
-# ---------- 确保依赖已安装 ----------
-if ! "$PY" -c "import fastapi, uvicorn, httpx, pydantic" >/dev/null 2>&1; then
+# ---------- 确保依赖已安装（本地级位引擎，无模型依赖） ----------
+if ! "$PY" -c "import fastapi, uvicorn, pydantic" >/dev/null 2>&1; then
     echo "[run.sh] 正在安装依赖 requirements.txt ..."
     "$PY" -m pip install -r requirements.txt
 fi

@@ -1,4 +1,4 @@
-"""健康检查与应用骨架测试：契约、无密钥降级、密钥不泄露与静态托管预留。"""
+"""健康检查（v2 引擎信息契约）与应用骨架测试：静态托管预留与 CORS。"""
 
 import os
 import unittest
@@ -26,46 +26,35 @@ def build_client(testcase: unittest.TestCase, **env_overrides) -> TestClient:
 
 
 class HealthContractTests(unittest.TestCase):
-    def test_health_without_key(self):
+    def test_health_engine_contract(self):
         client = build_client(self)
         response = client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["status"], "ok")
-        self.assertFalse(data["llm"])
-        self.assertEqual(data["model"], "deepseek-flash")
-        self.assertEqual(data["version"], "1.0.0")
+        self.assertEqual(data["engine"], "kyu-engine")
+        self.assertEqual(data["levels"], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        self.assertEqual(data["sizes"], [9, 13, 19])
+        self.assertEqual(data["version"], "2.0.0")
 
     def test_health_fields_exact(self):
         client = build_client(self)
         data = client.get("/api/health").json()
-        self.assertEqual(set(data.keys()), {"status", "llm", "model", "version"})
+        self.assertEqual(set(data.keys()), {"status", "engine", "levels", "sizes", "version"})
 
-    def test_health_with_key_enabled_and_no_leak(self):
-        secret = "unit-test-placeholder-secret"
-        client = build_client(self, DEEPSEEK_API_KEY=secret)
-        response = client.get("/api/health")
-        data = response.json()
-        self.assertTrue(data["llm"])
-        # 健康响应不得包含任何形式的密钥。
-        self.assertNotIn(secret, response.text)
-
-    def test_health_custom_model_name(self):
-        client = build_client(self, DEEPSEEK_API_KEY="unit-test-placeholder", DEEPSEEK_MODEL="deepseek-alt")
+    def test_health_reflects_allowed_sizes(self):
+        client = build_client(self, ALLOWED_BOARD_SIZES="9,13")
         data = client.get("/api/health").json()
-        self.assertEqual(data["model"], "deepseek-alt")
+        self.assertEqual(data["sizes"], [9, 13])
 
 
 class AppSkeletonTests(unittest.TestCase):
     def test_root_serves_front_page(self):
-        # front/index.html 已由任务 5 创建，GET / 应同源返回人机对弈前端页面。
+        # front/index.html 存在时，GET / 应同源返回对弈前端页面。
         client = build_client(self)
         response = client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers.get("content-type", ""))
-        # 返回的是改造后的人机对弈页面，而不是原始双人版本。
-        self.assertIn("人机对弈", response.text)
-        self.assertNotIn("本地双人对弈", response.text)
         # 前端不得包含任何密钥或外部 CDN 引用。
         self.assertNotIn("DEEPSEEK_API_KEY", response.text)
         self.assertNotIn("http://cdn", response.text)
@@ -97,6 +86,12 @@ class AppSkeletonTests(unittest.TestCase):
         response = client.get("/api/not-exist")
         self.assertEqual(response.status_code, 404)
         self.assertNotIn("Traceback", response.text)
+
+    def test_old_ai_move_route_removed(self):
+        # 旧路径 /api/ai-move 更名后必须 404（无兼容层）。
+        client = build_client(self)
+        response = client.post("/api/ai-move", json={})
+        self.assertEqual(response.status_code, 404)
 
 
 if __name__ == "__main__":

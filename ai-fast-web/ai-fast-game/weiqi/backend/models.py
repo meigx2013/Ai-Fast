@@ -1,7 +1,8 @@
-"""Pydantic 请求/响应模型。
+"""Pydantic 请求/响应模型（v2 · 系统对弈）。
 
-字段名与总纲 6.2/6.3 的接口契约保持一致（camelCase 直接作为字段名）。
-结构校验由 Pydantic 完成，棋局语义校验（维度、值域、坐标界内）在 model_validator 中统一执行。
+字段名与 04_prompt.md 接口契约保持一致（camelCase 直接作为字段名）。
+结构校验由 Pydantic 完成，棋局语义校验（维度、值域、坐标界内）在
+model_validator 中统一执行。
 """
 
 from typing import Literal, Union
@@ -12,11 +13,12 @@ from .config import load_settings
 
 
 class HealthResponse(BaseModel):
-    """GET /api/health 响应，字段与总纲 6.3 严格一致。"""
+    """GET /api/health 响应（v2 · 引擎信息）。"""
 
     status: str = Field(default="ok", description="服务状态，正常为 ok")
-    llm: bool = Field(description="模型是否启用（是否配置了有效密钥）")
-    model: str = Field(description="模型标识，如 deepseek-flash")
+    engine: str = Field(description="引擎标识，固定 kyu-engine")
+    levels: list[int] = Field(description="支持的级位列表（1~10）")
+    sizes: list[int] = Field(description="支持的棋盘尺寸列表")
     version: str = Field(description="后端版本号")
 
 
@@ -39,12 +41,12 @@ def _validate_board_values(board: list[list[int]], size: int, field_name: str) -
                 raise ValueError(f"{field_name}[{index}][{col}] 的值 {value!r} 非法，仅允许 0/1/2")
 
 
-class AiMoveRequest(BaseModel):
-    """POST /api/ai-move 请求体。AI 固定执白（2）。"""
+class SystemMoveRequest(BaseModel):
+    """POST /api/system-move 请求体。系统固定执白（2）。"""
 
     board: list[list[StrictInt]] = Field(description="当前棋盘，size×size 二维整数数组")
     size: StrictInt = Field(description="棋盘尺寸，仅允许配置中的尺寸（默认 9/13/19）")
-    level: StrictInt = Field(ge=1, le=10, description="AI 级位，1 最强、10 最弱")
+    level: StrictInt = Field(ge=1, le=10, description="系统级位，1 最强、10 最弱")
     moveNumber: StrictInt = Field(default=0, ge=0, description="当前手数")
     lastMove: Union[MovePoint, Literal["pass"], None] = Field(
         default=None, description="上一手：null / \"pass\" / {row,col}"
@@ -55,7 +57,7 @@ class AiMoveRequest(BaseModel):
     consecutivePasses: StrictInt = Field(default=0, ge=0, le=2, description="连续虚手数")
 
     @model_validator(mode="after")
-    def _validate_game_state(self) -> "AiMoveRequest":
+    def _validate_game_state(self) -> "SystemMoveRequest":
         allowed = load_settings().allowed_sizes
         if self.size not in allowed:
             raise ValueError(f"size 仅支持 {list(allowed)}")
@@ -69,10 +71,10 @@ class AiMoveRequest(BaseModel):
         return self
 
 
-class AiMoveResponse(BaseModel):
-    """POST /api/ai-move 成功响应。"""
+class SystemMoveResponse(BaseModel):
+    """POST /api/system-move 成功响应。"""
 
     move: Union[MovePoint, Literal["pass"]] = Field(description='落点 {row,col} 或字符串 "pass"')
-    reason: str = Field(description="简要理由")
+    reason: str = Field(description="简要理由，[N级] 前缀 + 触发模块标签")
     elapsedMs: int = Field(ge=0, description="服务端耗时（毫秒）")
-    engine: Literal["llm", "heuristic"] = Field(description="实际使用的引擎")
+    engine: Literal["kyu-engine"] = Field(description="引擎标识，固定 kyu-engine")

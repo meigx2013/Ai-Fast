@@ -1,12 +1,12 @@
 @echo off
 rem ============================================================
-rem 弈境 · 人机对弈后端一键启动脚本（Windows）
+rem 弈境 · 系统对弈后端一键启动脚本（Windows）
 rem 用法：
 rem   run.bat                以默认 127.0.0.1:8000 启动
 rem   run.bat --reload       透传额外 uvicorn 参数（开发模式）
 rem 可用环境变量：
 rem   WEIQI_HOST / WEIQI_PORT  覆盖监听地址与端口
-rem   DEEPSEEK_API_KEY 等     见 .env.example（若存在 .env 会自动加载）
+rem   SCORING_KOMI / ALLOWED_BOARD_SIZES 等 见 .env.example
 rem ============================================================
 setlocal EnableExtensions
 cd /d "%~dp0"
@@ -32,8 +32,8 @@ if not exist ".venv\Scripts\python.exe" (
     ".venv\Scripts\python.exe" -m pip install --upgrade pip
 )
 
-rem ---------- 确保依赖已安装 ----------
-".venv\Scripts\python.exe" -c "import fastapi, uvicorn, httpx, pydantic" >nul 2>nul
+rem ---------- 确保依赖已安装（本地级位引擎，无模型依赖） ----------
+".venv\Scripts\python.exe" -c "import fastapi, uvicorn, pydantic" >nul 2>nul
 if errorlevel 1 (
     echo [run.bat] 正在安装依赖 requirements.txt ...
     ".venv\Scripts\python.exe" -m pip install -r requirements.txt

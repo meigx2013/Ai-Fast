@@ -666,7 +666,7 @@
       // ===== AI 网络模块：集中管理后端访问、一维/二维棋盘转换、超时与请求中止 =====
       const AiClient = (() => {
         const API_BASE = '';               // 默认同源；开发期可指向 'http://127.0.0.1:8000'
-        const REQUEST_TIMEOUT_MS = 15000;  // 前端 15 秒超时，后端单次模型调用 12 秒
+        const REQUEST_TIMEOUT_MS = 15000;  // 前端 15 秒超时
         let controller = null;
 
         // 一维棋盘（数组）或 previousBoard 字符串 → 后端要求的 size×size 二维数组。
@@ -683,7 +683,7 @@
           controller = new AbortController();
           const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
           try {
-            const response = await fetch(`${API_BASE}/api/ai-move`, {
+            const response = await fetch(`${API_BASE}/api/system-move`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
@@ -754,7 +754,7 @@
         return game.state.currentPlayer === BLACK;
       }
 
-      // 组装 /api/ai-move 请求体：一维棋盘与 previousBoard 字符串转二维数组。
+      // 组装 /api/system-move 请求体：一维棋盘与 previousBoard 字符串转二维数组。
       function buildAiPayload() {
         const state = game.state;
         const size = game.size;
@@ -803,8 +803,7 @@
       }
 
       function updateEngineText(engine) {
-        if (engine === 'llm') elements.engineText.textContent = '模型已启用';
-        else if (engine === 'heuristic') elements.engineText.textContent = '本地 AI';
+        if (engine === 'kyu-engine') elements.engineText.textContent = '本地引擎';
       }
 
       // 轮到白方（AI）且对局未结束时自动请求应手。
@@ -1238,18 +1237,18 @@
         showToast(`${size} 路对局开始：你执黑先行，白方 AI 为 ${level} 级`);
       }
 
-      // 读取后端健康状态：未配置密钥时提示本地 AI，不阻止开局。
+      // 读取后端健康状态（v2：引擎信息），未连接时提示但不阻止开局。
       async function loadHealth() {
         try {
           const response = await fetch(`${AiClient.API_BASE}/api/health`);
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const data = await response.json();
-          if (data.llm) {
-            elements.engineText.textContent = '模型已启用';
-            elements.llmHint.textContent = `当前优先使用模型（${data.model}），调用失败时自动降级本地 AI。`;
+          if (data.engine === 'kyu-engine') {
+            elements.engineText.textContent = '引擎就绪';
+            elements.llmHint.textContent = '本地对弈引擎 · 级位 1~10';
           } else {
-            elements.engineText.textContent = '本地 AI';
-            elements.llmHint.textContent = '未配置模型密钥，当前为本地 AI，可正常对弈。';
+            elements.engineText.textContent = '对弈引擎';
+            elements.llmHint.textContent = '本地对弈引擎 · 级位 1~10';
           }
         } catch (error) {
           elements.engineText.textContent = '后端未连接';

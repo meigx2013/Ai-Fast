@@ -1,17 +1,17 @@
-"""AI 引擎统一入口：级位调度 + 模型优先 + 启发式永久兜底。
+"""系统对弈引擎统一入口：级位档案 → 级位决策管道 → 规则双保险 → 响应。
 
-流程（任务 4）：
-1. 读取配置与级位档案（levels.get_level_profile）；
-2. 配置了密钥且存在合法候选时，优先调用 DeepSeek（llm.request_llm_move，
-   内部含 Top-K 候选约束、12 秒超时、最多 1 次重试与规则预校验）；
-3. 模型路径任何失败（LlmError / 意外异常）降级启发式，engine 如实标记；
-4. 启发式路径应用级位参数（噪声幅度、随性一手概率、评分权重、战术加成）；
-5. 引擎候选返回前必须再次通过服务端规则校验（双保险）；
-6. 无合法点时返回 "pass"。
+流程（v2，本地级位引擎为唯一应手路径，无任何模型调用）：
+1. 读取级位档案（levels.get_level_profile）；
+2. 调用级位决策管道（decision.decide：模块融合 + 习惯 + 噪声 + 主动 Pass）；
+3. 引擎候选返回前必须再次通过服务端规则校验（双保险）；
+4. 决策管道异常时回退首个合法点；仍无合法点时返回 "pass"。
+
+引擎函数黑白参数化（player 参数）为任务 5/8 自对弈测试铺路；
+`generate_move` 端点入口固定系统执白。
 
 安全兜底原则：
 - 引擎内部任何异常都不向外抛 500，先回退 first_legal_or_pass；
-- 密钥与请求头绝不进入日志和响应。
+- 无密钥、无网络调用，本地引擎是唯一应手路径。
 """
 
 import logging
@@ -19,95 +19,125 @@ import random
 import time
 
 from .. import go_rules
-from ..config import get_settings
-from ..models import AiMoveRequest, AiMoveResponse, MovePoint
-from . import heuristic, levels, llm
+from ..models import MovePoint, SystemMoveRequest, SystemMoveResponse
+from . import decision, levels
 
 logger = logging.getLogger("weiqi.backend.ai")
 
+ENGINE_NAME = "kyu-engine"
 
-def _extract_last_move(request: AiMoveRequest) -> tuple[int, int] | None:
+
+def _extract_last_move(request: SystemMoveRequest) -> tuple[int, int] | None:
     last_move = request.lastMove
     if isinstance(last_move, MovePoint):
         return last_move.row, last_move.col
     return None  # None 或 "pass"
 
 
-async def generate_move(request: AiMoveRequest) -> AiMoveResponse:
-    """生成白方（AI）下一手；请求体已由 Pydantic 完成结构校验。"""
-    start = time.perf_counter()
-    settings = get_settings()
-    profile = levels.get_level_profile(request.level)
-    board = request.board
-    size = request.size
-    previous_board = request.previousBoard
-    last_move = _extract_last_move(request)
+def first_legal_or_pass(
+    board: list[list[int]],
+    size: int,
+    player: int,
+    previous_board: list[list[int]] | None = None,
+) -> tuple[int, int, str] | None:
+    """兜底策略：按行列顺序返回第一个合法点；无合法点返回 None。
 
-    # ---- 模型路径：密钥存在且仍有合法候选时优先尝试 ----
-    if settings.llm_enabled:
-        try:
-            candidates = heuristic.generate_candidates(board, size, go_rules.WHITE, previous_board)
-            if candidates:
-                (row, col), reason = await llm.request_llm_move(
-                    request, profile, settings, candidates, last_move
-                )
-                # 双保险：模型结果返回前再次通过服务端规则校验。
-                check = go_rules.simulate_move(board, size, row, col, go_rules.WHITE, previous_board)
-                if check.ok:
-                    return AiMoveResponse(
-                        move=MovePoint(row=row, col=col),
-                        reason=reason,
-                        elapsedMs=int((time.perf_counter() - start) * 1000),
-                        engine="llm",
-                    )
-                # 理论上不可达（llm 内部已校验）；保留双保险降级日志。
-                logger.warning("模型坐标未通过二次规则校验(%s)，降级启发式", check.reason)
-            # 无合法候选：直接进入启发式 pass 分支，不浪费模型调用。
-        except llm.LlmError as exc:
-            logger.warning("模型调用失败，降级启发式：%s", exc)
-        except Exception:
-            logger.exception("模型路径意外异常，降级启发式")
+    仅在决策管道出现意外异常时由引擎调用，保证接口永不因引擎缺陷而 500。
+    """
+    for row in range(size):
+        for col in range(size):
+            if board[row][col] != go_rules.EMPTY:
+                continue
+            if go_rules.simulate_move(board, size, row, col, player, previous_board).ok:
+                return row, col, "稳健应手"
+    return None
 
-    # ---- 启发式路径（带级位参数）：始终可用的兜底 ----
+
+def generate_engine_move(
+    board: list[list[int]],
+    size: int,
+    player: int,
+    level: int,
+    previous_board: list[list[int]] | None = None,
+    last_move: tuple[int, int] | None = None,
+    move_number: int = 0,
+    rng: random.Random | None = None,
+) -> tuple[tuple[int, int] | None, str]:
+    """生成 player 方下一手（黑白参数化，自对弈测试直接调用）。
+
+    返回 (落点, reason)；落点为 None 表示虚手。三层兜底：
+    决策管道 → 首个合法点 → "pass"。reason 统一带 [N级] 前缀。
+    """
+    profile = levels.get_level_profile(level)
+    if rng is None:
+        rng = random.Random()
+
+    result = None
     try:
-        choice = heuristic.choose_move(
-            board, size, go_rules.WHITE, previous_board, last_move,
-            random.Random(), profile=profile,
+        result = decision.decide(
+            board, size, player, profile,
+            previous_board=previous_board, last_move=last_move,
+            rng=rng, move_number=move_number,
         )
     except Exception:
-        logger.exception("启发式引擎异常，回退至首个合法点")
+        logger.exception("级位决策管道异常，回退至首个合法点")
+        result = None
+
+    # 双保险：引擎候选必须再次通过服务端规则校验。
+    if result is not None and result.move is not None:
+        row, col = result.move
+        check = go_rules.simulate_move(board, size, row, col, player, previous_board)
+        if not check.ok:
+            logger.warning(
+                "引擎候选 (%s,%s) 未通过规则校验(%s)，回退首个合法点", row, col, check.reason
+            )
+            result = None
+        else:
+            return (row, col), f"[{profile.label}]{result.reason}"
+
+    # 决策正常给出的虚手（无合法点或级位化主动 Pass）直接采纳。
+    if result is not None and result.move is None:
+        return None, f"[{profile.label}]{result.reason}"
+
+    # 兜底：首个合法点；仍无合法点时虚手。
+    try:
+        choice = first_legal_or_pass(board, size, player, previous_board)
+    except Exception:
+        logger.exception("兜底策略异常，虚手")
         choice = None
 
-    if choice is not None:
-        row, col, reason = choice
-        # 双保险：引擎候选必须再次通过服务端规则校验。
-        check = go_rules.simulate_move(board, size, row, col, go_rules.WHITE, previous_board)
-        if not check.ok:
-            logger.warning("引擎候选 (%s,%s) 未通过规则校验(%s)，回退", row, col, check.reason)
-            choice = None
-
     if choice is None:
-        try:
-            choice = heuristic.first_legal_or_pass(board, size, go_rules.WHITE, previous_board)
-        except Exception:
-            logger.exception("兜底策略异常，虚手")
-            choice = None
+        return None, "无合法落点，虚手"
+    row, col, reason = choice
+    return (row, col), f"[{profile.label}]{reason}"
 
+
+async def generate_move(request: SystemMoveRequest) -> SystemMoveResponse:
+    """生成白方（系统）下一手；请求体已由 Pydantic 完成结构校验。"""
+    start = time.perf_counter()
+    last_move = _extract_last_move(request)
+    move, reason = generate_engine_move(
+        request.board,
+        request.size,
+        go_rules.WHITE,
+        request.level,
+        previous_board=request.previousBoard,
+        last_move=last_move,
+        move_number=request.moveNumber,
+    )
     elapsed_ms = int((time.perf_counter() - start) * 1000)
 
-    if choice is None:
-        # 无合法点（满盘或所有空点均为自杀/劫）时返回 pass。
-        return AiMoveResponse(
+    if move is None:
+        return SystemMoveResponse(
             move="pass",
-            reason="无合法落点，虚手",
+            reason=reason,
             elapsedMs=elapsed_ms,
-            engine="heuristic",
+            engine=ENGINE_NAME,
         )
-
-    row, col, reason = choice
-    return AiMoveResponse(
+    row, col = move
+    return SystemMoveResponse(
         move=MovePoint(row=row, col=col),
-        reason=f"[{profile.label}]{reason}",
+        reason=reason,
         elapsedMs=elapsed_ms,
-        engine="heuristic",
+        engine=ENGINE_NAME,
     )
