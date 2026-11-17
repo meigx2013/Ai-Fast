@@ -1,20 +1,22 @@
 /**
- * FT-TBD 在线智能体空间开放接入 — API 测试引擎（由 ft-tbd-api-test.sh 释放）
- * 独立运行: FT_BASE_URL=... FT_EMAIL=... node engine.mjs [--fresh|--resume]
- * 依赖编排: 0.1登录→token; 1.7镜像→imageConfigId; 1.1实例→instanceId;
- *           1.10项目→projectId; 2.2→wsUrl; [ACP WS连接]→3.2会话→sessionId; 4.1→filePath; 4.3→artifactId
- * 自愈: 网络错误/5xx重试、401重新登录、3.2建立裸ACP WS连接、1.11删除前关闭WS、0.2 JWT兜底、1.1/1.3 error实例删除重建
+ * FT-TBD 在线智能体空间开放接入（服务化接口）— API 测试引擎（由 ft-tbd-api-test.sh 释放）
+ * 接口契约: FT-TBD 在线智能体空间开放接入.postman_collection_v2.json（19 个接口）
+ * 独立运行: FT_BASE_URL=... FT_OPEN_ACCESS_TOKEN=... FT_ASDM_PAT=... FT_USER_ID=... node engine.mjs [--fresh|--resume]
+ * 鉴权: X-Open-Access-Token 全局携带；enter/connect 额外携带 X-Asdm-Pat；成员接口携带 userId
+ * 依赖编排: 1.1列表→instanceId/workspaceId; 1.2详情(等待running);
+ *           2.2connect→wsUrl; [ACP WS连接+initialize]→3.2会话→sessionId; 3.4模型→currentModel; 4.1→filePath; 4.3→artifactId
+ * 自愈: 网络错误/5xx重试、3.2创建会话409→建立ACP WS连接并initialize后重试、
+ *       1.2实例stopped→restart、1.3停止后自动restore重启
  */
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 
-const BASE = process.env.FT_BASE_URL || 'https://asdm-dt02.leansoftx.com';
-const EMAIL = process.env.FT_EMAIL || 'test01@asdm.ai';
-const PASSWORD = process.env.FT_PASSWORD || 'admin@2026';
-const WSID = process.env.FT_WORKSPACE_ID || '2';
-const WORKSPACE_ID = /^\d+$/.test(String(WSID)) ? Number(WSID) : WSID;
-const PAT = process.env.FT_PAT || 'pat_2X0gaO1iISIHf-S1yFl48Jr5aIn8uB5a1IAXK3G8NdM';
+const BASE = process.env.FT_BASE_URL || 'https://asdm-dt01.leansoftx.com';
+const OAT = process.env.FT_OPEN_ACCESS_TOKEN || 'oat_NqUKhk8W658Kew8lUAGjgr6Xx-66eatkOYEezVogxto';
+const PAT = process.env.FT_ASDM_PAT || 'pat_5AmoF95eEMFjSxfGQ-3_GCJYibciY-JBVu_ETItZCOg';
+const USER_ID_RAW = process.env.FT_USER_ID || '52';
+const USER_ID = /^\d+$/.test(String(USER_ID_RAW)) ? Number(USER_ID_RAW) : USER_ID_RAW;
 const FRESH = process.argv.includes('--fresh');
 
 const DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -34,21 +36,18 @@ const pick = (obj, ...keys) => {
   for (const k of keys) { const v = obj?.[k]; if (v !== undefined && v !== null) return v; }
 };
 
-let TOKEN = state.token || '';
-let reloginTried = false;
-
 // 当前步骤的 HTTP 累计耗时（毫秒）与请求次数（rawRequest 层统计，不含轮询间隔等待）
 let httpTime = { ms: 0, count: 0 };
 const resetHttpTime = () => { httpTime = { ms: 0, count: 0 }; };
 
 async function rawRequest(method, path, opts = {}) {
-  const { json, form, query, token = TOKEN, timeoutMs = 60000 } = opts;
+  const { json, form, query, pat = false, timeoutMs = 60000 } = opts;
   const url = new URL(BASE + path);
   if (query) for (const [k, v] of Object.entries(query)) {
     if (v !== undefined && v !== null && String(v) !== '') url.searchParams.set(k, String(v));
   }
-  const headers = {};
-  if (token) headers.Authorization = 'Bearer ' + token;
+  const headers = { 'X-Open-Access-Token': OAT };
+  if (pat) headers['X-Asdm-Pat'] = PAT;
   let body;
   if (json !== undefined) { headers['Content-Type'] = 'application/json'; body = JSON.stringify(json); }
   else if (form) { body = form; }
@@ -87,20 +86,8 @@ function bizNote(r) {
   return parts.join(' | ');
 }
 
-async function doLogin() {
-  const r = await rawRequest('POST', '/api/auth/login', { json: { email: EMAIL, password: PASSWORD } });
-  const d = r.body?.data || {};
-  TOKEN = pick(d, 'token', 'accessToken') || pick(r.body, 'token', 'accessToken') || '';
-  if (TOKEN) {
-    state.token = TOKEN;
-    state.asdmUserId = String(pick(d, 'userId', 'asdmUserId') || pick(d.user, 'id', 'userId') || pick(r.body, 'userId') || state.asdmUserId || '1');
-    return true;
-  }
-  return false;
-}
-
-/** 带通用自愈的请求执行：网络错误/5xx 重试；401 重新登录后重试（鉴权接口除外）；extraHeal 步骤级自愈 */
-async function healRequest(method, path, opts = {}, { isAuth = false, extraHeal } = {}) {
+/** 带通用自愈的请求执行：网络错误/5xx 重试；extraHeal 步骤级自愈（401/403 为令牌失效不可自愈，直接返回） */
+async function healRequest(method, path, opts = {}, { extraHeal } = {}) {
   let last;
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
@@ -111,11 +98,9 @@ async function healRequest(method, path, opts = {}, { isAuth = false, extraHeal 
       await sleep(2000);
       continue;
     }
-    if (last.status === 401 && !isAuth && !reloginTried) {
-      reloginTried = true;
-      log('  401 → 自愈: 重新登录');
-      const ok = await doLogin();
-      if (ok) { attempt--; continue; }
+    if (last.status === 401 || last.status === 403) {
+      log('  ' + last.status + ' 令牌/权限失效（openAccessToken 或 asdmPat 无效），不可自愈');
+      break;
     }
     if (last.status >= 500 && attempt < 3) { log('  5xx → 重试(' + attempt + ')'); await sleep(2000); continue; }
     if (extraHeal) {
@@ -126,6 +111,37 @@ async function healRequest(method, path, opts = {}, { isAuth = false, extraHeal 
   }
   return last;
 }
+
+const instPath = () => '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId);
+const getInstanceStatus = async () => {
+  const r = await rawRequest('GET', instPath(), { timeoutMs: 30000 });
+  return { ok: bizOk(r), status: r.body?.data?.status, body: r.body };
+};
+
+/** 轮询实例状态直到目标态；error/terminated 视为终态提前返回 */
+async function waitStatus(target, maxMs, intervalMs = 6000) {
+  const start = Date.now();
+  let lastStatus;
+  while (Date.now() - start < maxMs) {
+    const s = await getInstanceStatus();
+    lastStatus = s.status;
+    if (lastStatus === target) return { hit: true, status: lastStatus };
+    if (lastStatus === 'error' || lastStatus === 'terminated') return { hit: false, status: lastStatus, terminal: true };
+    log('  实例状态: ' + lastStatus + '（等待 ' + target + '...）');
+    await sleep(intervalMs);
+  }
+  return { hit: false, status: lastStatus };
+}
+
+/** 重启实例并等待 running（自愈/环境还原共用） */
+async function restartInstance(maxMs = 300000) {
+  const r = await healRequest('POST', instPath() + '/restart', { timeoutMs: 120000 });
+  if (!bizOk(r)) return { ok: false, status: null };
+  const w = await waitStatus('running', maxMs);
+  return { ok: w.hit, status: w.status };
+}
+
+const TS = Date.now();
 
 /** 最小 WebSocket 客户端：接收/解析帧、回 pong、发送带掩码的文本帧、等待 JSON-RPC 响应 */
 async function openWsKeepAlive(wsUrl, headers = {}, keepMs = 300000) {
@@ -218,218 +234,116 @@ async function openWsKeepAlive(wsUrl, headers = {}, keepMs = 300000) {
 }
 
 let wsHandle = null;
-/** 建立 ACP WebSocket 连接（诊断结论: 裸连接即可支持 HTTP 会话创建；主动 initialize 反触发智能体鉴权要求） */
-async function wsHeal() {
+/**
+ * ACP 连接自愈（3.2 创建会话 409 时触发）:
+ * 服务化接口要求外部调用方持有"活跃且已 initialize"的 ACP 连接。
+ * 使用 2.2 connect 返回的 wsUrl 建立裸 WS → 发送 initialize → 等待响应与 session/new 通知。
+ */
+async function wsInitialize() {
   try {
     if (!state.wsUrl) return false;
     let wsUrl = state.wsUrl;
     if (wsUrl.startsWith('/')) wsUrl = 'wss://' + new URL(BASE).host + wsUrl;
     else if (!wsUrl.startsWith('ws://') && !wsUrl.startsWith('wss://')) wsUrl = 'wss://' + wsUrl;
-    const headers = {};
-    if (state.wsToken) headers.Authorization = 'Bearer ' + state.wsToken;
-    else if (TOKEN) headers.Authorization = 'Bearer ' + TOKEN;
-    wsHandle = await openWsKeepAlive(wsUrl, headers, 300000);
-    await sleep(2000);
+    if (wsHandle) { try { wsHandle.close(); } catch {} wsHandle = null; }
+    wsHandle = await openWsKeepAlive(wsUrl, {}, 300000);
+    const resp = await wsHandle.sendJsonRpc(
+      { jsonrpc: '2.0', id: Date.now(), method: 'initialize', params: { protocolVersion: 1, clientCapabilities: {} } },
+      20000,
+    );
+    log('  ACP initialize 响应: ' + (resp ? JSON.stringify(resp).slice(0, 150) : '超时（继续尝试）'));
+    await sleep(3000); // 等待 session/new 等服务端通知就绪
     return true;
   } catch (e) {
-    log('  WS 自愈失败:', e.message);
+    log('  WS 自愈失败: ' + e.message);
+    wsHandle = null;
     return false;
   }
 }
 
-async function waitInstanceRunning(maxMs = 300000) {
-  const start = Date.now();
-  let lastStatus;
-  while (Date.now() - start < maxMs) {
-    const r = await rawRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId), { timeoutMs: 20000 });
-    lastStatus = r.body?.data?.status ?? r.body?.data?.instance?.status;
-    if (lastStatus === 'running') return { running: true, status: lastStatus };
-    log('  实例状态: ' + lastStatus + '（等待中...）');
-    if (lastStatus === 'error') return { running: false, status: 'error' };
-    await sleep(6000);
-  }
-  return { running: false, status: lastStatus };
-}
-
-/** 自愈: 删除异常(error)实例并重建，成功返回新 instanceId（幂等创建会复用 error 实例，必须先删） */
-async function recreateInstance() {
-  const del = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId), { timeoutMs: 120000 });
-  if (!bizOk(del)) return null;
-  await sleep(5000);
-  const r = await healRequest('POST', '/api/v1/agentorbit/workspaces', {
-    json: { workspaceId: WORKSPACE_ID, imageConfigId: state.imageConfigId, cpu: '2', memory: '4Gi', idleTimeoutMinutes: 30 },
-    timeoutMs: 120000,
-  });
-  const d = r.body?.data || {};
-  const id = pick(d, 'instanceId') || pick(d.instance, 'instanceId') || pick(d, 'id');
-  return id ? (state.instanceId = String(id)) : null;
-}
-
-const TS = Date.now();
 
 const steps = [
-  { id: '0.1', name: '账号密码登录', run: async () => {
-    const ok = await doLogin();
-    reloginTried = false;
-    return { ok, note: ok ? '获取 token 成功, asdmUserId=' + state.asdmUserId : '登录失败' };
-  } },
-  { id: '0.2', name: 'PAT 兑换 JWT', run: async () => {
-    let r = await healRequest('POST', '/api/auth/personal-access-tokens/exchange', { token: PAT }, { isAuth: true });
-    let at = pick(r.body?.data, 'accessToken', 'token');
-    let healed = false;
-    if (!at && TOKEN) {
-      log('  PAT 兑换 401 → 自愈: 尝试使用 JWT 作为凭据');
-      const r2 = await rawRequest('POST', '/api/auth/personal-access-tokens/exchange', { token: TOKEN });
-      if (bizOk(r2)) { r = r2; at = pick(r2.body?.data, 'accessToken', 'token'); healed = !!at; }
-    }
-    return { ok: bizOk(r) && !!at, note: bizNote(r) + (at ? '（兑换成功' + (healed ? '，JWT 兜底自愈' : '') + '）' : '；PAT 已失效且无有效 PAT 凭据，无法完成兑换') };
-  } },
-  { id: '1.7', name: '可用镜像列表', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + WORKSPACE_ID + '/images');
-    const list = Array.isArray(r.body?.data) ? r.body.data : (r.body?.data?.items || r.body?.data?.list || []);
-    const ic = list.length ? (pick(list[0], 'imageId', 'imageConfigId', 'id', 'configId') || '') : '';
-    if (ic) state.imageConfigId = String(ic);
-    return { ok: bizOk(r), note: bizNote(r) + '；镜像数=' + list.length + (ic ? '，选中 imageConfigId=' + ic : '') };
-  } },
-  { id: '1.1', name: '创建实例', run: async () => {
-    if (!state.imageConfigId) {
-      const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + WORKSPACE_ID + '/images');
-      const list = Array.isArray(r.body?.data) ? r.body.data : [];
-      state.imageConfigId = String(pick(list[0], 'imageId', 'imageConfigId', 'id', 'configId') || '');
-    }
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces', {
-      json: { workspaceId: WORKSPACE_ID, imageConfigId: state.imageConfigId, cpu: '2', memory: '4Gi', idleTimeoutMinutes: 30 },
-      timeoutMs: 120000,
-    });
-    const d = r.body?.data || {};
-    const id = pick(d, 'instanceId') || pick(d.instance, 'instanceId') || pick(d, 'id');
-    let healed = false;
-    if (id) {
-      state.instanceId = String(id);
-      // 幂等创建可能返回已存在的 error 实例（服务端提示"请重新创建"）→ 自愈: 删除后重建
-      const det = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId));
-      const st0 = det.body?.data?.status ?? det.body?.data?.instance?.status;
-      if (st0 === 'error') {
-        log('  实例 status=error → 自愈: 删除异常实例并重建');
-        const nid = await recreateInstance();
-        if (nid) { healed = true; }
-        else { log('  自愈重建失败，保留原实例'); }
-      }
-    }
-    return { ok: bizOk(r) && !!state.instanceId, note: bizNote(r) + '；instanceId=' + (state.instanceId || '-') + (healed ? '；@healed 删除error实例后重建' : '') };
-  } },
-  { id: '1.2', name: '实例列表', run: async () => {
+  { id: '1.1', name: '查询全部在线智能体空间', run: async () => {
     const r = await healRequest('GET', '/api/v1/agentorbit/workspaces');
     const list = Array.isArray(r.body?.data) ? r.body.data : [];
-    return { ok: bizOk(r), note: bizNote(r) + '；实例数=' + list.length };
+    // 实例发现：优先 running；否则选最近更新的非 terminated 实例（交由 1.2 自愈拉起）；集合不含创建实例端点
+    const running = list.filter((i) => i.status === 'running');
+    const alive = list.filter((i) => i.status !== 'terminated')
+      .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+    const chosen = running[0] || alive[0];
+    let healNote = '';
+    if (chosen) {
+      state.instanceId = String(pick(chosen, 'instanceId') || '');
+      state.workspaceId = pick(chosen, 'workspaceId') !== undefined ? String(chosen.workspaceId) : state.workspaceId;
+      if (!running.length) healNote = '；无 running 实例，选中 status=' + chosen.status + '（将由 1.2 自愈拉起）';
+    }
+    return { ok: bizOk(r) && !!state.instanceId, note: bizNote(r) + '；实例数=' + list.length + '，选中 instanceId=' + (state.instanceId || '-') + (state.workspaceId ? '（workspaceId=' + state.workspaceId + '）' : '') + healNote };
   } },
-  { id: '1.3', name: '实例详情', run: async () => {
-    const first = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId));
+  { id: '1.2', name: '实例详情（兼作状态轮询）', run: async () => {
+    const first = await healRequest('GET', instPath());
     let note = bizNote(first);
-    const ok = bizOk(first);
+    let ok = bizOk(first);
     if (ok) {
-      const st = first.body?.data?.status ?? first.body?.data?.instance?.status;
+      let st = first.body?.data?.status;
       if (st !== 'running') {
-        log('  实例未运行，轮询等待就绪...');
-        let w = await waitInstanceRunning(300000);
+        log('  实例 status=' + st + '，非 running');
         let healed = false;
-        if (w.status === 'error') {
-          // error 为终态，继续等待无意义 → 自愈: 删除后重建（1 次阈值）
-          log('  实例 status=error → 自愈: 删除异常实例并重建');
-          const nid = await recreateInstance();
-          if (nid) {
-            healed = true;
-            w = await waitInstanceRunning(240000);
-          } else log('  自愈重建失败');
+        // stopped/短暂中间态：先等待；仍非 running 或终态 → 自愈: restart 拉起
+        if (st !== 'error' && st !== 'terminated') {
+          const w = await waitStatus('running', 120000);
+          if (w.hit) st = 'running';
+          else st = w.status;
         }
-        note += '；初始 status=' + st + '，最终 status=' + w.status + (w.running ? '（running）' : '（等待超时）') + (healed ? '；@healed 重建后 instanceId=' + state.instanceId : '');
+        if (st !== 'running') {
+          log('  实例 ' + st + ' → 自愈: 调用 restart 拉起并等待 running');
+          const rr = await restartInstance(300000);
+          healed = rr.ok;
+          st = rr.status;
+        }
+        note += '；初始 status=' + first.body?.data?.status + '，最终 status=' + st
+          + (healed ? '；@healed restart 拉起后恢复 running' : '（未恢复）');
+        ok = healed || st === 'running';
       } else note += '；status=running';
     }
     return { ok, note };
   } },
-  { id: '1.8', name: '项目列表', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/projects');
-    const list = Array.isArray(r.body?.data) ? r.body.data : [];
-    return { ok: bizOk(r), note: bizNote(r) + '；项目数=' + list.length };
-  } },
-  { id: '1.10', name: '创建项目', run: async () => {
-    const name = 'api-test-' + TS;
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/projects', {
-      json: { name, description: '接口自动化测试项目', slug: 'api-test-' + TS },
-    });
-    const d = r.body?.data || {};
-    const id = pick(d, 'projectId') || pick(d.project, 'projectId') || pick(d, 'id');
-    if (id) state.projectId = String(id);
-    return { ok: bizOk(r) && !!id, note: bizNote(r) + '；projectId=' + (id || '-') };
-  } },
-  { id: '1.9', name: '项目详情', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/projects/' + encodeURIComponent(state.projectId));
-    return { ok: bizOk(r), note: bizNote(r) };
-  } },
   { id: '2.1', name: '进入实例', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/enter', {
-      json: { projectId: state.projectId },
-    });
-    return { ok: bizOk(r), note: bizNote(r) };
+    const r = await healRequest('POST', instPath() + '/enter', { json: { userId: USER_ID }, pat: true, timeoutMs: 120000 });
+    const d = r.body?.data || {};
+    const homeDir = pick(d, 'homeDir');
+    return { ok: bizOk(r), note: bizNote(r) + (homeDir ? '；homeDir=' + homeDir + ', projectSlug=' + (pick(d, 'projectSlug') || '-') : '') };
   } },
   { id: '2.2', name: '获取连接信息', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/connect', {
-      json: { projectId: state.projectId },
-    });
+    const r = await healRequest('POST', instPath() + '/connect', { json: { userId: USER_ID }, pat: true, timeoutMs: 120000 });
     const d = r.body?.data || {};
-    const wsUrl = pick(d, 'wsUrl', 'url', 'websocketUrl');
+    const wsUrl = pick(d, 'wsUrl');
     if (wsUrl) state.wsUrl = wsUrl;
-    const wsToken = pick(d, 'token', 'wsToken', 'accessToken');
-    if (wsToken) state.wsToken = wsToken;
     return { ok: bizOk(r), note: bizNote(r) + (wsUrl ? '；wsUrl=' + String(wsUrl).slice(0, 90) : '') };
   } },
   { id: '2.3', name: '查询用户连接状态', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/connection-status', {
-      query: { asdmUserId: state.asdmUserId || '1' },
-    });
+    const r = await healRequest('GET', instPath() + '/connection-status', { query: { userId: USER_ID } });
     const d = r.body?.data || {};
     return { ok: bizOk(r), note: bizNote(r) + '；connected=' + (pick(d, 'connected') ?? '-') + ', connectionCount=' + (pick(d, 'connectionCount') ?? '-') };
   } },
   { id: '3.1', name: '会话列表', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/sessions', {
-      query: { projectId: state.projectId },
-    });
+    const r = await healRequest('GET', instPath() + '/sessions', { query: { userId: USER_ID } });
     const list = Array.isArray(r.body?.data) ? r.body.data : [];
     return { ok: bizOk(r), note: bizNote(r) + '；会话数=' + list.length };
   } },
   { id: '3.2', name: '创建会话', run: async () => {
-    const path = '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/sessions';
-    const json = { projectId: state.projectId };
+    const path = instPath() + '/sessions';
+    const json = { userId: USER_ID };
     let healedNote = '';
     const r = await healRequest('POST', path, { json }, {
       extraHeal: async (last) => {
-        if (last.status !== 409 && last.status !== 400 && last.status !== 500) return null;
-        const msg = String(last.body?.message || '');
-        if (!wsHandle) {
-          log('  创建会话被拒(' + last.status + ') → 自愈①: 建立 ACP WebSocket 连接后重试');
-          const healed = await wsHeal();
-          if (!healed) return null;
-          healedNote = '，自愈①: 建立 ACP WS 连接';
-          return await rawRequest('POST', path, { json });
-        }
-        if (msg.includes('initialize') || msg.includes('initialized')) {
-          log('  仍提示需要 initialize → 自愈②: 补发 ACP initialize 后重试');
-          const initMsg = { jsonrpc: '2.0', id: Date.now(), method: 'initialize', params: { protocolVersion: 1, clientCapabilities: {} } };
-          await wsHandle.sendJsonRpc(initMsg, 20000);
-          await sleep(2000);
-          healedNote = '，自愈②: 补发 initialize';
-          return await rawRequest('POST', path, { json });
-        }
-        if (msg.includes('Authentication required') || last.status === 500) {
-          log('  智能体要求鉴权 → 自愈③: 关闭并重开裸 WS 连接后重试');
-          try { wsHandle.close(); } catch {}
-          wsHandle = null;
-          const healed = await wsHeal();
-          if (!healed) return null;
-          healedNote = '，自愈③: 重开裸 WS 连接';
-          return await rawRequest('POST', path, { json });
-        }
-        return null;
+        if (last.status !== 409) return null;
+        // 自愈: 无活跃 ACP 连接被拒 → 按 2.2 的 wsUrl 建立 ACP WS 连接并 initialize 后重试
+        log('  创建会话 409 → 自愈: 建立 ACP WebSocket 连接并 initialize 后重试');
+        const ok = await wsInitialize();
+        if (!ok) return null;
+        const r2 = await rawRequest('POST', path, { json });
+        if (bizOk(r2) && pick(r2.body?.data, 'sessionId')) healedNote = '，@healed 建立 ACP WS 连接并 initialize 后重试成功';
+        return r2;
       },
     });
     const d = r.body?.data || {};
@@ -437,40 +351,46 @@ const steps = [
     if (id) state.sessionId = String(id);
     return { ok: bizOk(r) && !!id, note: bizNote(r) + '；sessionId=' + (id || '-') + healedNote };
   } },
-  { id: '3.3', name: '切换会话', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/sessions/switch', {
-      json: { sessionId: state.sessionId, projectId: state.projectId },
-    });
-    return { ok: bizOk(r), note: bizNote(r) };
-  } },
-  { id: '3.5', name: '获取会话可用模型', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/sessions/' + encodeURIComponent(state.sessionId) + '/models');
+  { id: '3.4', name: '获取会话可用模型', run: async () => {
+    if (!state.sessionId) return { ok: false, note: '级联失败: 未获得 sessionId（3.2 创建会话失败）' };
+    const r = await healRequest('GET', instPath() + '/sessions/' + encodeURIComponent(state.sessionId) + '/models', { query: { userId: USER_ID } });
     const cm = pick(r.body?.data, 'currentModel') || pick(r.body?.data, 'model');
     if (cm) state.modelId = String(cm);
     const models = Array.isArray(r.body?.data?.models) ? r.body.data.models.length : '-';
     return { ok: bizOk(r), note: bizNote(r) + '；currentModel=' + (cm || '-') + ', models=' + models };
   } },
-  { id: '3.6', name: '切换会话模型', run: async () => {
-    const model = state.modelId || 'deepseek-v4-flash';
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/sessions/' + encodeURIComponent(state.sessionId) + '/model', {
-      json: { model },
+  { id: '3.5', name: '切换会话模型', run: async () => {
+    if (!state.sessionId) return { ok: false, note: '级联失败: 未获得 sessionId（3.2 创建会话失败）' };
+    const model = state.modelId || 'deepseek-v4.1-flash';
+    const r = await healRequest('POST', instPath() + '/sessions/' + encodeURIComponent(state.sessionId) + '/model', {
+      json: { userId: USER_ID, model },
     });
-    return { ok: bizOk(r), note: bizNote(r) + '；model=' + model };
+    const cm = pick(r.body?.data, 'currentModel');
+    return { ok: bizOk(r), note: bizNote(r) + '；model=' + model + (cm ? '，切换后 currentModel=' + cm : '') };
+  } },
+  { id: '3.6', name: '获取会话历史', run: async () => {
+    if (!state.sessionId) return { ok: false, note: '级联失败: 未获得 sessionId（3.2 创建会话失败）' };
+    const r = await healRequest('GET', instPath() + '/sessions/' + encodeURIComponent(state.sessionId) + '/history', {
+      query: { limit: 50, userId: USER_ID },
+    });
+    const msgs = Array.isArray(r.body?.data?.messages) ? r.body.data.messages.length : '-';
+    return { ok: bizOk(r), note: bizNote(r) + '；messages=' + msgs };
   } },
   { id: '3.7', name: '停止生成', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/generation/stop', {
-      json: { sessionId: state.sessionId },
+    if (!state.sessionId) return { ok: false, note: '级联失败: 未获得 sessionId（3.2 创建会话失败）' };
+    const r = await healRequest('POST', instPath() + '/generation/stop', {
+      json: { userId: USER_ID, sessionId: state.sessionId },
     });
-    return { ok: bizOk(r), note: bizNote(r) };
+    const stopped = pick(r.body?.data, 'stopped');
+    return { ok: bizOk(r), note: bizNote(r) + (stopped !== undefined ? '；stopped=' + stopped : '') };
   } },
   { id: '4.1', name: '上传文件', run: async () => {
     const fileName = 'api-test-' + TS + '.txt';
     const form = new FormData();
-    form.append('file', new Blob(['FT-TBD 接口测试上传文件 ' + new Date().toISOString()], { type: 'text/plain' }), fileName);
-    form.append('projectId', state.projectId);
+    form.append('file', new Blob(['FT-TBD 服务化接口测试上传文件 ' + new Date().toISOString()], { type: 'text/plain' }), fileName);
     form.append('path', '');
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/artifacts', {
-      form, timeoutMs: 120000,
+    const r = await healRequest('POST', instPath() + '/artifacts', {
+      query: { userId: USER_ID }, form, timeoutMs: 120000,
     });
     const fullPath = pick(r.body?.data, 'path', 'fullPath', 'filePath');
     let filePath = '';
@@ -484,17 +404,16 @@ const steps = [
     return { ok: bizOk(r), note: bizNote(r) + '；filePath=' + filePath };
   } },
   { id: '4.2', name: '下载文件', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/artifacts', {
-      query: { path: state.filePath, projectId: state.projectId },
+    const r = await healRequest('GET', instPath() + '/artifacts', {
+      query: { path: state.filePath, userId: USER_ID },
     });
     const ct = r.headers?.get?.('content-type') || '';
     const bytes = r.byteLength ?? (r.text ? Buffer.byteLength(r.text) : 0);
-    const isFile = !r.body && bytes > 0;
-    return { ok: bizOk(r) && bytes > 0, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + bytes + (isFile ? '（文件内容' + (r.binary ? '，二进制已省略' : '') + '）' : '') };
+    return { ok: bizOk(r) && bytes > 0, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + bytes };
   } },
   { id: '4.3', name: '上传制品到智能体空间', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/workspace-artifacts', {
-      json: { projectId: state.projectId, path: state.artifactPath || state.filePath },
+    const r = await healRequest('POST', instPath() + '/workspace-artifacts', {
+      json: { userId: USER_ID, path: state.artifactPath || state.filePath },
       timeoutMs: 120000,
     });
     const d = r.body?.data || {};
@@ -503,65 +422,50 @@ const steps = [
     return { ok: bizOk(r) && !!id, note: bizNote(r) + '；artifactId=' + (id || '-') };
   } },
   { id: '4.4', name: '获取智能体空间制品列表', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + WORKSPACE_ID + '/workspace-artifacts');
+    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.workspaceId) + '/workspace-artifacts');
     const list = Array.isArray(r.body?.data) ? r.body.data : [];
-    return { ok: bizOk(r), note: bizNote(r) + '；制品数=' + list.length };
+    const found = list.some((a) => String(pick(a, 'artifactId')) === String(state.artifactId));
+    return { ok: bizOk(r), note: bizNote(r) + '；制品数=' + list.length + (state.artifactId ? '，含本次上传 artifactId=' + state.artifactId + '：' + (found ? '是' : '否') : '') };
   } },
-  { id: '4.5', name: '下载制品', run: async () => {
-    const r = await healRequest('GET', '/api/v1/agentorbit/workspace-artifacts/' + encodeURIComponent(state.artifactId));
+  { id: '4.5', name: '下载制品（按 artifactId）', run: async () => {
+    const r = await healRequest('GET', '/api/v1/agentorbit/workspaces/artifacts/' + encodeURIComponent(state.artifactId));
     const ct = r.headers?.get?.('content-type') || '';
     const bytes = r.byteLength ?? (r.text ? Buffer.byteLength(r.text) : 0);
-    return { ok: bizOk(r) && bytes > 0, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + bytes };
+    return { ok: bizOk(r) && bytes > 0, note: bizNote(r) + '；contentType=' + (ct || '-') + ', bytes=' + bytes + (r.binary ? '（zip 二进制）' : '') };
   } },
-  { id: '3.4', name: '删除会话', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/sessions/' + encodeURIComponent(state.sessionId));
-    return { ok: bizOk(r), note: bizNote(r) };
+  { id: '3.3', name: '删除会话', run: async () => {
+    if (!state.sessionId) return { ok: false, note: '级联失败: 未获得 sessionId（3.2 创建会话失败）' };
+    const r = await healRequest('POST', instPath() + '/sessions/' + encodeURIComponent(state.sessionId), { query: { userId: USER_ID } });
+    const deleted = pick(r.body?.data, 'deleted');
+    return { ok: bizOk(r), note: bizNote(r) + (deleted !== undefined ? '；deleted=' + deleted : '') };
   } },
-  { id: '1.11', name: '删除项目', run: async () => {
-    const path = '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/projects/' + encodeURIComponent(state.projectId);
-    if (wsHandle) {
-      log('  自愈①: 删除前先关闭我方 ACP WS 连接');
-      try { wsHandle.close(); } catch {}
-      wsHandle = null;
-      await sleep(2000);
-    }
-    const r = await healRequest('POST', path, { json: { force: false } }, {
-      extraHeal: async (last) => {
-        if (last.status !== 409) return null;
-        log('  删除项目 409 → 自愈②: force=true 重试');
-        const r2 = await rawRequest('POST', path, { json: { force: true } });
-        if (r2.status === 404 && String(r2.body?.message || '').includes('不存在')) {
-          return { status: 200, statusText: 'OK', body: { code: 200, message: 'success(项目已确认删除)' }, text: JSON.stringify(r2.body) };
-        }
-        return r2;
-      },
-    });
-    return { ok: bizOk(r), note: bizNote(r) };
-  } },
-  { id: '1.5', name: '重启实例', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/restart', { timeoutMs: 120000 });
+  { id: '1.4', name: '重启实例', run: async () => {
+    const r = await healRequest('POST', instPath() + '/restart', { timeoutMs: 120000 });
     const ok = bizOk(r);
     if (ok) {
       log('  等待实例重启就绪...');
-      const w = await waitInstanceRunning(240000);
-      return { ok, note: bizNote(r) + '；重启后 status=' + w.status };
+      const w = await waitStatus('running', 300000);
+      return { ok: w.hit, note: bizNote(r) + '；重启后 status=' + w.status };
     }
     return { ok, note: bizNote(r) };
   } },
-  { id: '1.4', name: '暂停实例', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId) + '/stop', { timeoutMs: 120000 });
-    return { ok: bizOk(r), note: bizNote(r) };
-  } },
-  { id: '1.6', name: '删除实例', run: async () => {
-    const r = await healRequest('POST', '/api/v1/agentorbit/workspaces/' + encodeURIComponent(state.instanceId), { timeoutMs: 120000 });
-    return { ok: bizOk(r), note: bizNote(r) };
+  { id: '1.3', name: '暂停实例', run: async () => {
+    const r = await healRequest('POST', instPath() + '/stop', { timeoutMs: 120000 });
+    const ok = bizOk(r);
+    if (!ok) return { ok, note: bizNote(r) };
+    const w = await waitStatus('stopped', 120000, 4000);
+    let note = bizNote(r) + '；停止后 status=' + w.status;
+    // 环境还原：实例非本脚本创建，测试后自动 restart 恢复 running，避免影响他人
+    log('  自愈: 自动重启恢复实例到 running（环境还原）');
+    const rr = await restartInstance(300000);
+    note += rr.ok ? '；@restored 已自动重启恢复 running' : '；⚠ 恢复失败，实例停留在 ' + rr.status + '，请人工确认';
+    return { ok: w.hit && rr.ok, note };
   } },
 ];
 
-// 报告展示顺序（Postman 原始编号顺序，共 28 个接口）
+// 报告展示顺序（Postman v2 集合编号顺序，共 19 个接口）
 const displayOrder = [
-  '0.1', '0.2',
-  '1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7', '1.8', '1.9', '1.10', '1.11',
+  '1.1', '1.2', '1.3', '1.4',
   '2.1', '2.2', '2.3',
   '3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7',
   '4.1', '4.2', '4.3', '4.4', '4.5',
@@ -570,12 +474,12 @@ const displayOrder = [
 function writeReport(okCount, failIds, missingIds) {
   const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
   const L = [];
-  L.push('# FT-TBD 在线智能体空间开放接入 — 接口测试报告');
+  L.push('# FT-TBD 在线智能体空间开放接入（服务化接口）— 接口测试报告');
   L.push('');
   L.push('- **测试时间**: ' + new Date().toISOString());
   L.push('- **环境**: ' + BASE);
-  L.push('- **账号**: ' + EMAIL);
-  L.push('- **workspaceId**: ' + WORKSPACE_ID);
+  L.push('- **userId**: ' + USER_ID + '（openAccessToken: ' + OAT.slice(0, 12) + '...）');
+  L.push('- **实例**: ' + (state.instanceId || '-') + '（workspaceId=' + (state.workspaceId || '-') + '）');
   L.push('- **汇总**: ' + okCount + '/' + displayOrder.length + ' 通过'
     + (failIds.length ? '；失败: ' + failIds.join(', ') : '')
     + (missingIds.length ? '；未执行: ' + missingIds.join(', ') : ''));
@@ -613,9 +517,8 @@ async function main() {
     fs.writeFileSync(RESULTS_FILE, '{}');
     fs.writeFileSync(STATE_FILE, '{}');
     results = {}; state = {};
-    TOKEN = '';
   }
-  log('=== FT-TBD 接口自动化测试开始（' + BASE + ' workspace=' + WORKSPACE_ID + '）===');
+  log('=== FT-TBD 服务化接口测试开始（' + BASE + ' userId=' + USER_ID + '）===');
   let skipped = 0;
   for (const step of steps) {
     if (results[step.id]?.ok) {
@@ -635,12 +538,12 @@ async function main() {
     results[step.id] = { id: step.id, name: step.name, ok: !!out.ok, note: out.note || '', durationMs: Date.now() - start, respMs: httpTime.ms, reqCount: httpTime.count };
     saveFiles();
     log('[DONE] ' + step.id + ' ' + step.name + ' → ' + (out.ok ? '✅ 成功' : '❌ 失败') + ' (耗时 ' + results[step.id].durationMs + 'ms, HTTP 响应 ' + httpTime.ms + 'ms/' + httpTime.count + '次) ' + (out.note || ''));
-    if (!out.ok && ['0.1', '1.1', '1.10'].includes(step.id)) {
-      log('!!! 依赖步骤 ' + step.id + ' 失败，中止执行');
+    if (!out.ok && ['1.1', '1.2'].includes(step.id)) {
+      log('!!! 依赖步骤 ' + step.id + ' 失败（无可用实例/实例无法拉起），中止执行');
       break;
     }
-    if (!out.ok && step.id === '3.2') {
-      log('  警告: 会话创建失败，会话相关后续步骤可能失败，继续执行其余接口');
+    if (!out.ok && step.id === '2.2') {
+      log('  警告: connect 失败，会话相关后续步骤可能失败，继续执行其余接口');
     }
   }
   if (wsHandle) { try { wsHandle.close(); } catch {} }

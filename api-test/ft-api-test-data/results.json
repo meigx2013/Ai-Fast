@@ -1,101 +1,38 @@
 {
-  "0.1": {
-    "id": "0.1",
-    "name": "账号密码登录",
-    "ok": true,
-    "note": "获取 token 成功, asdmUserId=2",
-    "durationMs": 1562,
-    "respMs": 1561,
-    "reqCount": 1
-  },
-  "0.2": {
-    "id": "0.2",
-    "name": "PAT 兑换 JWT",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success（兑换成功）",
-    "durationMs": 228,
-    "respMs": 228,
-    "reqCount": 1
-  },
-  "1.7": {
-    "id": "1.7",
-    "name": "可用镜像列表",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success；镜像数=1，选中 imageConfigId=img-1789723693241cintts",
-    "durationMs": 65,
-    "respMs": 65,
-    "reqCount": 1
-  },
   "1.1": {
     "id": "1.1",
-    "name": "创建实例",
+    "name": "查询全部在线智能体空间",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；instanceId=acp-mwd7azq5gb61zs",
-    "durationMs": 175,
-    "respMs": 175,
-    "reqCount": 2
+    "note": "HTTP 200 | code=200 | success；实例数=3，选中 instanceId=acp-mwimjlxojy5p5n（workspaceId=17）",
+    "durationMs": 426,
+    "respMs": 425,
+    "reqCount": 1
   },
   "1.2": {
     "id": "1.2",
-    "name": "实例列表",
+    "name": "实例详情（兼作状态轮询）",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；实例数=1",
-    "durationMs": 50,
-    "respMs": 50,
-    "reqCount": 1
-  },
-  "1.3": {
-    "id": "1.3",
-    "name": "实例详情",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success；初始 status=creating，最终 status=running（running）",
-    "durationMs": 25736,
-    "respMs": 1706,
-    "reqCount": 6
-  },
-  "1.8": {
-    "id": "1.8",
-    "name": "项目列表",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success；项目数=1",
-    "durationMs": 1690,
-    "respMs": 1690,
-    "reqCount": 1
-  },
-  "1.10": {
-    "id": "1.10",
-    "name": "创建项目",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success；projectId=8c5598d5-db5c-4eb1-950c-438911d60ba5",
-    "durationMs": 1125,
-    "respMs": 1125,
-    "reqCount": 1
-  },
-  "1.9": {
-    "id": "1.9",
-    "name": "项目详情",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 628,
-    "respMs": 628,
+    "note": "HTTP 200 | code=200 | success；status=running",
+    "durationMs": 156,
+    "respMs": 156,
     "reqCount": 1
   },
   "2.1": {
     "id": "2.1",
     "name": "进入实例",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 636,
-    "respMs": 636,
+    "note": "HTTP 200 | code=200 | success；homeDir=/home/test01, projectSlug=_default",
+    "durationMs": 31122,
+    "respMs": 31122,
     "reqCount": 1
   },
   "2.2": {
     "id": "2.2",
     "name": "获取连接信息",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；wsUrl=/_instance/k8s/acp-mwd7azq5gb61zs/ws?asdmUserId=2&username=test01&projectSlug=api-test-179",
-    "durationMs": 525,
-    "respMs": 524,
+    "note": "HTTP 200 | code=200 | success；wsUrl=/_instance/k8s/acp-mwimjlxojy5p5n/ws?asdmUserId=52&username=test01&projectSlug=_default",
+    "durationMs": 638,
+    "respMs": 638,
     "reqCount": 1
   },
   "2.3": {
@@ -103,80 +40,80 @@
     "name": "查询用户连接状态",
     "ok": true,
     "note": "HTTP 200 | code=200 | success；connected=false, connectionCount=0",
-    "durationMs": 48,
-    "respMs": 48,
+    "durationMs": 69,
+    "respMs": 68,
     "reqCount": 1
   },
   "3.1": {
     "id": "3.1",
     "name": "会话列表",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；会话数=0",
-    "durationMs": 49,
-    "respMs": 49,
+    "note": "HTTP 200 | code=200 | success；会话数=3",
+    "durationMs": 118,
+    "respMs": 117,
     "reqCount": 1
   },
   "3.2": {
     "id": "3.2",
     "name": "创建会话",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；sessionId=01a1ce91-92c9-716a-8ac7-cea0f73c94e6，自愈①: 建立 ACP WS 连接",
-    "durationMs": 3719,
-    "respMs": 1536,
+    "note": "HTTP 200 | code=200 | success；sessionId=01a1e881-1f3f-77cb-ada5-30d6760578f7，@healed 建立 ACP WS 连接并 initialize 后重试成功",
+    "durationMs": 7010,
+    "respMs": 873,
     "reqCount": 2
   },
-  "3.3": {
-    "id": "3.3",
-    "name": "切换会话",
+  "3.4": {
+    "id": "3.4",
+    "name": "获取会话可用模型",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 64,
-    "respMs": 64,
+    "note": "HTTP 200 | code=200 | success；currentModel=deepseek-v4.1-flash, models=21",
+    "durationMs": 154,
+    "respMs": 154,
     "reqCount": 1
   },
   "3.5": {
     "id": "3.5",
-    "name": "获取会话可用模型",
+    "name": "切换会话模型",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；currentModel=deepseek-v4.1-flash, models=17",
-    "durationMs": 50,
-    "respMs": 50,
+    "note": "HTTP 200 | code=200 | success；model=deepseek-v4.1-flash，切换后 currentModel=deepseek-v4.1-flash",
+    "durationMs": 76,
+    "respMs": 75,
     "reqCount": 1
   },
   "3.6": {
     "id": "3.6",
-    "name": "切换会话模型",
+    "name": "获取会话历史",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；model=deepseek-v4.1-flash",
-    "durationMs": 217,
-    "respMs": 217,
+    "note": "HTTP 200 | code=200 | success；messages=0",
+    "durationMs": 238,
+    "respMs": 237,
     "reqCount": 1
   },
   "3.7": {
     "id": "3.7",
     "name": "停止生成",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 53,
-    "respMs": 53,
+    "note": "HTTP 200 | code=200 | success；stopped=true",
+    "durationMs": 73,
+    "respMs": 73,
     "reqCount": 1
   },
   "4.1": {
     "id": "4.1",
     "name": "上传文件",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；filePath=api-test-1794466972808.txt",
-    "durationMs": 1145,
-    "respMs": 1145,
+    "note": "HTTP 200 | code=200 | success；filePath=api-test-1794902099535.txt",
+    "durationMs": 491,
+    "respMs": 489,
     "reqCount": 1
   },
   "4.2": {
     "id": "4.2",
     "name": "下载文件",
     "ok": true,
-    "note": "HTTP 200 | FT-TBD 接口测试上传文件 2026-11-12T07:03:29.449Z；contentType=application/octet-stream, bytes=56（文件内容）",
-    "durationMs": 556,
-    "respMs": 556,
+    "note": "HTTP 200 | FT-TBD 服务化接口测试上传文件 2026-11-17T07:55:39.635Z；contentType=application/octet-stream, bytes=65",
+    "durationMs": 474,
+    "respMs": 472,
     "reqCount": 1
   },
   "4.3": {
@@ -184,71 +121,53 @@
     "name": "上传制品到智能体空间",
     "ok": true,
     "note": "HTTP 200 | code=200 | success；artifactId=16",
-    "durationMs": 660,
-    "respMs": 659,
+    "durationMs": 480,
+    "respMs": 478,
     "reqCount": 1
   },
   "4.4": {
     "id": "4.4",
     "name": "获取智能体空间制品列表",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success；制品数=7",
-    "durationMs": 52,
-    "respMs": 52,
+    "note": "HTTP 200 | code=200 | success；制品数=12，含本次上传 artifactId=16：是",
+    "durationMs": 76,
+    "respMs": 76,
     "reqCount": 1
   },
   "4.5": {
     "id": "4.5",
-    "name": "下载制品",
+    "name": "下载制品（按 artifactId）",
     "ok": true,
-    "note": "HTTP 200 | <二进制内容 230 字节>；contentType=application/zip, bytes=230",
-    "durationMs": 91,
-    "respMs": 91,
+    "note": "HTTP 200 | <二进制内容 240 字节>；contentType=application/zip, bytes=240（zip 二进制）",
+    "durationMs": 81,
+    "respMs": 80,
     "reqCount": 1
   },
-  "3.4": {
-    "id": "3.4",
+  "3.3": {
+    "id": "3.3",
     "name": "删除会话",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 58,
-    "respMs": 58,
+    "note": "HTTP 200 | code=200 | success；deleted=true",
+    "durationMs": 84,
+    "respMs": 84,
     "reqCount": 1
-  },
-  "1.11": {
-    "id": "1.11",
-    "name": "删除项目",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 3075,
-    "respMs": 1062,
-    "reqCount": 1
-  },
-  "1.5": {
-    "id": "1.5",
-    "name": "重启实例",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success；重启后 status=running",
-    "durationMs": 26477,
-    "respMs": 26477,
-    "reqCount": 2
   },
   "1.4": {
     "id": "1.4",
+    "name": "重启实例",
+    "ok": true,
+    "note": "HTTP 200 | code=200 | success；重启后 status=running",
+    "durationMs": 26712,
+    "respMs": 26712,
+    "reqCount": 2
+  },
+  "1.3": {
+    "id": "1.3",
     "name": "暂停实例",
     "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 124,
-    "respMs": 124,
-    "reqCount": 1
-  },
-  "1.6": {
-    "id": "1.6",
-    "name": "删除实例",
-    "ok": true,
-    "note": "HTTP 200 | code=200 | success",
-    "durationMs": 54,
-    "respMs": 54,
-    "reqCount": 1
+    "note": "HTTP 200 | code=200 | success；停止后 status=stopped；@restored 已自动重启恢复 running",
+    "durationMs": 26800,
+    "respMs": 26799,
+    "reqCount": 4
   }
 }
