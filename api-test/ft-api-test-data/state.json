@@ -2,9 +2,9 @@
   "instanceId": "acp-mwimjlxojy5p5n",
   "workspaceId": "17",
   "wsUrl": "/_instance/k8s/acp-mwimjlxojy5p5n/ws?asdmUserId=52&username=test01&projectSlug=_default",
-  "sessionId": "01a1e881-1f3f-77cb-ada5-30d6760578f7",
+  "sessionId": "01a20c88-728f-7c3e-8de2-bafaab976e54",
   "modelId": "deepseek-v4.1-flash",
-  "filePath": "api-test-1794902099535.txt",
-  "artifactPath": "api-test-1794902099535.txt",
-  "artifactId": "16"
+  "filePath": "api-test-1795506411474.txt",
+  "artifactPath": "api-test-1795506411474.txt",
+  "artifactId": "32"
 }
