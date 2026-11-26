@@ -72,6 +72,8 @@ json_get() {
 
 # ---- 环境与变量约定 ----
 BASE_URL="${ASDM_BASE_URL:-https://asdm-sit.leansoftx.com}"
+# 规范化：去除尾斜杠，避免与接口路径拼接产生 //api/... 导致网关 404
+BASE_URL="${BASE_URL%/}"
 CORE_BASE="${BASE_URL}"
 SSO_BASE="${BASE_URL}"
 INTEGRATION_BASE="${BASE_URL}"
